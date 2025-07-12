@@ -27,25 +27,16 @@ const AddMaterial = () => {
   const [material, setMaterial] = useState({
     material_type_id: "",
     factory_lot_number: "",
+    total_quantity: "",
+    carton_count: "",
+    items_per_carton: "",
   });
 
   // Animation variants
   const pageVariants = {
-    initial: {
-      opacity: 0,
-      x: 50,
-      scale: 0.95,
-    },
-    in: {
-      opacity: 1,
-      x: 0,
-      scale: 1,
-    },
-    out: {
-      opacity: 0,
-      x: -50,
-      scale: 0.95,
-    },
+    initial: { opacity: 0, x: 0, scale: 0.95 },
+    in: { opacity: 1, x: 0, scale: 1 },
+    out: { opacity: 0, x: -50, scale: 0.95 },
   };
 
   const pageTransition = {
@@ -95,14 +86,116 @@ const AddMaterial = () => {
     if (name === "factory_lot_number" && cameraError) setCameraError("");
   };
 
+  // Calculate total quantity from cartons
+  const calculateTotalFromCartons = () => {
+    const cartonCount = parseInt(material.carton_count) || 0;
+    const itemsPerCarton = parseInt(material.items_per_carton) || 0;
+    return cartonCount * itemsPerCarton;
+  };
+
+  // Calculate carton count from total and items per carton
+  const calculateCartonCount = () => {
+    const totalQuantity = parseInt(material.total_quantity) || 0;
+    const itemsPerCarton = parseInt(material.items_per_carton) || 0;
+    if (itemsPerCarton === 0) return 0;
+    return Math.floor(totalQuantity / itemsPerCarton);
+  };
+
+  // Calculate items per carton from total and carton count
+  const calculateItemsPerCarton = () => {
+    const totalQuantity = parseInt(material.total_quantity) || 0;
+    const cartonCount = parseInt(material.carton_count) || 0;
+    if (cartonCount === 0) return 0;
+    return Math.floor(totalQuantity / cartonCount);
+  };
+
+  // Check if quantities match
+  const checkQuantitiesMatch = () => {
+    const total = parseInt(material.total_quantity) || 0;
+    const cartons = parseInt(material.carton_count) || 0;
+    const itemsPerCarton = parseInt(material.items_per_carton) || 0;
+
+    if (total === 0 || cartons === 0 || itemsPerCarton === 0) {
+      return { match: null, message: "" };
+    }
+
+    const calculatedTotal = cartons * itemsPerCarton;
+    const match = total === calculatedTotal;
+
+    return {
+      match,
+      message: match
+        ? `數量匹配: ${total} 件`
+        : `數量不匹配: 總數量 ${total} ≠ 箱數 ${cartons} × 每箱 ${itemsPerCarton} = ${calculatedTotal}`,
+    };
+  };
+
+  // Get the final total quantity to submit
+  const getFinalQuantity = () => {
+    const totalQuantity = parseInt(material.total_quantity) || 0;
+    const calculatedFromCartons = calculateTotalFromCartons();
+
+    // If both total and carton info are provided, use total quantity
+    if (totalQuantity > 0) {
+      return totalQuantity;
+    }
+
+    // Otherwise use calculated from cartons
+    return calculatedFromCartons;
+  };
+
+  // Check if form is valid for submission
+  const isFormValid = () => {
+    // Check required fields
+    if (
+      !material.material_type_id ||
+      !material.factory_lot_number ||
+      !material.total_quantity ||
+      !material.carton_count ||
+      !material.items_per_carton
+    ) {
+      return false;
+    }
+
+    // Check if at least one quantity is provided
+    const total = parseInt(material.total_quantity) || 0;
+    const cartons = parseInt(material.carton_count) || 0;
+    const itemsPerCarton = parseInt(material.items_per_carton) || 0;
+
+    // Must have either total quantity OR both carton info
+    const hasValidQuantity = total > 0 || (cartons > 0 && itemsPerCarton > 0);
+    if (!hasValidQuantity) {
+      return false;
+    }
+
+    // If all three fields are filled, they must match
+    if (total > 0 && cartons > 0 && itemsPerCarton > 0) {
+      const calculatedTotal = cartons * itemsPerCarton;
+      return total === calculatedTotal;
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setMessage({ type: "", text: "" });
 
+    // Validation
+    const finalQuantity = getFinalQuantity();
+    if (finalQuantity <= 0) {
+      setMessage({
+        type: "error",
+        text: "請輸入總數量，或同時輸入箱數和每箱件數",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("/api/stock/lots", {
+      const response = await fetch("/api/add_material", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -111,6 +204,9 @@ const AddMaterial = () => {
         body: JSON.stringify({
           material_type_id: material.material_type_id,
           factory_lot_number: material.factory_lot_number,
+          total_quantity: finalQuantity,
+          carton_count: parseInt(material.carton_count) || null,
+          items_per_carton: parseInt(material.items_per_carton) || null,
         }),
       });
 
@@ -121,7 +217,7 @@ const AddMaterial = () => {
         // Reset form after successful submission
         setTimeout(() => {
           handleReset();
-        }, 1500);
+        }, 5000);
       } else {
         setMessage({ type: "error", text: data.message || "添加失敗" });
       }
@@ -137,6 +233,9 @@ const AddMaterial = () => {
     setMaterial({
       material_type_id: "",
       factory_lot_number: "",
+      total_quantity: "",
+      carton_count: "",
+      items_per_carton: "",
     });
     setMessage({ type: "", text: "" });
     setCameraError("");
@@ -314,12 +413,98 @@ const AddMaterial = () => {
                 )}
               </div>
 
+              {/* Quantity Inputs */}
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  數量設置 *
+                </label>
+                <div className="flex gap-4">
+                  {/* Total Quantity */}
+                  <div className="flex-1">
+                    <label
+                      htmlFor="total_quantity"
+                      className="mb-1 block text-sm text-gray-600"
+                    >
+                      總數量
+                    </label>
+                    <input
+                      type="number"
+                      id="total_quantity"
+                      name="total_quantity"
+                      className="focus:ring-blue w-full rounded-xl border border-gray-300 px-4 py-3 transition-all duration-200 focus:border-transparent focus:ring-2"
+                      placeholder="輸入總數量"
+                      value={material.total_quantity}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+
+                  {/* Carton Count */}
+                  <div className="flex-1">
+                    <label
+                      htmlFor="carton_count"
+                      className="mb-1 block text-sm text-gray-600"
+                    >
+                      箱數
+                    </label>
+                    <input
+                      type="number"
+                      id="carton_count"
+                      name="carton_count"
+                      className="focus:ring-blue w-full rounded-xl border border-gray-300 px-4 py-3 transition-all duration-200 focus:border-transparent focus:ring-2"
+                      placeholder="輸入箱數"
+                      value={material.carton_count}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+
+                  {/* Items Per Carton */}
+                  <div className="flex-1">
+                    <label
+                      htmlFor="items_per_carton"
+                      className="mb-1 block text-sm text-gray-600"
+                    >
+                      每箱件數
+                    </label>
+                    <input
+                      type="number"
+                      id="items_per_carton"
+                      name="items_per_carton"
+                      className="focus:ring-blue w-full rounded-xl border border-gray-300 px-4 py-3 transition-all duration-200 focus:border-transparent focus:ring-2"
+                      placeholder="輸入每箱件數"
+                      value={material.items_per_carton}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                </div>
+
+                {/* Quantity Match Display */}
+                <div className="mt-2 text-sm">
+                  <span
+                    className={`rounded-lg px-3 py-1 transition-opacity ${
+                      checkQuantitiesMatch().match !== null
+                        ? "visible"
+                        : "invisible"
+                    } ${
+                      checkQuantitiesMatch().match
+                        ? "bg-green-50 text-green-700"
+                        : "bg-red-50 text-red-700"
+                    }`}
+                  >
+                    {checkQuantitiesMatch().message}
+                  </span>
+                </div>
+
+                {/*<p className="mt-1 text-xs text-gray-500">*/}
+                {/*  可輸入總數量，或同時輸入箱數和每箱件數*/}
+                {/*</p>*/}
+              </div>
+
               {/* Action Buttons */}
               <div className="flex items-center justify-center space-x-4 border-t border-gray-200 pt-6">
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="flex flex-col items-center justify-center gap-2 rounded-xl bg-gray-400 px-6 py-3 font-medium text-white transition-colors duration-200 hover:bg-gray-600"
+                  className="bg-gray flex w-1/3 flex-col items-center justify-center gap-2 rounded-xl px-6 py-3 font-medium text-white transition-colors duration-200 hover:bg-gray-600"
                   disabled={isSubmitting}
                 >
                   <Refresh className="h-5 w-5" />
@@ -327,8 +512,8 @@ const AddMaterial = () => {
                 </button>
                 <button
                   type="submit"
-                  className="bg-lightblue hover:bg-blue flex flex-col items-center justify-center gap-2 rounded-xl px-6 py-3 font-medium text-white transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50"
-                  disabled={isSubmitting || isLoadingTypes}
+                  className="bg-lightblue hover:bg-blue flex w-1/2 flex-col items-center justify-center gap-2 rounded-xl px-6 py-3 font-medium text-white transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={isSubmitting || isLoadingTypes || !isFormValid()}
                 >
                   <Save className="h-5 w-5" />
                   {isSubmitting ? "添加中..." : "添加物料"}

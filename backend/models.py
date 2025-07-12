@@ -22,9 +22,12 @@ class UserType(db.Model):
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.String(20), primary_key=True)  # USR001, USR002, etc.
-    user_type_id = db.Column(db.String(20), db.ForeignKey('user_types.id'), nullable=False)
+    user_type_id = db.Column(db.String(20), db.ForeignKey('user_types.id'), nullable=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(120), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=True)
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    last_login = db.Column(db.DateTime, nullable=True)
     project_ids = db.Column(db.Text)  # JSON string of project IDs
     work_order_ids = db.Column(db.Text)  # JSON string of work order IDs
     task_ids = db.Column(db.Text)  # JSON string of task IDs
@@ -62,6 +65,7 @@ class Lot(db.Model):
     carton_ids = db.Column(db.Text)  # JSON string of carton IDs
     log_ids = db.Column(db.Text)  # JSON string of log IDs
     created_at = db.Column(db.DateTime, default=get_hk_time)
+    created_user_id = db.Column(db.String(20), db.ForeignKey('users.id'), nullable=False)
 
     material_type = db.relationship('MaterialType', backref='lots')
 
@@ -85,7 +89,7 @@ class Item(db.Model):
     status = db.Column(db.String(20), nullable=False)  # available, assigned, used
     parent_id = db.Column(db.String(20))  # carton or item ID
     child_item_ids = db.Column(db.Text)  # JSON string of child item IDs
-    stock_log_ids = db.Column(db.Text)  # JSON string of stock log IDs
+    log_ids = db.Column(db.Text)  # JSON string of stock log IDs
     task_ids = db.Column(db.Text)  # JSON string of task IDs
     created_at = db.Column(db.DateTime, default=get_hk_time)
 
@@ -181,4 +185,3 @@ class CardMenu(db.Model):
     is_active = db.Column(db.Boolean, default=True)  # Whether card is active
     created_at = db.Column(db.DateTime, default=get_hk_time)
     updated_at = db.Column(db.DateTime, default=get_hk_time, onupdate=get_hk_time)
-

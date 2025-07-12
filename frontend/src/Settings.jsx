@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import Header from "./componenets/Header.jsx";
 import BackButton from "./componenets/BackButton.jsx";
 import { Person, ExitToApp } from "@mui/icons-material";
@@ -23,6 +24,19 @@ const Settings = ({ onLogout }) => {
   };
 
   const user = getUserData();
+
+  // Animation variants
+  const pageVariants = {
+    initial: { opacity: 0, x: 0, scale: 0.95 },
+    in: { opacity: 1, x: 0, scale: 1 },
+    out: { opacity: 0, x: -50, scale: 0.95 },
+  };
+
+  const pageTransition = {
+    type: "tween",
+    ease: "anticipate",
+    duration: 0.5,
+  };
 
   // Fetch user type from API
   useEffect(() => {
@@ -71,7 +85,14 @@ const Settings = ({ onLogout }) => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gray-100">
+    <motion.div
+      className="min-h-screen w-full bg-gray-100"
+      initial="initial"
+      animate="in"
+      exit="out"
+      variants={pageVariants}
+      transition={pageTransition}
+    >
       <Header title={"個人設置"} />
 
       <div className="px-6 py-8">
@@ -131,7 +152,7 @@ const Settings = ({ onLogout }) => {
 
       {/* Back Button Component */}
       <BackButton to="/dashboard" />
-    </div>
+    </motion.div>
   );
 };
 

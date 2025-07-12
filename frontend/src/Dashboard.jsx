@@ -102,25 +102,25 @@ const Dashboard = () => {
   const pageVariants = {
     initial: {
       opacity: 0,
-      x: -50,
-      scale: 0.95,
     },
     in: {
       opacity: 1,
-      x: 0,
-      scale: 1,
     },
     out: {
       opacity: 0,
-      x: 50,
-      scale: 0.95,
     },
   };
 
-  const pageTransition = {
+  const pageTransitionFadeIn = {
     type: "tween",
-    ease: "anticipate",
-    duration: 0.5,
+    ease: "easeInOut",
+    duration: 1,
+  };
+
+  const pageTransitionFadeOut = {
+    type: "tween",
+    ease: "easeInOut",
+    duration: 0.3,
   };
 
   if (isLoading) {
@@ -131,11 +131,11 @@ const Dashboard = () => {
         animate="in"
         exit="out"
         variants={pageVariants}
-        transition={pageTransition}
+        transition={pageTransitionFadeIn}
       >
-        <Header title={"物料管理系統"} />
+        <Header title={"工作台"} />
         <div className="mx-4 mt-4 flex justify-center">
-          <div className="text-lg text-gray-600">載入中...</div>
+          <div className="text-lg text-gray-600"></div>
         </div>
       </motion.div>
     );
@@ -149,9 +149,9 @@ const Dashboard = () => {
         animate="in"
         exit="out"
         variants={pageVariants}
-        transition={pageTransition}
+        transition={pageTransitionFadeIn}
       >
-        <Header title={"物料管理系統"} />
+        <Header title={"工作台"} />
         <div className="mx-4 mt-4 flex justify-center">
           <div className="text-lg text-red-600">{error}</div>
         </div>
@@ -166,7 +166,7 @@ const Dashboard = () => {
       animate="in"
       exit="out"
       variants={pageVariants}
-      transition={pageTransition}
+      transition={pageTransitionFadeOut}
     >
       <Header title={"工作台"} />
       <motion.div
