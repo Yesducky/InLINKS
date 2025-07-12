@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#3B82F6" />
+    <link rel="manifest" href="/manifest.json" />
+    <title>InLINKS 物料管理系統</title>
+    <style>
+      /* Prevent address bar from showing on mobile */
+      html, body {
+        height: 100vh;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      /* Hide address bar on iOS Safari */
+      @supports (-webkit-touch-callout: none) {
+        body {
+          min-height: -webkit-fill-available;
+        }
+      }
+
+      /* Fullscreen styles */
+      .fullscreen-container {
+        height: 100vh;
+        height: -webkit-fill-available;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" class="fullscreen-container"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+<script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+<script>
+  // VConsole will be exported to `window.VConsole` by default.
+  var vConsole = new window.VConsole();
+</script>

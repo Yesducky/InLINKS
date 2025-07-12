@@ -1,0 +1,184 @@
+from datetime import datetime
+import pytz
+from __init__ import db
+
+# Hong Kong timezone
+HK_TZ = pytz.timezone('Asia/Hong_Kong')
+
+def get_hk_time():
+    """Get current time in Hong Kong timezone"""
+    return datetime.now(HK_TZ)
+
+# Database Models - Common Collection
+class UserType(db.Model):
+    __tablename__ = 'user_types'
+    id = db.Column(db.String(20), primary_key=True)  # UT001, UT002, etc.
+    type = db.Column(db.String(50), nullable=False)  # admin, worker, client, consultant, pm
+    permission = db.Column(db.String(100), nullable=False)  # all, write, read_only
+    user_ids = db.Column(db.Text)  # JSON string of user IDs
+    created_at = db.Column(db.DateTime, default=get_hk_time)
+    card_menus_id = db.Column(db.Text)
+
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.String(20), primary_key=True)  # USR001, USR002, etc.
+    user_type_id = db.Column(db.String(20), db.ForeignKey('user_types.id'), nullable=False)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password_hash = db.Column(db.String(120), nullable=False)
+    project_ids = db.Column(db.Text)  # JSON string of project IDs
+    work_order_ids = db.Column(db.Text)  # JSON string of work order IDs
+    task_ids = db.Column(db.Text)  # JSON string of task IDs
+    created_at = db.Column(db.DateTime, default=get_hk_time)
+
+    user_type = db.relationship('UserType', backref='users')
+
+class MaterialType(db.Model):
+    __tablename__ = 'material_types'
+    id = db.Column(db.String(20), primary_key=True)  # MT001, MT002, etc.
+    material_name = db.Column(db.String(100), nullable=False)
+    material_unit = db.Column(db.String(20), nullable=False)  # cm, meter, unit
+    created_at = db.Column(db.DateTime, default=get_hk_time)
+
+class WorkflowType(db.Model):
+    __tablename__ = 'workflow_types'
+    id = db.Column(db.String(20), primary_key=True)  # WT001, WT002, etc.
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=get_hk_time)
+
+class LogType(db.Model):
+    __tablename__ = 'log_types'
+    id = db.Column(db.String(20), primary_key=True)  # LT001, LT002, etc.
+    type = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=get_hk_time)
+
+# Database Models - Stock Collection
+class Lot(db.Model):
+    __tablename__ = 'lots'
+    id = db.Column(db.String(20), primary_key=True)  # LOT001, LOT002, etc.
+    material_type_id = db.Column(db.String(20), db.ForeignKey('material_types.id'), nullable=False)
+    factory_lot_number = db.Column(db.String(100), nullable=False)
+    carton_ids = db.Column(db.Text)  # JSON string of carton IDs
+    log_ids = db.Column(db.Text)  # JSON string of log IDs
+    created_at = db.Column(db.DateTime, default=get_hk_time)
+
+    material_type = db.relationship('MaterialType', backref='lots')
+
+class Carton(db.Model):
+    __tablename__ = 'cartons'
+    id = db.Column(db.String(20), primary_key=True)  # CTN001, CTN002, etc.
+    parent_lot_id = db.Column(db.String(20), db.ForeignKey('lots.id'), nullable=False)
+    material_type_id = db.Column(db.String(20), db.ForeignKey('material_types.id'), nullable=False)
+    item_ids = db.Column(db.Text)  # JSON string of item IDs
+    log_ids = db.Column(db.Text)  # JSON string of log IDs
+    created_at = db.Column(db.DateTime, default=get_hk_time)
+
+    parent_lot = db.relationship('Lot', backref='cartons')
+    material_type = db.relationship('MaterialType', backref='cartons')
+
+class Item(db.Model):
+    __tablename__ = 'items'
+    id = db.Column(db.String(20), primary_key=True)  # ITM001, ITM002, etc.
+    material_type_id = db.Column(db.String(20), db.ForeignKey('material_types.id'), nullable=False)
+    quantity = db.Column(db.Float, nullable=False)
+    status = db.Column(db.String(20), nullable=False)  # available, assigned, used
+    parent_id = db.Column(db.String(20))  # carton or item ID
+    child_item_ids = db.Column(db.Text)  # JSON string of child item IDs
+    stock_log_ids = db.Column(db.Text)  # JSON string of stock log IDs
+    task_ids = db.Column(db.Text)  # JSON string of task IDs
+    created_at = db.Column(db.DateTime, default=get_hk_time)
+
+    material_type = db.relationship('MaterialType', backref='items')
+
+class StockLog(db.Model):
+    __tablename__ = 'stock_logs'
+    id = db.Column(db.String(20), primary_key=True)  # SL001, SL002, etc.
+    date = db.Column(db.DateTime, default=get_hk_time)
+    user_id = db.Column(db.String(20), db.ForeignKey('users.id'), nullable=False)
+    description = db.Column(db.Text)
+    task_id = db.Column(db.String(20))
+    item_id = db.Column(db.String(20), db.ForeignKey('items.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=get_hk_time)
+
+    user = db.relationship('User', backref='stock_logs')
+    item = db.relationship('Item', backref='stock_logs')
+
+# Database Models - Process Collection
+class Project(db.Model):
+    __tablename__ = 'projects'
+    id = db.Column(db.String(20), primary_key=True)  # PRJ001, PRJ002, etc.
+    project_name = db.Column(db.String(100), nullable=False)
+    person_in_charge_id = db.Column(db.String(20), db.ForeignKey('users.id'), nullable=False)
+    work_order_ids = db.Column(db.Text)  # JSON string of work order IDs
+    process_log_ids = db.Column(db.Text)  # JSON string of process log IDs
+    created_at = db.Column(db.DateTime, default=get_hk_time)
+
+    person_in_charge = db.relationship('User', backref='managed_projects')
+
+class WorkOrder(db.Model):
+    __tablename__ = 'work_orders'
+    id = db.Column(db.String(20), primary_key=True)  # WO001, WO002, etc.
+    work_order_name = db.Column(db.String(100), nullable=False)
+    workflow_type_id = db.Column(db.String(20), db.ForeignKey('workflow_types.id'), nullable=False)
+    parent_project_id = db.Column(db.String(20), db.ForeignKey('projects.id'), nullable=False)
+    lot_id = db.Column(db.String(20), db.ForeignKey('lots.id'))
+    task_ids = db.Column(db.Text)  # JSON string of task IDs
+    process_log_ids = db.Column(db.Text)  # JSON string of process log IDs
+    created_at = db.Column(db.DateTime, default=get_hk_time)
+
+    workflow_type = db.relationship('WorkflowType', backref='work_orders')
+    parent_project = db.relationship('Project', backref='work_orders')
+    lot = db.relationship('Lot', backref='work_orders')
+
+class Task(db.Model):
+    __tablename__ = 'tasks'
+    id = db.Column(db.String(20), primary_key=True)  # TSK001, TSK002, etc.
+    task_type = db.Column(db.String(50), nullable=False)
+    item_ids = db.Column(db.Text)  # JSON string of item IDs
+    status = db.Column(db.String(20), nullable=False)
+    user_ids = db.Column(db.Text)  # JSON string of user IDs
+    subtask_ids = db.Column(db.Text)  # JSON string of subtask IDs
+    process_log_ids = db.Column(db.Text)  # JSON string of process log IDs
+    parent_work_order_id = db.Column(db.String(20), db.ForeignKey('work_orders.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=get_hk_time)
+
+    parent_work_order = db.relationship('WorkOrder', backref='tasks')
+
+class SubTask(db.Model):
+    __tablename__ = 'subtasks'
+    id = db.Column(db.String(20), primary_key=True)  # ST001, ST002, etc.
+    status = db.Column(db.String(20), nullable=False)  # design, pulling_cable, terminated, completed
+    item_ids = db.Column(db.Text)  # JSON string of item IDs
+    user_ids = db.Column(db.Text)  # JSON string of user IDs
+    parent_task_id = db.Column(db.String(20), db.ForeignKey('tasks.id'), nullable=False)
+    process_log_ids = db.Column(db.Text)  # JSON string of process log IDs
+    created_at = db.Column(db.DateTime, default=get_hk_time)
+
+    parent_task = db.relationship('Task', backref='subtasks')
+
+class ProcessLog(db.Model):
+    __tablename__ = 'process_logs'
+    id = db.Column(db.String(20), primary_key=True)  # PL001, PL002, etc.
+    log_type_id = db.Column(db.String(20), db.ForeignKey('log_types.id'), nullable=False)
+    date = db.Column(db.DateTime, default=get_hk_time)
+    user_id = db.Column(db.String(20), db.ForeignKey('users.id'), nullable=False)
+    description = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=get_hk_time)
+
+    log_type = db.relationship('LogType', backref='process_logs')
+    user = db.relationship('User', backref='process_logs')
+
+# Database Models - Menu Collection
+class CardMenu(db.Model):
+    __tablename__ = 'card_menus'
+    id = db.Column(db.String(20), primary_key=True)  # CM001, CM002, etc.
+    title = db.Column(db.String(100), nullable=False)  # Card title in Chinese
+    icon_name = db.Column(db.String(50), nullable=False)  # Material-UI icon name
+    icon_color = db.Column(db.String(50), nullable=False)  # Tailwind CSS color class
+    route_path = db.Column(db.String(100))  # Frontend route path
+    order_index = db.Column(db.Integer, nullable=False, default=0)  # Display order
+    is_active = db.Column(db.Boolean, default=True)  # Whether card is active
+    created_at = db.Column(db.DateTime, default=get_hk_time)
+    updated_at = db.Column(db.DateTime, default=get_hk_time, onupdate=get_hk_time)
+
