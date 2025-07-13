@@ -17,12 +17,12 @@ export default defineConfig({
     },
     proxy: {
       "/api": {
-        target: "http://11.45.1.248:5000/",
+        target: "http://11.45.1.249:5000/",
         changeOrigin: true,
         secure: false,
       },
       "/auth": {
-        target: "http://11.45.1.248:5000/",
+        target: "http://11.45.1.249:5000/",
         changeOrigin: true,
         secure: false,
       },

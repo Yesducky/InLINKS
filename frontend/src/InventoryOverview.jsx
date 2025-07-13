@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import Header from "./componenets/Header.jsx";
 import BackButton from "./componenets/BackButton.jsx";
 import {
@@ -17,14 +18,16 @@ import {
 } from "@mui/icons-material";
 
 const InventoryOverview = () => {
+  const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [materialTypes, setMaterialTypes] = useState([]);
+  const [materialTypeQuantities, setMaterialTypeQuantities] = useState([]);
   const [lots, setLots] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
-  const [viewMode, setViewMode] = useState("list"); // "list" or "grid"
+  const [viewMode, setViewMode] = useState("grid"); // "list" or "grid"
   const [stats, setStats] = useState({
     totalItems: 0,
     availableItems: 0,
@@ -60,12 +63,9 @@ const InventoryOverview = () => {
     try {
       const token = localStorage.getItem("token");
 
-      // Fetch all data in parallel - using correct endpoints from stock_routes.py
-      const [itemsRes, materialTypesRes, lotsRes] = await Promise.all([
-        fetch("/api/items", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch("/api/material_types", {
+      // Fetch material type quantities and lots data
+      const [materialTypeQuantitiesRes, lotsRes] = await Promise.all([
+        fetch("/api/material_type_quantities", {
           headers: { Authorization: `Bearer ${token}` },
         }),
         fetch("/api/lots", {
@@ -73,26 +73,37 @@ const InventoryOverview = () => {
         }),
       ]);
 
-      if (itemsRes.ok && materialTypesRes.ok && lotsRes.ok) {
-        const itemsData = await itemsRes.json();
-        const materialTypesData = await materialTypesRes.json();
+      if (materialTypeQuantitiesRes.ok && lotsRes.ok) {
+        const materialTypeQuantitiesData =
+          await materialTypeQuantitiesRes.json();
         const lotsData = await lotsRes.json();
 
-        setItems(itemsData || []);
-        setMaterialTypes(materialTypesData || []);
+        setMaterialTypeQuantities(
+          materialTypeQuantitiesData.material_type_quantities || [],
+        );
         setLots(lotsData || []);
 
-        // Calculate stats
-        const totalItems = itemsData.length;
-        const availableItems = itemsData.filter(
-          (item) => item.status === "available",
-        ).length;
-        const assignedItems = itemsData.filter(
-          (item) => item.status === "assigned",
-        ).length;
-        const usedItems = itemsData.filter(
-          (item) => item.status === "used",
-        ).length;
+        // Calculate stats from material type quantities
+        const totalItems =
+          materialTypeQuantitiesData.material_type_quantities.reduce(
+            (sum, type) => sum + type.total_items,
+            0,
+          );
+        const availableItems =
+          materialTypeQuantitiesData.material_type_quantities.reduce(
+            (sum, type) => sum + type.available_items,
+            0,
+          );
+        const assignedItems =
+          materialTypeQuantitiesData.material_type_quantities.reduce(
+            (sum, type) => sum + type.assigned_items,
+            0,
+          );
+        const usedItems =
+          materialTypeQuantitiesData.material_type_quantities.reduce(
+            (sum, type) => sum + type.used_items,
+            0,
+          );
 
         setStats({
           totalItems,
@@ -100,7 +111,7 @@ const InventoryOverview = () => {
           assignedItems,
           usedItems,
           totalLots: lotsData.length,
-          materialTypes: materialTypesData.length,
+          materialTypes: materialTypeQuantitiesData.total_material_types || 0,
         });
       } else {
         setError("Failed to load inventory data");
@@ -146,18 +157,29 @@ const InventoryOverview = () => {
     }
   };
 
-  const filteredItems = items.filter((item) => {
-    const matchesSearch =
-      item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      getMaterialTypeName(item.material_type_id)
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
+  // Filter material types based on search and status
+  const filteredMaterialTypes = materialTypeQuantities.filter(
+    (materialType) => {
+      const matchesSearch =
+        materialType.material_name
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        materialType.material_type_id
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase());
 
-    const matchesStatus =
-      selectedStatus === "all" || item.status === selectedStatus;
+      let matchesStatus = true;
+      if (selectedStatus === "available") {
+        matchesStatus = materialType.available_quantity > 0;
+      } else if (selectedStatus === "assigned") {
+        matchesStatus = materialType.assigned_quantity > 0;
+      } else if (selectedStatus === "used") {
+        matchesStatus = materialType.used_quantity > 0;
+      }
 
-    return matchesSearch && matchesStatus;
-  });
+      return matchesSearch && matchesStatus;
+    },
+  );
 
   if (isLoading) {
     return (
@@ -324,11 +346,12 @@ const InventoryOverview = () => {
             </motion.div>
 
             <motion.div
-              className="rounded-2xl border border-gray-100 bg-white p-4 shadow-lg"
+              className="cursor-pointer rounded-2xl border border-gray-100 bg-white p-4 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl"
               variants={cardVariants}
               initial="hidden"
               animate="visible"
               transition={{ delay: 0.5 }}
+              onClick={() => navigate("/lots")}
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
@@ -407,11 +430,11 @@ const InventoryOverview = () => {
           >
             <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
               <h3 className="text-lg font-semibold text-gray-800">
-                物料清單 ({filteredItems.length})
+                物料清單 ({filteredMaterialTypes.length})
               </h3>
             </div>
 
-            {filteredItems.length === 0 ? (
+            {filteredMaterialTypes.length === 0 ? (
               <div className="p-8 text-center">
                 <Inventory className="mx-auto h-12 w-12 text-gray-400" />
                 <p className="mt-2 text-gray-500">
@@ -426,67 +449,81 @@ const InventoryOverview = () => {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                        物料 ID
+                        物料類型 ID
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                        物料類型
+                        物料名稱
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                        數量
+                        可用數量
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                        狀態
+                        已分配數量
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                        創建時間
+                        已使用數量
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                        總數量
                       </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
-                    {filteredItems.map((item, index) => (
+                    {filteredMaterialTypes.map((materialType, index) => (
                       <motion.tr
-                        key={item.id}
-                        className="hover:bg-gray-50"
+                        key={materialType.material_type_id}
+                        className="cursor-pointer transition-colors duration-200 hover:bg-gray-50"
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.05, duration: 0.2 }}
+                        onClick={() =>
+                          navigate(`/lots/${materialType.material_type_id}`)
+                        }
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
-                              <Inventory2 className="h-4 w-4 text-blue-600" />
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100">
+                              <Category className="h-4 w-4 text-indigo-600" />
                             </div>
                             <div className="ml-3">
                               <div className="text-sm font-medium text-gray-900">
-                                {item.id}
+                                {materialType.material_type_id}
                               </div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
-                          {getMaterialTypeName(item.material_type_id)}
-                        </td>
-                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
-                          {item.quantity}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">
+                            {materialType.material_name}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            單位: {materialType.material_unit}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(item.status)}`}
-                          >
-                            {getStatusIcon(item.status)}
-                            {item.status === "available"
-                              ? "可用"
-                              : item.status === "assigned"
-                                ? "已分配"
-                                : "已使用"}
+                          <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-800">
+                            <CheckCircle className="h-3 w-3" />
+                            {materialType.available_quantity}{" "}
+                            {materialType.material_unit}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
-                          {item.created_at
-                            ? new Date(item.created_at).toLocaleDateString(
-                                "zh-TW",
-                              )
-                            : "N/A"}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-3 py-1 text-sm font-semibold text-yellow-800">
+                            <Warning className="h-3 w-3" />
+                            {materialType.assigned_quantity}{" "}
+                            {materialType.material_unit}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-3 py-1 text-sm font-semibold text-red-800">
+                            <Inventory2 className="h-3 w-3" />
+                            {materialType.used_quantity}{" "}
+                            {materialType.material_unit}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm font-bold whitespace-nowrap text-gray-900">
+                          {materialType.total_quantity}{" "}
+                          {materialType.material_unit}
                         </td>
                       </motion.tr>
                     ))}
@@ -495,48 +532,65 @@ const InventoryOverview = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-2 lg:grid-cols-3">
-                {filteredItems.map((item, index) => (
+                {filteredMaterialTypes.map((materialType, index) => (
                   <motion.div
-                    key={item.id}
-                    className="rounded-xl border border-gray-200 bg-gray-50 p-4 transition-shadow duration-200 hover:shadow-md"
+                    key={materialType.material_type_id}
+                    className="cursor-pointer rounded-xl border border-gray-200 bg-gray-50 p-4 transition-shadow duration-200 hover:shadow-md"
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: index * 0.05, duration: 0.2 }}
+                    onClick={() =>
+                      navigate(`/lots/${materialType.material_type_id}`)
+                    }
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
-                          <Inventory2 className="h-5 w-5 text-blue-600" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100">
+                          <Category className="h-5 w-5 text-indigo-600" />
                         </div>
                         <div>
                           <h4 className="font-medium text-gray-900">
-                            {item.id}
+                            {materialType.material_name}
                           </h4>
                           <p className="text-sm text-gray-500">
-                            {getMaterialTypeName(item.material_type_id)}
+                            {materialType.material_type_id} •{" "}
+                            {materialType.material_unit}
                           </p>
                         </div>
                       </div>
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(item.status)}`}
-                      >
-                        {getStatusIcon(item.status)}
-                        {item.status === "available"
-                          ? "可用"
-                          : item.status === "assigned"
-                            ? "已分配"
-                            : "已使用"}
-                      </span>
+                      <div className="text-right">
+                        <div className="text-sm font-bold text-gray-900">
+                          {materialType.total_quantity}{" "}
+                          {materialType.material_unit}
+                        </div>
+                        <div className="text-xs text-gray-500">總數量</div>
+                      </div>
                     </div>
-                    <div className="mt-3 flex items-center justify-between text-sm text-gray-500">
-                      <span>數量: {item.quantity}</span>
-                      <span>
-                        {item.created_at
-                          ? new Date(item.created_at).toLocaleDateString(
-                              "zh-TW",
-                            )
-                          : "N/A"}
-                      </span>
+
+                    <div className="mt-4 grid grid-cols-3 gap-2">
+                      <div className="text-center">
+                        <div className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
+                          <CheckCircle className="h-3 w-3" />
+                          {materialType.available_quantity}
+                        </div>
+                        <div className="mt-1 text-xs text-gray-500">可用</div>
+                      </div>
+
+                      <div className="text-center">
+                        <div className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-800">
+                          <Warning className="h-3 w-3" />
+                          {materialType.assigned_quantity}
+                        </div>
+                        <div className="mt-1 text-xs text-gray-500">已分配</div>
+                      </div>
+
+                      <div className="text-center">
+                        <div className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-800">
+                          <Inventory2 className="h-3 w-3" />
+                          {materialType.used_quantity}
+                        </div>
+                        <div className="mt-1 text-xs text-gray-500">已使用</div>
+                      </div>
                     </div>
                   </motion.div>
                 ))}

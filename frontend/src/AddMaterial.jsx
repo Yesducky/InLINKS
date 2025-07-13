@@ -30,6 +30,7 @@ const AddMaterial = () => {
     total_quantity: "",
     carton_count: "",
     items_per_carton: "",
+    item_quantity: "", // Individual item quantity (material type unit)
   });
 
   // Animation variants
@@ -93,40 +94,32 @@ const AddMaterial = () => {
     return cartonCount * itemsPerCarton;
   };
 
-  // Calculate carton count from total and items per carton
-  const calculateCartonCount = () => {
-    const totalQuantity = parseInt(material.total_quantity) || 0;
-    const itemsPerCarton = parseInt(material.items_per_carton) || 0;
-    if (itemsPerCarton === 0) return 0;
-    return Math.floor(totalQuantity / itemsPerCarton);
-  };
-
-  // Calculate items per carton from total and carton count
-  const calculateItemsPerCarton = () => {
-    const totalQuantity = parseInt(material.total_quantity) || 0;
-    const cartonCount = parseInt(material.carton_count) || 0;
-    if (cartonCount === 0) return 0;
-    return Math.floor(totalQuantity / cartonCount);
-  };
-
   // Check if quantities match
   const checkQuantitiesMatch = () => {
     const total = parseInt(material.total_quantity) || 0;
     const cartons = parseInt(material.carton_count) || 0;
     const itemsPerCarton = parseInt(material.items_per_carton) || 0;
+    const itemQuantity = parseFloat(material.item_quantity) || 0;
 
-    if (total === 0 || cartons === 0 || itemsPerCarton === 0) {
+    if (
+      total === 0 ||
+      cartons === 0 ||
+      itemsPerCarton === 0 ||
+      itemQuantity === 0
+    ) {
       return { match: null, message: "" };
     }
 
-    const calculatedTotal = cartons * itemsPerCarton;
+    const calculatedTotal = cartons * itemsPerCarton * itemQuantity;
     const match = total === calculatedTotal;
-
+    const materialUnit = materialTypes.find(
+      (type) => type.id === material.material_type_id,
+    )?.material_unit;
     return {
       match,
       message: match
-        ? `數量匹配: ${total} 件`
-        : `數量不匹配: 總數量 ${total} ≠ 箱數 ${cartons} × 每箱 ${itemsPerCarton} = ${calculatedTotal}`,
+        ? `數量匹配: ${total} ${materialUnit}`
+        : `數量不匹配: 總數量 ${total} ${materialUnit} ≠ 箱數 ${cartons} × 每箱 ${itemsPerCarton} × 每件 ${itemQuantity} ${materialUnit} = ${calculatedTotal} ${materialUnit}`,
     };
   };
 
@@ -161,16 +154,18 @@ const AddMaterial = () => {
     const total = parseInt(material.total_quantity) || 0;
     const cartons = parseInt(material.carton_count) || 0;
     const itemsPerCarton = parseInt(material.items_per_carton) || 0;
+    const itemQuantity = parseFloat(material.item_quantity) || 0;
 
     // Must have either total quantity OR both carton info
-    const hasValidQuantity = total > 0 || (cartons > 0 && itemsPerCarton > 0);
+    const hasValidQuantity =
+      total > 0 || (cartons > 0 && itemsPerCarton > 0 && itemQuantity > 0);
     if (!hasValidQuantity) {
       return false;
     }
 
     // If all three fields are filled, they must match
     if (total > 0 && cartons > 0 && itemsPerCarton > 0) {
-      const calculatedTotal = cartons * itemsPerCarton;
+      const calculatedTotal = cartons * itemsPerCarton * itemQuantity;
       return total === calculatedTotal;
     }
 
@@ -207,6 +202,7 @@ const AddMaterial = () => {
           total_quantity: finalQuantity,
           carton_count: parseInt(material.carton_count) || null,
           items_per_carton: parseInt(material.items_per_carton) || null,
+          item_quantity: parseFloat(material.item_quantity) || null, // Individual item quantity
         }),
       });
 
@@ -236,6 +232,7 @@ const AddMaterial = () => {
       total_quantity: "",
       carton_count: "",
       items_per_carton: "",
+      item_quantity: "", // Individual item quantity (material type unit)
     });
     setMessage({ type: "", text: "" });
     setCameraError("");
@@ -360,7 +357,8 @@ const AddMaterial = () => {
                   </option>
                   {materialTypes.map((type) => (
                     <option key={type.id} value={type.id}>
-                      {type.material_name} ({type.material_unit})
+                      {type.material_name}
+                      {/*({type.material_unit})*/}
                     </option>
                   ))}
                 </select>
@@ -418,7 +416,7 @@ const AddMaterial = () => {
                 <label className="mb-2 block text-sm font-medium text-gray-700">
                   數量設置 *
                 </label>
-                <div className="flex gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   {/* Total Quantity */}
                   <div className="flex-1">
                     <label
@@ -426,6 +424,15 @@ const AddMaterial = () => {
                       className="mb-1 block text-sm text-gray-600"
                     >
                       總數量
+                      {material.material_type_id &&
+                        materialTypes.find(
+                          (type) => type.id === material.material_type_id,
+                        )?.material_unit &&
+                        ` (${
+                          materialTypes.find(
+                            (type) => type.id === material.material_type_id,
+                          )?.material_unit
+                        })`}
                     </label>
                     <input
                       type="number"
@@ -472,6 +479,33 @@ const AddMaterial = () => {
                       className="focus:ring-blue w-full rounded-xl border border-gray-300 px-4 py-3 transition-all duration-200 focus:border-transparent focus:ring-2"
                       placeholder="輸入每箱件數"
                       value={material.items_per_carton}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label
+                      htmlFor="item_quantity"
+                      className="mb-1 block text-sm text-gray-600"
+                    >
+                      單項數量
+                      {material.material_type_id &&
+                        materialTypes.find(
+                          (type) => type.id === material.material_type_id,
+                        )?.material_unit &&
+                        ` (${
+                          materialTypes.find(
+                            (type) => type.id === material.material_type_id,
+                          )?.material_unit
+                        })`}
+                    </label>
+                    <input
+                      type="number"
+                      id="item_quantity"
+                      name="item_quantity"
+                      step="0.01"
+                      className="focus:ring-blue w-full rounded-xl border border-gray-300 px-4 py-3 transition-all duration-200 focus:border-transparent focus:ring-2"
+                      placeholder="輸入每個物料項目的數量"
+                      value={material.item_quantity}
                       onChange={handleInputChange}
                     />
                   </div>

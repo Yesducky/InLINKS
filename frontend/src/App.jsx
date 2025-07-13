@@ -13,6 +13,8 @@ import Dashboard from "./Dashboard.jsx";
 import Settings from "./Settings.jsx";
 import AddMaterial from "./AddMaterial.jsx";
 import InventoryOverview from "./InventoryOverview.jsx";
+import UserManagement from "./UserManagement.jsx";
+import Lot from "./Lot.jsx";
 
 const ProtectedRoute = ({ children, user }) => {
   return user ? children : <Navigate to="/login" replace />;
@@ -60,10 +62,34 @@ const AnimatedRoutes = ({ user, handleLogin, handleLogout }) => {
           }
         />
         <Route
+          path="/user_management"
+          element={
+            <ProtectedRoute user={user}>
+              <UserManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/inventory_overview"
           element={
             <ProtectedRoute user={user}>
               <InventoryOverview />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lots"
+          element={
+            <ProtectedRoute user={user}>
+              <Lot />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lots/:materialTypeId"
+          element={
+            <ProtectedRoute user={user}>
+              <Lot />
             </ProtectedRoute>
           }
         />
