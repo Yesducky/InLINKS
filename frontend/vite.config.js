@@ -3,6 +3,8 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import basicSsl from "@vitejs/plugin-basic-ssl";
 
+const api_url = process.env.API_URL || "http://localhost:5000";
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss(), basicSsl()],
@@ -17,12 +19,12 @@ export default defineConfig({
     },
     proxy: {
       "/api": {
-        target: "http://11.45.1.249:5000/",
+        target: api_url,
         changeOrigin: true,
         secure: false,
       },
       "/auth": {
-        target: "http://11.45.1.249:5000/",
+        target: api_url,
         changeOrigin: true,
         secure: false,
       },
