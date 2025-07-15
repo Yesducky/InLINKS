@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useParams } from "react-router-dom";
-import Header from "./componenets/Header.jsx";
-import BackButton from "./componenets/BackButton.jsx";
+import { useParams, useNavigate } from "react-router-dom";
+import Header from "../componenets/Header.jsx";
+import BackButton from "../componenets/BackButton.jsx";
 import {
   Inventory,
   Search,
@@ -13,10 +13,13 @@ import {
   Inventory2,
   Warning,
   CheckCircle,
+  AssignmentTurnedIn,
 } from "@mui/icons-material";
+import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 
-const Lot = () => {
+const LotOverview = () => {
   const { materialTypeId } = useParams();
+  const navigate = useNavigate();
   const [lots, setLots] = useState([]);
   const [materialType, setMaterialType] = useState(null);
   const [totalLots, setTotalLots] = useState(0);
@@ -36,11 +39,6 @@ const Lot = () => {
     type: "tween",
     ease: "easeInOut",
     duration: 0.3,
-  };
-
-  const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
   };
 
   useEffect(() => {
@@ -112,7 +110,6 @@ const Lot = () => {
 
   const getStatusText = (availableItems, totalItems) => {
     const ratio = availableItems / totalItems;
-    console.log(ratio);
     if (ratio === 1) return "完全可用";
     if (ratio > 0.5) return "部分使用";
     if (ratio > 0) return "大部分使用";
@@ -137,10 +134,10 @@ const Lot = () => {
         transition={pageTransition}
       >
         <Header
-          title={materialType ? `${materialType.name} 批次` : "批次管理"}
+          title={materialType ? `${materialType.name} 批次` : "批次總覽"}
         />
         <div className="flex h-64 items-center justify-center">
-          <div className="text-lg text-gray-600">載入中...</div>
+          <LoadingSpinner variant="circular" size={30} message="載入中" />
         </div>
       </motion.div>
     );
@@ -157,7 +154,7 @@ const Lot = () => {
         transition={pageTransition}
       >
         <Header
-          title={materialType ? `${materialType.name} 批次` : "批次管理"}
+          title={materialType ? `${materialType.name} 批次` : "批次總覽"}
         />
         <div className="flex h-64 items-center justify-center">
           <div className="text-lg text-red-600">{error}</div>
@@ -175,40 +172,37 @@ const Lot = () => {
       variants={pageVariants}
       transition={pageTransition}
     >
-      <Header title={materialType ? `${materialType.name} 批次` : "批次管理"} />
+      <Header title={materialType ? `${materialType.name} 批次` : "批次總覽"} />
 
       <div className="px-6 py-8">
         <div className="mx-auto max-w-6xl">
           {/* Page Header */}
           <motion.div
-            className="mb-8 flex items-center justify-between"
+            className="mb-8 flex items-start justify-between gap-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.3 }}
           >
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">
-                {materialType ? `${materialType.name} 批次` : "批次管理"}
-              </h1>
+            <div className="flex-1">
               <p className="text-gray-600">
                 {materialType
-                  ? `查看 ${materialType.name} (${materialType.unit}) 的所有批次`
+                  ? `查看 ${materialType.name} 的所有批次`
                   : "查看和管理所有物料批次"}
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex-shrink-0">
               <button
                 onClick={() =>
                   setViewMode(viewMode === "list" ? "grid" : "list")
                 }
-                className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
+                className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 whitespace-nowrap text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
               >
                 {viewMode === "list" ? (
                   <ViewModule className="h-5 w-5" />
                 ) : (
                   <ViewList className="h-5 w-5" />
                 )}
-                {viewMode === "list" ? "網格檢視" : "列表檢視"}
+                {/*{viewMode === "list" ? "網格檢視" : "列表檢視"}*/}
               </button>
             </div>
           </motion.div>
@@ -223,7 +217,7 @@ const Lot = () => {
             >
               <div className="flex items-center gap-4">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100">
-                  <Category className="h-6 w-6 text-indigo-600" />
+                  <Category className="text-lightblue h-6 w-6" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-800">
@@ -257,7 +251,7 @@ const Lot = () => {
               <input
                 type="text"
                 placeholder="搜索批次 ID 或工廠批次號..."
-                className="w-full rounded-xl border border-gray-300 py-3 pr-4 pl-10 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                className="focus:ring-blue w-full rounded-xl border border-gray-300 py-3 pr-4 pl-10 transition-all duration-200 focus:border-transparent focus:ring-2"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -292,17 +286,20 @@ const Lot = () => {
                       <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                         批次 ID
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                      <th className="min-w-[120px] px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                         工廠批次號
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                        總數量
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                         可用數量
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                        箱數
+                        已分配數量
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                        已使用數量
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                        總數量
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                         狀態
@@ -316,15 +313,16 @@ const Lot = () => {
                     {filteredLots.map((lot, index) => (
                       <motion.tr
                         key={lot.id}
-                        className="hover:bg-gray-50"
+                        className="cursor-pointer hover:bg-gray-50"
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.05, duration: 0.2 }}
+                        onClick={() => navigate(`/lot/${lot.id}`)} // Navigate to lot details
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
-                              <LocalShipping className="h-4 w-4 text-blue-600" />
+                              <LocalShipping className="text-blue h-4 w-4" />
                             </div>
                             <div className="ml-3">
                               <div className="text-sm font-medium text-gray-900">
@@ -336,16 +334,32 @@ const Lot = () => {
                         <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
                           {lot.factory_lot_number}
                         </td>
-                        <td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-800">
+                            <CheckCircle className="h-3 w-3" />
+                            {lot.available_quantity || 0}{" "}
+                            {lot.material_unit || materialType?.unit || ""}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-3 py-1 text-sm font-semibold text-yellow-800">
+                            <AssignmentTurnedIn className="h-3 w-3" />
+                            {lot.total_quantity -
+                              lot.available_quantity -
+                              (lot.used_quantity || 0) || 0}{" "}
+                            {lot.material_unit || materialType?.unit || ""}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-3 py-1 text-sm font-semibold text-red-800">
+                            <Inventory2 className="h-3 w-3" />
+                            {lot.used_quantity || 0}{" "}
+                            {lot.material_unit || materialType?.unit || ""}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm font-bold whitespace-nowrap text-gray-900">
                           {lot.total_quantity}{" "}
                           {lot.material_unit || materialType?.unit || ""}
-                        </td>
-                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
-                          {lot.available_quantity}{" "}
-                          {lot.material_unit || materialType?.unit || ""}
-                        </td>
-                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
-                          {lot.carton_count} 箱
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
@@ -377,22 +391,25 @@ const Lot = () => {
                 {filteredLots.map((lot, index) => (
                   <motion.div
                     key={lot.id}
-                    className="rounded-xl border border-gray-200 bg-gray-50 p-4 transition-shadow duration-200 hover:shadow-md"
+                    className="cursor-pointer rounded-xl border border-gray-200 bg-gray-50 p-4 transition-shadow duration-200 hover:shadow-md"
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: index * 0.05, duration: 0.2 }}
+                    onClick={() => navigate(`/lot/${lot.id}`)} // Navigate to lot details
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
-                          <LocalShipping className="h-5 w-5 text-blue-600" />
+                          <LocalShipping className="text-blue h-5 w-5" />
                         </div>
                         <div>
                           <h4 className="font-medium text-gray-900">
                             {lot.id}
                           </h4>
-                          <p className="text-sm text-gray-500">
-                            工廠批次: {lot.factory_lot_number}
+                          <p className="text-xs text-gray-500">
+                            工廠批次號:
+                            <br />
+                            {lot.factory_lot_number}
                           </p>
                         </div>
                       </div>
@@ -407,32 +424,41 @@ const Lot = () => {
                       </span>
                     </div>
 
-                    <div className="mt-4 grid grid-cols-2 gap-4">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {lot.total_quantity}{" "}
-                          {lot.material_unit || materialType?.unit || ""}
+                    <div className="mt-4 grid grid-cols-3 gap-2">
+                      <div className="text-center">
+                        <div className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
+                          <CheckCircle className="h-3 w-3" />
+                          {lot.available_quantity || 0}
                         </div>
-                        <div className="text-xs text-gray-500">總數量</div>
+                        <div className="mt-1 text-xs text-gray-500">可用</div>
                       </div>
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {lot.available_quantity}{" "}
-                          {lot.material_unit || materialType?.unit || ""}
+
+                      <div className="text-center">
+                        <div className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-800">
+                          <AssignmentTurnedIn className="h-3 w-3" />
+                          {lot.total_quantity -
+                            lot.available_quantity -
+                            (lot.used_quantity || 0) || 0}
                         </div>
-                        <div className="text-xs text-gray-500">可用數量</div>
+                        <div className="mt-1 text-xs text-gray-500">已分配</div>
                       </div>
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {lot.carton_count} 箱
+
+                      <div className="text-center">
+                        <div className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-800">
+                          <Inventory2 className="h-3 w-3" />
+                          {lot.used_quantity || 0}
                         </div>
-                        <div className="text-xs text-gray-500">箱數</div>
+                        <div className="mt-1 text-xs text-gray-500">已使用</div>
                       </div>
+                    </div>
+
+                    <div className="text-md mt-4 flex items-stretch justify-between font-medium text-gray-900">
+                      <div>總數：</div>
+                      <div>{lot.carton_count} 箱</div>
+                      <div>{lot.total_items} 件</div>
                       <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {lot.total_items} 件
-                        </div>
-                        <div className="text-xs text-gray-500">總件數</div>
+                        {lot.total_quantity}
+                        {lot.material_unit || materialType?.unit || ""}
                       </div>
                     </div>
 
@@ -453,4 +479,4 @@ const Lot = () => {
   );
 };
 
-export default Lot;
+export default LotOverview;

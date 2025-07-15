@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import Header from "./componenets/Header.jsx";
-import BackButton from "./componenets/BackButton.jsx";
+import Header from "../componenets/Header.jsx";
+import BackButton from "../componenets/BackButton.jsx";
+import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import {
   Inventory,
   Search,
@@ -10,19 +11,15 @@ import {
   ViewList,
   ViewModule,
   TrendingUp,
-  TrendingDown,
   Inventory2,
-  Warning,
   CheckCircle,
   Category,
+  AssignmentTurnedIn,
 } from "@mui/icons-material";
 
 const InventoryOverview = () => {
   const navigate = useNavigate();
-  const [items, setItems] = useState([]);
-  const [materialTypes, setMaterialTypes] = useState([]);
   const [materialTypeQuantities, setMaterialTypeQuantities] = useState([]);
-  const [lots, setLots] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -81,7 +78,6 @@ const InventoryOverview = () => {
         setMaterialTypeQuantities(
           materialTypeQuantitiesData.material_type_quantities || [],
         );
-        setLots(lotsData || []);
 
         // Calculate stats from material type quantities
         const totalItems =
@@ -123,40 +119,6 @@ const InventoryOverview = () => {
       setIsLoading(false);
     }
   };
-
-  const getMaterialTypeName = (materialTypeId) => {
-    const materialType = materialTypes.find(
-      (type) => type.id === materialTypeId,
-    );
-    return materialType ? materialType.material_name : "Unknown";
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "available":
-        return "bg-green-100 text-green-800";
-      case "assigned":
-        return "bg-yellow-100 text-yellow-800";
-      case "used":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "available":
-        return <CheckCircle className="h-4 w-4" />;
-      case "assigned":
-        return <Warning className="h-4 w-4" />;
-      case "used":
-        return <Inventory2 className="h-4 w-4" />;
-      default:
-        return <Inventory2 className="h-4 w-4" />;
-    }
-  };
-
   // Filter material types based on search and status
   const filteredMaterialTypes = materialTypeQuantities.filter(
     (materialType) => {
@@ -193,8 +155,9 @@ const InventoryOverview = () => {
       >
         <Header title={"庫存總覽"} />
         <div className="flex h-64 items-center justify-center">
-          <div className="text-lg text-gray-600">載入中...</div>
+          <LoadingSpinner variant="circular" size={30} message="載入中" />
         </div>
+        <BackButton to="/dashboard" />
       </motion.div>
     );
   }
@@ -213,6 +176,7 @@ const InventoryOverview = () => {
         <div className="flex h-64 items-center justify-center">
           <div className="text-lg text-red-600">{error}</div>
         </div>
+        <BackButton to="/dashboard" />
       </motion.div>
     );
   }
@@ -238,7 +202,6 @@ const InventoryOverview = () => {
             transition={{ delay: 0.2, duration: 0.3 }}
           >
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">庫存總覽</h1>
               <p className="text-gray-600">管理和監控所有庫存物料</p>
             </div>
             <div className="flex items-center gap-2">
@@ -253,7 +216,7 @@ const InventoryOverview = () => {
                 ) : (
                   <ViewList className="h-5 w-5" />
                 )}
-                {viewMode === "list" ? "網格檢視" : "列表檢視"}
+                {/*{viewMode === "list" ? "網格檢視" : "列表檢視"}*/}
               </button>
             </div>
           </motion.div>
@@ -266,18 +229,19 @@ const InventoryOverview = () => {
             transition={{ delay: 0.3, duration: 0.3 }}
           >
             <motion.div
-              className="rounded-2xl border border-gray-100 bg-white p-4 shadow-lg"
+              className="cursor-pointer rounded-2xl border border-gray-100 bg-white p-4 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl"
               variants={cardVariants}
               initial="hidden"
               animate="visible"
               transition={{ delay: 0.1 }}
+              onClick={() => navigate("/item_overview")}
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
                   <Inventory className="h-5 w-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">總物料</p>
+                  <p className="text-sm text-gray-600">總物件</p>
                   <p className="text-xl font-bold text-gray-800">
                     {stats.totalItems}
                   </p>
@@ -286,11 +250,12 @@ const InventoryOverview = () => {
             </motion.div>
 
             <motion.div
-              className="rounded-2xl border border-gray-100 bg-white p-4 shadow-lg"
+              className="cursor-pointer rounded-2xl border border-gray-100 bg-white p-4 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl"
               variants={cardVariants}
               initial="hidden"
               animate="visible"
               transition={{ delay: 0.2 }}
+              onClick={() => navigate("/item_overview?status=available")}
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
@@ -306,15 +271,16 @@ const InventoryOverview = () => {
             </motion.div>
 
             <motion.div
-              className="rounded-2xl border border-gray-100 bg-white p-4 shadow-lg"
+              className="cursor-pointer rounded-2xl border border-gray-100 bg-white p-4 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl"
               variants={cardVariants}
               initial="hidden"
               animate="visible"
               transition={{ delay: 0.3 }}
+              onClick={() => navigate("/item_overview?status=assigned")}
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100">
-                  <Warning className="h-5 w-5 text-yellow-600" />
+                  <AssignmentTurnedIn className="h-5 w-5 text-yellow-600" />
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">已分配</p>
@@ -326,11 +292,12 @@ const InventoryOverview = () => {
             </motion.div>
 
             <motion.div
-              className="rounded-2xl border border-gray-100 bg-white p-4 shadow-lg"
+              className="cursor-pointer rounded-2xl border border-gray-100 bg-white p-4 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl"
               variants={cardVariants}
               initial="hidden"
               animate="visible"
               transition={{ delay: 0.4 }}
+              onClick={() => navigate("/item_overview?status=used")}
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
@@ -351,7 +318,7 @@ const InventoryOverview = () => {
               initial="hidden"
               animate="visible"
               transition={{ delay: 0.5 }}
-              onClick={() => navigate("/lots")}
+              onClick={() => navigate("/lot_overview")}
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
@@ -398,7 +365,7 @@ const InventoryOverview = () => {
               <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="搜索物料 ID 或名稱..."
+                placeholder="搜索物料類型 ID 或名稱..."
                 className="w-full rounded-xl border border-gray-300 py-3 pr-4 pl-10 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -430,7 +397,7 @@ const InventoryOverview = () => {
           >
             <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
               <h3 className="text-lg font-semibold text-gray-800">
-                物料清單 ({filteredMaterialTypes.length})
+                物料類型清單 ({filteredMaterialTypes.length})
               </h3>
             </div>
 
@@ -439,8 +406,8 @@ const InventoryOverview = () => {
                 <Inventory className="mx-auto h-12 w-12 text-gray-400" />
                 <p className="mt-2 text-gray-500">
                   {searchTerm || selectedStatus !== "all"
-                    ? "沒有符合條件的物料"
-                    : "暫無物料資料"}
+                    ? "沒有符合條件的物料類型"
+                    : "暫無物料類型資料"}
                 </p>
               </div>
             ) : viewMode === "list" ? (
@@ -452,7 +419,7 @@ const InventoryOverview = () => {
                         物料類型 ID
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                        物料名稱
+                        物料類型名稱
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                         可用數量
@@ -477,7 +444,9 @@ const InventoryOverview = () => {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.05, duration: 0.2 }}
                         onClick={() =>
-                          navigate(`/lots/${materialType.material_type_id}`)
+                          navigate(
+                            `/lot_overview/${materialType.material_type_id}`,
+                          )
                         }
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -509,7 +478,7 @@ const InventoryOverview = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-3 py-1 text-sm font-semibold text-yellow-800">
-                            <Warning className="h-3 w-3" />
+                            <AssignmentTurnedIn className="h-3 w-3" />
                             {materialType.assigned_quantity}{" "}
                             {materialType.material_unit}
                           </span>
@@ -540,7 +509,7 @@ const InventoryOverview = () => {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: index * 0.05, duration: 0.2 }}
                     onClick={() =>
-                      navigate(`/lots/${materialType.material_type_id}`)
+                      navigate(`/lot_overview/${materialType.material_type_id}`)
                     }
                   >
                     <div className="flex items-start justify-between">
@@ -578,7 +547,7 @@ const InventoryOverview = () => {
 
                       <div className="text-center">
                         <div className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-800">
-                          <Warning className="h-3 w-3" />
+                          <AssignmentTurnedIn className="h-3 w-3" />
                           {materialType.assigned_quantity}
                         </div>
                         <div className="mt-1 text-xs text-gray-500">已分配</div>

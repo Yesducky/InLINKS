@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import Header from "./componenets/Header.jsx";
-import BackButton from "./componenets/BackButton.jsx";
+import Header from "../componenets/Header.jsx";
+import BackButton from "../componenets/BackButton.jsx";
 import {
   Add,
   Edit,
@@ -15,6 +15,7 @@ import {
   Visibility,
   VisibilityOff,
 } from "@mui/icons-material";
+import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -194,36 +195,6 @@ const UserManagement = () => {
     }
   };
 
-  const handleUpdateUserType = async (userId, userTypeId) => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`/api/users/${userId}/user_type`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ user_type_id: userTypeId }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        const userType = userTypes.find((type) => type.id === userTypeId);
-        setMessage({
-          type: "success",
-          text: `用戶類型已更新為${userType?.type || "未知"}`,
-        });
-        fetchUsers(); // Refresh user list
-      } else {
-        setMessage({ type: "error", text: data.message || "更新失敗" });
-      }
-    } catch (error) {
-      console.error("Error updating user type:", error);
-      setMessage({ type: "error", text: "網絡錯誤，請重試" });
-    }
-  };
-
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setNewUser((prev) => ({
@@ -313,11 +284,6 @@ const UserManagement = () => {
       work_order_ids: "",
       task_ids: "",
     });
-  };
-
-  const getUserTypeDisplay = (userTypeId) => {
-    const userType = userTypes.find((type) => type.id === userTypeId);
-    return userType ? userType.type : "未知";
   };
 
   const getStatusDisplay = (isActive) => {
@@ -559,7 +525,7 @@ const UserManagement = () => {
 
             {isLoading ? (
               <div className="p-8 text-center">
-                <div className="text-gray-500">載入中...</div>
+                <LoadingSpinner variant="circular" size={30} message="載入中" />
               </div>
             ) : users.length === 0 ? (
               <div className="p-8 text-center">

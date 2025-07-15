@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { BrowserMultiFormatReader } from "@zxing/library";
-import Header from "./componenets/Header.jsx";
-import BackButton from "./componenets/BackButton.jsx";
+import Header from "../componenets/Header.jsx";
+import BackButton from "../componenets/BackButton.jsx";
+import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import {
   Save,
   Refresh,
@@ -96,7 +97,7 @@ const AddMaterial = () => {
 
   // Check if quantities match
   const checkQuantitiesMatch = () => {
-    const total = parseInt(material.total_quantity) || 0;
+    const total = parseFloat(material.total_quantity) || 0;
     const cartons = parseInt(material.carton_count) || 0;
     const itemsPerCarton = parseInt(material.items_per_carton) || 0;
     const itemQuantity = parseFloat(material.item_quantity) || 0;
@@ -125,7 +126,7 @@ const AddMaterial = () => {
 
   // Get the final total quantity to submit
   const getFinalQuantity = () => {
-    const totalQuantity = parseInt(material.total_quantity) || 0;
+    const totalQuantity = parseFloat(material.total_quantity) || 0;
     const calculatedFromCartons = calculateTotalFromCartons();
 
     // If both total and carton info are provided, use total quantity
@@ -151,7 +152,7 @@ const AddMaterial = () => {
     }
 
     // Check if at least one quantity is provided
-    const total = parseInt(material.total_quantity) || 0;
+    const total = parseFloat(material.total_quantity) || 0;
     const cartons = parseInt(material.carton_count) || 0;
     const itemsPerCarton = parseInt(material.items_per_carton) || 0;
     const itemQuantity = parseFloat(material.item_quantity) || 0;
@@ -305,6 +306,26 @@ const AddMaterial = () => {
     >
       <Header title={"新增物料"} />
 
+      {/* Show loading spinner when initially loading material types */}
+      {isLoadingTypes && (
+        <LoadingSpinner
+          variant="circular"
+          size={50}
+          message="載入物料類型中..."
+          fullPage={true}
+        />
+      )}
+
+      {/* Show backdrop loading during form submission */}
+      {isSubmitting && (
+        <LoadingSpinner
+          variant="circular"
+          size={60}
+          message="添加物料中..."
+          backdrop={true}
+        />
+      )}
+
       <div className="px-6 py-8">
         <div className="mx-auto max-w-2xl">
           {/* Page Header */}
@@ -343,25 +364,32 @@ const AddMaterial = () => {
                 >
                   物料類型 *
                 </label>
-                <select
-                  id="material_type_id"
-                  name="material_type_id"
-                  required
-                  className="focus:ring-blue w-full rounded-xl border border-gray-300 px-4 py-3 transition-all duration-200 focus:border-transparent focus:ring-2"
-                  value={material.material_type_id}
-                  onChange={handleInputChange}
-                  disabled={isLoadingTypes}
-                >
-                  <option value="">
-                    {isLoadingTypes ? "載入中..." : "選擇物料類型"}
-                  </option>
-                  {materialTypes.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.material_name}
-                      {/*({type.material_unit})*/}
+                <div className="relative">
+                  <select
+                    id="material_type_id"
+                    name="material_type_id"
+                    required
+                    className="focus:ring-blue w-full rounded-xl border border-gray-300 px-4 py-3 transition-all duration-200 focus:border-transparent focus:ring-2"
+                    value={material.material_type_id}
+                    onChange={handleInputChange}
+                    disabled={isLoadingTypes}
+                  >
+                    <option value="">
+                      {isLoadingTypes ? "載入中..." : "選擇物料類型"}
                     </option>
-                  ))}
-                </select>
+                    {materialTypes.map((type) => (
+                      <option key={type.id} value={type.id}>
+                        {type.material_name}
+                        {/*({type.material_unit})*/}
+                      </option>
+                    ))}
+                  </select>
+                  {isLoadingTypes && (
+                    <div className="absolute top-1/2 right-3 -translate-y-1/2 transform">
+                      <LoadingSpinner variant="dots" message="" />
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Factory Lot Number */}
@@ -549,7 +577,11 @@ const AddMaterial = () => {
                   className="bg-lightblue hover:bg-blue flex w-1/2 flex-col items-center justify-center gap-2 rounded-xl px-6 py-3 font-medium text-white transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50"
                   disabled={isSubmitting || isLoadingTypes || !isFormValid()}
                 >
-                  <Save className="h-5 w-5" />
+                  {isSubmitting ? (
+                    <LoadingSpinner variant="dots" message="" />
+                  ) : (
+                    <Save className="h-5 w-5" />
+                  )}
                   {isSubmitting ? "添加中..." : "添加物料"}
                 </button>
               </div>
@@ -605,6 +637,16 @@ const AddMaterial = () => {
                     <div className="border-blue absolute bottom-0 left-0 h-6 w-6 border-b-4 border-l-4"></div>
                     <div className="border-blue absolute right-0 bottom-0 h-6 w-6 border-r-4 border-b-4"></div>
                   </div>
+                </div>
+
+                {/* Loading indicator for camera initialization */}
+                <div className="absolute top-4 right-4">
+                  {/*<LoadingSpinner*/}
+                  {/*  variant="circular"*/}
+                  {/*  size={30}*/}
+                  {/*  message=""*/}
+                  {/*  color="primary"*/}
+                  {/*/>*/}
                 </div>
               </div>
 

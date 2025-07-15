@@ -25,16 +25,24 @@ def create_app():
     from routes.auth_routes import auth_bp
     from routes.common_routes import common_bp
     from routes.stock_routes import stock_bp
+    from routes.carton_routes import carton_bp
+    from routes.lot_routes import lot_bp
+    from routes.material_routes import material_bp
     from routes.process_routes import process_bp
     from routes.utility_routes import utility_bp
     from routes.menu_routes import menu_bp
+    from routes.item_routes import item_bp
 
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(common_bp, url_prefix='/api')
     app.register_blueprint(stock_bp, url_prefix='/api')
+    app.register_blueprint(carton_bp, url_prefix='/api')
+    app.register_blueprint(lot_bp, url_prefix='/api')
+    app.register_blueprint(material_bp, url_prefix='/api')
     app.register_blueprint(process_bp, url_prefix='/api')
     app.register_blueprint(utility_bp, url_prefix='/api')
     app.register_blueprint(menu_bp, url_prefix='/api')
+    app.register_blueprint(item_bp, url_prefix='/api')
 
     # Create tables and initialize data
     with app.app_context():

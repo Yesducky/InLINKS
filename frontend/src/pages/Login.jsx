@@ -1,5 +1,5 @@
 import { useState } from "react";
-import Header from "./componenets/Header.jsx";
+import Header from "../componenets/Header.jsx";
 import { Person, Lock } from "@mui/icons-material";
 
 const Login = ({ onLogin }) => {

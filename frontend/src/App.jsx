@@ -8,13 +8,16 @@ import {
 } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import "./App.css";
-import Login from "./Login.jsx";
-import Dashboard from "./Dashboard.jsx";
-import Settings from "./Settings.jsx";
-import AddMaterial from "./AddMaterial.jsx";
-import InventoryOverview from "./InventoryOverview.jsx";
-import UserManagement from "./UserManagement.jsx";
-import Lot from "./Lot.jsx";
+import Login from "./pages/Login.jsx";
+import Dashboard from "./pages/Dashboard.jsx";
+import Settings from "./pages/Settings.jsx";
+import AddMaterial from "./pages/AddMaterial.jsx";
+import InventoryOverview from "./pages/InventoryOverview.jsx";
+import UserManagement from "./pages/UserManagement.jsx";
+import LotOverview from "./pages/LotOverview.jsx";
+import ItemOverview from "./pages/ItemOverview.jsx";
+import Lot from "./pages/Lot.jsx";
+import Item from "./pages/Item.jsx";
 
 const ProtectedRoute = ({ children, user }) => {
   return user ? children : <Navigate to="/login" replace />;
@@ -78,7 +81,23 @@ const AnimatedRoutes = ({ user, handleLogin, handleLogout }) => {
           }
         />
         <Route
-          path="/lots"
+          path="/lot_overview"
+          element={
+            <ProtectedRoute user={user}>
+              <LotOverview />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lot_overview/:materialTypeId"
+          element={
+            <ProtectedRoute user={user}>
+              <LotOverview />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lot/:lotId"
           element={
             <ProtectedRoute user={user}>
               <Lot />
@@ -86,13 +105,22 @@ const AnimatedRoutes = ({ user, handleLogin, handleLogout }) => {
           }
         />
         <Route
-          path="/lots/:materialTypeId"
+          path="/item_overview"
           element={
             <ProtectedRoute user={user}>
-              <Lot />
+              <ItemOverview />
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/item/:itemId"
+          element={
+            <ProtectedRoute user={user}>
+              <Item />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/"
           element={<Navigate to={user ? "/dashboard" : "/login"} replace />}

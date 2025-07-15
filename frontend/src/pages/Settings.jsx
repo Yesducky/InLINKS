@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import Header from "./componenets/Header.jsx";
-import BackButton from "./componenets/BackButton.jsx";
+import Header from "../componenets/Header.jsx";
+import BackButton from "../componenets/BackButton.jsx";
 import { Person, ExitToApp } from "@mui/icons-material";
 
 const Settings = ({ onLogout }) => {

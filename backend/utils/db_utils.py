@@ -5,14 +5,23 @@ Database utility functions for ID generation and data initialization
 from models import *
 
 def generate_id(prefix, model_class):
-    """Generate sequential IDs with prefix"""
+    """Generate sequential IDs with prefix and appropriate digit formatting"""
     latest = model_class.query.filter(model_class.id.like(f'{prefix}%')).order_by(model_class.id.desc()).first()
     if latest:
         latest_num = int(latest.id[len(prefix):])
         new_num = latest_num + 1
     else:
         new_num = 1
-    return f'{prefix}{new_num:03d}'
+
+    # Define minimum digits based on prefix
+    if prefix == 'LOT':
+        return f'{prefix}{new_num:04d}'  # 4 digits for lots
+    elif prefix == 'CTN':
+        return f'{prefix}{new_num:05d}'  # 5 digits for cartons
+    elif prefix == 'ITM':
+        return f'{prefix}{new_num:06d}'  # 6 digits for items
+    else:
+        return f'{prefix}{new_num:03d}'  # 3 digits for other types (default)
 
 def init_default_data():
     """Initialize database with default data"""

@@ -207,7 +207,7 @@ All entities use prefixed sequential IDs:
 
 ## Status Values
 
-### Item Status
+### ItemOverview Status
 - `available` - Available for assignment
 - `assigned` - Assigned to a task
 - `used` - Already consumed/used
