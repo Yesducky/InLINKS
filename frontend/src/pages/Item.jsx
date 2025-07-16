@@ -3,6 +3,7 @@ import { useParams, useLocation } from "react-router-dom";
 import Header from "../componenets/Header.jsx";
 import BackButton from "../componenets/BackButton.jsx";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
+import FetchDataFail from "../componenets/FetchDataFail.jsx";
 import { Inventory2, CheckCircle, Warning } from "@mui/icons-material";
 
 const statusOptions = [
@@ -56,7 +57,7 @@ const Item = () => {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
-      if (!itemRes.ok) throw new Error("找不到物料");
+      if (!itemRes.ok) throw new Error(itemRes.status);
       const itemData = await itemRes.json();
       const materialTypesData = await materialTypesRes.json();
       setItem(itemData);
@@ -75,7 +76,7 @@ const Item = () => {
           : itemData.log_ids || "",
       });
     } catch (err) {
-      setError(err.message || "載入失敗");
+      setError(err);
     } finally {
       setIsLoading(false);
     }
@@ -142,9 +143,11 @@ const Item = () => {
     return (
       <div className="flex min-h-screen w-full flex-col bg-gradient-to-br from-gray-50 to-gray-100">
         <Header title="物料資訊" />
-        <div className="flex flex-1 items-center justify-center">
-          <div className="text-lg text-red-600">{error}</div>
-        </div>
+        <FetchDataFail
+          error={error}
+          onRetry={fetchItem}
+          className="flex flex-1 items-center justify-center"
+        />
         <BackButton />
       </div>
     );

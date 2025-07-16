@@ -13,6 +13,7 @@ import {
   AssignmentTurnedIn,
 } from "@mui/icons-material";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
+import FetchDataFail from "../componenets/FetchDataFail.jsx";
 import BackButton from "../componenets/BackButton.jsx";
 
 const Lot = () => {
@@ -52,7 +53,7 @@ const Lot = () => {
       });
 
       if (!lotResponse.ok) {
-        setError("批次不存在或無法訪問");
+        setError(lotResponse.status);
         setIsLoading(false);
         return;
       }
@@ -160,9 +161,11 @@ const Lot = () => {
         transition={pageTransition}
       >
         <Header title="批次詳情" />
-        <div className="flex h-64 items-center justify-center">
-          <div className="text-lg text-red-600">{error}</div>
-        </div>
+        <FetchDataFail
+          error={error}
+          onRetry={fetchLotDetails}
+          className="h-64"
+        />
         <BackButton
           to={cartonId ? `/lot/${lotId || ""}` : "/inventory_overview"}
         />

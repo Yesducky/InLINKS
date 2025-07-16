@@ -16,6 +16,7 @@ import {
   AssignmentTurnedIn,
 } from "@mui/icons-material";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
+import FetchDataFail from "../componenets/FetchDataFail.jsx";
 
 const LotOverview = () => {
   const { materialTypeId } = useParams();
@@ -73,7 +74,7 @@ const LotOverview = () => {
           setMaterialType(null);
         }
       } else {
-        setError("Failed to load lots data");
+        setError(response.status);
       }
     } catch (err) {
       setError("Network error loading lots");
@@ -156,9 +157,7 @@ const LotOverview = () => {
         <Header
           title={materialType ? `${materialType.name} 批次` : "批次總覽"}
         />
-        <div className="flex h-64 items-center justify-center">
-          <div className="text-lg text-red-600">{error}</div>
-        </div>
+        <FetchDataFail error={error} onRetry={fetchLots} className="h-64" />
       </motion.div>
     );
   }

@@ -13,6 +13,7 @@ import {
   Inventory2,
 } from "@mui/icons-material";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
+import FetchDataFail from "../componenets/FetchDataFail.jsx";
 
 const ItemOverview = () => {
   const [searchParams] = useSearchParams();
@@ -115,7 +116,7 @@ const ItemOverview = () => {
             usedItems,
           });
         } else {
-          setError("Failed to load carton items");
+          setError(itemsResponse.status);
         }
       } else {
         // Original logic for all items
@@ -273,9 +274,7 @@ const ItemOverview = () => {
         transition={pageTransition}
       >
         <Header title="物料總覽" />
-        <div className="flex h-64 items-center justify-center">
-          <div className="text-lg text-red-600">{error}</div>
-        </div>
+        <FetchDataFail error={error} onRetry={fetchItems} className="h-64" />
         <BackButton />
       </motion.div>
     );

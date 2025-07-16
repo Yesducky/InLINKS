@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Header from "../componenets/Header.jsx";
 import BackButton from "../componenets/BackButton.jsx";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
+import FetchDataFail from "../componenets/FetchDataFail.jsx";
 import {
   Inventory,
   Search,
@@ -110,10 +111,10 @@ const InventoryOverview = () => {
           materialTypes: materialTypeQuantitiesData.total_material_types || 0,
         });
       } else {
-        setError("Failed to load inventory data");
+        setError(materialTypeQuantitiesRes.status);
       }
     } catch (err) {
-      setError("Network error loading inventory");
+      setError("網絡錯誤，無法載入庫存資料");
       console.error("Error fetching inventory data:", err);
     } finally {
       setIsLoading(false);
@@ -173,9 +174,11 @@ const InventoryOverview = () => {
         transition={pageTransition}
       >
         <Header title={"庫存總覽"} />
-        <div className="flex h-64 items-center justify-center">
-          <div className="text-lg text-red-600">{error}</div>
-        </div>
+        <FetchDataFail
+          error={error}
+          onRetry={fetchInventoryData}
+          className="h-64"
+        />
         <BackButton to="/dashboard" />
       </motion.div>
     );

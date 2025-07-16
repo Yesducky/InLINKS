@@ -11,6 +11,8 @@ import {
   Label,
   Settings,
 } from "@mui/icons-material";
+import FetchDataFail from "../componenets/FetchDataFail.jsx";
+import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 
 const Dashboard = () => {
   const [cardMenus, setCardMenus] = useState([]);
@@ -45,35 +47,35 @@ const Dashboard = () => {
   const username = getUsername();
 
   // Fetch card menus from API
-  useEffect(() => {
-    const fetchCardMenus = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const response = await fetch("/api/card-menus", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
+  const fetchCardMenus = async () => {
+    try {
+      setIsLoading(true);
+      setError("");
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/card-menus", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
-        if (response.ok) {
-          const data = await response.json();
-          // Sort by order_index
-          const sortedMenus = data.sort(
-            (a, b) => a.order_index - b.order_index,
-          );
-          setCardMenus(sortedMenus);
-        } else {
-          setError("Failed to load menu items");
-        }
-      } catch (err) {
-        setError("Network error loading menus");
-        console.error("Error fetching card menus:", err);
-      } finally {
-        setIsLoading(false);
+      if (response.ok) {
+        const data = await response.json();
+        // Sort by order_index
+        const sortedMenus = data.sort((a, b) => a.order_index - b.order_index);
+        setCardMenus(sortedMenus);
+      } else {
+        setError(response.status);
       }
-    };
+    } catch (err) {
+      setError("Network error loading menus");
+      console.error("Error fetching card menus:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchCardMenus();
   }, []);
 
@@ -134,8 +136,8 @@ const Dashboard = () => {
         transition={pageTransitionFadeIn}
       >
         <Header title={"工作台"} />
-        <div className="mx-4 mt-4 flex justify-center">
-          <div className="text-lg text-gray-600"></div>
+        <div className="flex h-64 items-center justify-center">
+          <LoadingSpinner variant="circular" size={30} message="載入中" />
         </div>
       </motion.div>
     );
@@ -152,9 +154,11 @@ const Dashboard = () => {
         transition={pageTransitionFadeIn}
       >
         <Header title={"工作台"} />
-        <div className="mx-4 mt-4 flex justify-center">
-          <div className="text-lg text-red-600">{error}</div>
-        </div>
+        <FetchDataFail
+          error={error}
+          onRetry={fetchCardMenus}
+          className="mx-4 mt-4"
+        />
       </motion.div>
     );
   }
