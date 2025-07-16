@@ -5,6 +5,7 @@ import BackButton from "../componenets/BackButton.jsx";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
 import { Inventory2, CheckCircle, Warning } from "@mui/icons-material";
+import PermissionGate from "../componenets/PermissionGate.jsx";
 
 const statusOptions = [
   {
@@ -154,9 +155,9 @@ const Item = () => {
   }
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="item-container flex min-h-screen flex-col">
       <Header title={`物料 ${item.id} 詳細資訊`} />
-      <div className="mx-auto max-w-2xl px-6 py-8">
+      <div className="mx-auto max-w-2xl flex-1 px-6 py-8">
         <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-lg">
           <div className="mb-6 flex items-center gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
@@ -358,17 +359,26 @@ const Item = () => {
                 </button>
               </div>
             ) : (
-              <button
-                className="bg-blue hover:bg-lightblue mr-0 ml-auto rounded-xl px-6 py-2 font-semibold text-white shadow"
-                onClick={() => setEditMode(true)}
-              >
-                編輯
-              </button>
+              <PermissionGate resource="items" action="write">
+                <button
+                  className="bg-blue hover:bg-lightblue mr-0 ml-auto rounded-xl px-6 py-2 font-semibold text-white shadow"
+                  onClick={() => setEditMode(true)}
+                >
+                  編輯
+                </button>
+              </PermissionGate>
             )}
           </div>
           {error && <div className="mt-4 text-red-600">{error}</div>}
         </div>
       </div>
+
+      <PermissionGate permission="admin.users">
+        <div className="admin-only-fields">
+          {/* Admin-only content, editable fields for admin */}
+        </div>
+      </PermissionGate>
+
       <BackButton />
     </div>
   );

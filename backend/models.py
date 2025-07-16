@@ -185,3 +185,29 @@ class CardMenu(db.Model):
     is_active = db.Column(db.Boolean, default=True)  # Whether card is active
     created_at = db.Column(db.DateTime, default=get_hk_time)
     updated_at = db.Column(db.DateTime, default=get_hk_time, onupdate=get_hk_time)
+
+class Permission(db.Model):
+    __tablename__ = 'permissions'
+    id = db.Column(db.String(50), primary_key=True)
+    resource = db.Column(db.String(50), nullable=False)
+    action = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=get_hk_time)
+
+class UserTypePermission(db.Model):
+    __tablename__ = 'user_type_permissions'
+    user_type_id = db.Column(db.String(20), db.ForeignKey('user_types.id'), primary_key=True)
+    permission_id = db.Column(db.String(50), db.ForeignKey('permissions.id'), primary_key=True)
+    granted_at = db.Column(db.DateTime, default=get_hk_time)
+
+class PermissionAudit(db.Model):
+    __tablename__ = 'permission_audit'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.String(50), nullable=False)
+    permission_id = db.Column(db.String(50), nullable=False)
+    action = db.Column(db.String(50), nullable=False)
+    resource_id = db.Column(db.String(50))
+    status = db.Column(db.String(20), nullable=False)  # 'granted', 'denied'
+    timestamp = db.Column(db.DateTime, default=get_hk_time)
+    ip_address = db.Column(db.String(45))
+    user_agent = db.Column(db.Text)

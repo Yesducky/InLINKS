@@ -32,6 +32,7 @@ def create_app():
     from routes.utility_routes import utility_bp
     from routes.menu_routes import menu_bp
     from routes.item_routes import item_bp
+    from routes.permission_routes import permission_bp
 
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(common_bp, url_prefix='/api')
@@ -43,6 +44,7 @@ def create_app():
     app.register_blueprint(utility_bp, url_prefix='/api')
     app.register_blueprint(menu_bp, url_prefix='/api')
     app.register_blueprint(item_bp, url_prefix='/api')
+    app.register_blueprint(permission_bp, url_prefix='/api')
 
     # Create tables and initialize data
     with app.app_context():

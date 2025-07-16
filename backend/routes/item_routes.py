@@ -8,12 +8,14 @@ from models import Item, Carton
 from utils.db_utils import generate_id
 from utils.item_utils import get_item_with_children_recursive
 from __init__ import db
+from utils.auth_middleware import require_permission
 
 item_bp = Blueprint('item', __name__)
 
 # Items endpoints
 @item_bp.route('/items', methods=['GET', 'POST'])
 @jwt_required()
+@require_permission('items.read')
 def items():
     """
     GET: Retrieve all items with parent type and lot information
@@ -101,6 +103,7 @@ def items():
 
 @item_bp.route('/items/<string:item_id>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
+@require_permission('items.read')
 def item_detail(item_id):
     """
     GET: Retrieve a specific item
@@ -175,6 +178,7 @@ def item_detail(item_id):
 
 @item_bp.route('/cartons/<string:carton_id>/items', methods=['GET'])
 @jwt_required()
+@require_permission('items.read')
 def get_items_under_carton(carton_id):
     """
     GET: Retrieve all items under a specific carton, including nested child items
@@ -238,6 +242,7 @@ def get_items_under_carton(carton_id):
 
 @item_bp.route('/lots/<string:lot_id>/items', methods=['GET'])
 @jwt_required()
+@require_permission('items.read')
 def get_items_under_lot(lot_id):
     """
     GET: Retrieve all items under a specific lot, including nested child items
