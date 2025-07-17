@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import Header from "../componenets/Header.jsx";
-import BackButton from "../componenets/BackButton.jsx";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
 import { Inventory2, CheckCircle, Warning } from "@mui/icons-material";
@@ -19,7 +18,6 @@ const statusOptions = [
 
 const Item = () => {
   const { itemId } = useParams();
-  const location = useLocation();
   const [item, setItem] = useState(null);
   const [materialTypes, setMaterialTypes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -149,7 +147,6 @@ const Item = () => {
           onRetry={fetchItem}
           className="flex flex-1 items-center justify-center"
         />
-        <BackButton />
       </div>
     );
   }
@@ -378,8 +375,6 @@ const Item = () => {
           {/* Admin-only content, editable fields for admin */}
         </div>
       </PermissionGate>
-
-      <BackButton />
     </div>
   );
 };

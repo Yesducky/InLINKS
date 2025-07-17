@@ -14,7 +14,6 @@ import {
 } from "@mui/icons-material";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
-import BackButton from "../componenets/BackButton.jsx";
 
 const Lot = () => {
   const { lotId } = useParams();
@@ -165,9 +164,6 @@ const Lot = () => {
           error={error}
           onRetry={fetchLotDetails}
           className="h-64"
-        />
-        <BackButton
-          to={cartonId ? `/lot/${lotId || ""}` : "/inventory_overview"}
         />
       </motion.div>
     );
@@ -498,15 +494,6 @@ const Lot = () => {
           </motion.div>
         </div>
       </div>
-
-      {/* Back Button */}
-      <BackButton
-        to={
-          lot?.material_type_id
-            ? `/lot_overview/${lot.material_type_id}`
-            : "/lot_overview"
-        }
-      />
     </motion.div>
   );
 };

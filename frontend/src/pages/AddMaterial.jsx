@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { BrowserMultiFormatReader } from "@zxing/library";
 import Header from "../componenets/Header.jsx";
-import BackButton from "../componenets/BackButton.jsx";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import {
   Save,
@@ -589,9 +588,6 @@ const AddMaterial = () => {
           </div>
         </div>
       </div>
-
-      {/* Back Button */}
-      <BackButton to="/dashboard" />
 
       {/* QR Scanner Modal */}
       {isScanning && (

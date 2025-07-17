@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import Header from "../componenets/Header.jsx";
-import BackButton from "../componenets/BackButton.jsx";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
 import {
@@ -158,7 +157,6 @@ const InventoryOverview = () => {
         <div className="flex h-64 items-center justify-center">
           <LoadingSpinner variant="circular" size={30} message="載入中" />
         </div>
-        <BackButton to="/dashboard" />
       </motion.div>
     );
   }
@@ -179,7 +177,6 @@ const InventoryOverview = () => {
           onRetry={fetchInventoryData}
           className="h-64"
         />
-        <BackButton to="/dashboard" />
       </motion.div>
     );
   }
@@ -571,9 +568,6 @@ const InventoryOverview = () => {
           </motion.div>
         </div>
       </div>
-
-      {/* Back Button */}
-      <BackButton to="/dashboard" />
     </motion.div>
   );
 };

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import Header from "../componenets/Header.jsx";
-import BackButton from "../componenets/BackButton.jsx";
 import {
   Inventory,
   Search,
@@ -276,7 +275,6 @@ const ItemOverview = () => {
       >
         <Header title="物料總覽" />
         <FetchDataFail error={error} onRetry={fetchItems} className="h-64" />
-        <BackButton />
       </motion.div>
     );
   }
@@ -631,9 +629,6 @@ const ItemOverview = () => {
             </motion.div>
           </div>
         </div>
-
-        {/* Back Button */}
-        <BackButton />
       </motion.div>
     </PermissionGate>
   );

@@ -18,9 +18,33 @@ import LotOverview from "./pages/LotOverview.jsx";
 import ItemOverview from "./pages/ItemOverview.jsx";
 import Lot from "./pages/Lot.jsx";
 import Item from "./pages/Item.jsx";
+import BackButton from "./componenets/BackButton.jsx";
 
 const ProtectedRoute = ({ children, user }) => {
   return user ? children : <Navigate to="/login" replace />;
+};
+
+// Global BackButton component
+const GlobalBackButton = () => {
+  const location = useLocation();
+  const shouldShowBackButton = !['/login', '/dashboard'].includes(location.pathname);
+  
+  if (!shouldShowBackButton) return null;
+  
+  // Determine back navigation based on current route
+  const getBackTo = () => {
+    const path = location.pathname;
+    if (path === '/settings' || path === '/add_material' || path === '/user_management' || path === '/inventory_overview') {
+      return '/dashboard';
+    }
+    if (path === '/lot_overview' || path.startsWith('/lot_overview/')) {
+      return '/inventory_overview';
+    }
+    // For dynamic routes like /lot/:id or /item/:id, use browser back
+    return undefined;
+  };
+  
+  return <BackButton to={getBackTo()} />;
 };
 
 // Animated Routes wrapper
@@ -161,6 +185,7 @@ function App() {
         handleLogin={handleLogin}
         handleLogout={handleLogout}
       />
+      <GlobalBackButton />
     </Router>
   );
 }

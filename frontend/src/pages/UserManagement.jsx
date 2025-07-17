@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Header from "../componenets/Header.jsx";
-import BackButton from "../componenets/BackButton.jsx";
 import {
   Add,
   Edit,
@@ -816,9 +815,6 @@ const UserManagement = () => {
           )}
         </div>
       </div>
-
-      {/* Back Button */}
-      <BackButton to="/dashboard" />
     </motion.div>
   );
 };

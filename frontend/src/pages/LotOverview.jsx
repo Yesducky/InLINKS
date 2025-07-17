@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "../componenets/Header.jsx";
-import BackButton from "../componenets/BackButton.jsx";
 import {
   Inventory,
   Search,
@@ -471,9 +470,6 @@ const LotOverview = () => {
           </motion.div>
         </div>
       </div>
-
-      {/* Back Button */}
-      <BackButton to="/inventory_overview" />
     </motion.div>
   );
 };
