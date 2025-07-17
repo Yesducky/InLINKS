@@ -19,54 +19,67 @@ def projects():
         return jsonify([{
             'id': p.id,
             'project_name': p.project_name,
+            'description': p.description,
+            'state': p.state,
+            'start_date': p.start_date.isoformat() if p.start_date else None,
+            'end_date': p.end_date.isoformat() if p.end_date else None,
             'person_in_charge_id': p.person_in_charge_id,
             'work_order_ids': p.work_order_ids,
             'process_log_ids': p.process_log_ids,
-            'created_at': p.created_at.isoformat()
+            'priority': p.priority,
+            'created_at': p.created_at.isoformat() if p.created_at else None
         } for p in projects])
 
     elif request.method == 'POST':
         data = request.get_json()
         project_id = generate_id('PRJ', Project)
-
         project = Project(
             id=project_id,
             project_name=data['project_name'],
+            description=data.get('description'),
+            state=data.get('state'),
+            start_date=data.get('start_date'),
+            end_date=data.get('end_date'),
             person_in_charge_id=data['person_in_charge_id'],
             work_order_ids=data.get('work_order_ids', '[]'),
-            process_log_ids=data.get('process_log_ids', '[]')
+            process_log_ids=data.get('process_log_ids', '[]'),
+            priority=data.get('priority', 'medium')
         )
-
         db.session.add(project)
         db.session.commit()
-
         return jsonify({'message': 'Project created', 'id': project_id}), 201
 
 @process_bp.route('/projects/<string:project_id>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
 def project_detail(project_id):
     project = Project.query.get_or_404(project_id)
-
     if request.method == 'GET':
         return jsonify({
             'id': project.id,
             'project_name': project.project_name,
+            'description': project.description,
+            'state': project.state,
+            'start_date': project.start_date.isoformat() if project.start_date else None,
+            'end_date': project.end_date.isoformat() if project.end_date else None,
             'person_in_charge_id': project.person_in_charge_id,
             'work_order_ids': project.work_order_ids,
             'process_log_ids': project.process_log_ids,
-            'created_at': project.created_at.isoformat()
+            'priority': project.priority,
+            'created_at': project.created_at.isoformat() if project.created_at else None
         })
-
     elif request.method == 'PUT':
         data = request.get_json()
         project.project_name = data.get('project_name', project.project_name)
+        project.description = data.get('description', project.description)
+        project.state = data.get('state', project.state)
+        project.start_date = data.get('start_date', project.start_date)
+        project.end_date = data.get('end_date', project.end_date)
         project.person_in_charge_id = data.get('person_in_charge_id', project.person_in_charge_id)
         project.work_order_ids = data.get('work_order_ids', project.work_order_ids)
         project.process_log_ids = data.get('process_log_ids', project.process_log_ids)
-
+        project.priority = data.get('priority', project.priority)
         db.session.commit()
         return jsonify({'message': 'Project updated'})
-
     elif request.method == 'DELETE':
         db.session.delete(project)
         db.session.commit()
@@ -278,3 +291,21 @@ def subtask_detail(subtask_id):
         db.session.delete(subtask)
         db.session.commit()
         return jsonify({'message': 'Subtask deleted'})
+
+@process_bp.route('/projects/<string:project_id>/work_orders', methods=['GET'])
+@jwt_required()
+def get_project_work_orders(project_id):
+    work_orders = WorkOrder.query.filter_by(parent_project_id=project_id).all()
+    return jsonify([
+        {
+            'id': wo.id,
+            'work_order_name': wo.work_order_name,
+            'workflow_type_id': wo.workflow_type_id,
+            'parent_project_id': wo.parent_project_id,
+            'lot_id': wo.lot_id,
+            'task_ids': wo.task_ids,
+            'process_log_ids': wo.process_log_ids,
+            'created_at': wo.created_at.isoformat() if wo.created_at else None
+        }
+        for wo in work_orders
+    ])

@@ -5,8 +5,6 @@ Utility routes - Dashboard, Search, Sample Data, Error Handlers
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import User, Project, WorkOrder, Task, Item, MaterialType
-from utils.db_utils import init_sample_data
-from __init__ import db
 
 utility_bp = Blueprint('utility', __name__)
 
@@ -71,15 +69,6 @@ def search():
 
     return jsonify(results)
 
-@utility_bp.route('/init_sample_data', methods=['POST'])
-@jwt_required()
-def initialize_sample_data():
-    """Endpoint to initialize sample data"""
-    try:
-        init_sample_data()
-        return jsonify({'message': 'Sample data initialized successfully'}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 # Error handlers
 @utility_bp.errorhandler(404)

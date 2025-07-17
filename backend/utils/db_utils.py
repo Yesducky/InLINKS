@@ -31,10 +31,52 @@ def init_default_data():
             id='UT001',
             type='admin',
             permission='all',
-            user_ids='[]'
+            user_ids='[]',
+            card_menus_id='["CM001", "CM002", "CM003", "CM004", "CM005", "CM006"]'
         )
         db.session.add(default_user_type)
-        db.session.commit()
+
+    # Create default user types if they don't exist
+    if not UserType.query.filter_by(id='UT002').first():
+        worker_user_type = UserType(
+            id='UT002',
+            type='worker',
+            permission='write',
+            user_ids='[]',
+            card_menus_id='["CM004", "CM005", "CM006"]'
+        )
+        db.session.add(worker_user_type)
+
+    if not UserType.query.filter_by(id='UT003').first():
+        client_user_type = UserType(
+            id='UT003',
+            type='client',
+            permission='read_only',
+            user_ids='[]',
+            card_menus_id='["CM001", "CM002", "CM003", "CM004", "CM005", "CM006"]'
+        )
+        db.session.add(client_user_type)
+
+    if not UserType.query.filter_by(id='UT004').first():
+        consultant_user_type = UserType(
+            id='UT004',
+            type='consultant',
+            permission='write',
+            user_ids='[]',
+            card_menus_id='["CM001", "CM002", "CM003", "CM004", "CM005", "CM006"]'
+        )
+        db.session.add(consultant_user_type)
+    if not UserType.query.filter_by(id='UT005').first():
+        pm_user_type = UserType(
+            id='UT005',
+            type='pm',
+            permission='all',
+            user_ids='[]',
+            card_menus_id='["CM001", "CM002", "CM003", "CM004", "CM005", "CM006"]'
+        )
+        db.session.add(pm_user_type)
+
+    db.session.commit()
 
     # Insert default permissions if not exist
     from models import Permission
@@ -56,6 +98,11 @@ def init_default_data():
         {'id': 'admin.users', 'resource': 'admin', 'action': 'users', 'description': 'Manage users'},
         {'id': 'admin.roles', 'resource': 'admin', 'action': 'roles', 'description': 'Manage roles'},
         {'id': 'dashboard.view', 'resource': 'dashboard', 'action': 'view', 'description': 'Access dashboard'},
+        # Project permissions
+        {'id': 'project.read', 'resource': 'project', 'action': 'read', 'description': 'View project details'},
+        {'id': 'project.write', 'resource': 'project', 'action': 'write', 'description': 'Edit project details'},
+        {'id': 'project.delete', 'resource': 'project', 'action': 'delete', 'description': 'Delete project'},
+        {'id': 'project.create', 'resource': 'project', 'action': 'create', 'description': 'Create new project'},
     ]
     for perm in default_permissions:
         if not Permission.query.filter_by(id=perm['id']).first():
@@ -79,8 +126,33 @@ def init_default_data():
             db.session.add(utp)
         db.session.commit()
 
-def init_sample_data():
-    """Initialize database with sample data for testing"""
+    # Assign permissions to each user type
+    user_type_permissions = {
+        'UT001': [perm['id'] for perm in default_permissions],  # admin: all permissions
+        'UT002': [  # worker
+            'items.read', 'items.write',
+            'lots.read', 'lots.write',
+            'cartons.read', 'cartons.write',
+            'inventory.read', 'inventory.write',
+            'dashboard.view'
+        ],
+        'UT003': [  # client
+            'items.read', 'lots.read', 'cartons.read', 'inventory.read', 'dashboard.view'
+        ],
+        'UT004': [  # consultant
+            'items.read', 'lots.read', 'cartons.read', 'inventory.read', 'dashboard.view'
+        ],
+        'UT005': [  # pm
+            'items.read', 'lots.read', 'cartons.read', 'inventory.read', 'dashboard.view',
+            'items.write', 'lots.write', 'cartons.write', 'inventory.write'
+        ]
+    }
+    for ut_id, perm_ids in user_type_permissions.items():
+        UserTypePermission.query.filter_by(user_type_id=ut_id).delete()
+        for perm_id in perm_ids:
+            if Permission.query.filter_by(id=perm_id).first():
+                db.session.add(UserTypePermission(user_type_id=ut_id, permission_id=perm_id))
+    db.session.commit()
 
     # Create user types
     user_types_data = [
@@ -90,7 +162,6 @@ def init_sample_data():
         {'type': 'consultant', 'permission': 'write'},
         {'type': 'pm', 'permission': 'all'}
     ]
-
     for i, ut_data in enumerate(user_types_data, 1):
         if not UserType.query.filter_by(id=f'UT{i:03d}').first():
             user_type = UserType(
@@ -108,7 +179,6 @@ def init_sample_data():
         {'material_name': 'Cable Tray', 'material_unit': 'meter'},
         {'material_name': 'Junction Box', 'material_unit': 'unit'}
     ]
-
     for i, mt_data in enumerate(material_types_data, 1):
         if not MaterialType.query.filter_by(id=f'MT{i:03d}').first():
             material_type = MaterialType(
@@ -124,7 +194,6 @@ def init_sample_data():
         {'name': 'Maintenance', 'description': 'Regular maintenance and inspection workflow'},
         {'name': 'Repair', 'description': 'Emergency repair workflow'}
     ]
-
     for i, wt_data in enumerate(workflow_types_data, 1):
         if not WorkflowType.query.filter_by(id=f'WT{i:03d}').first():
             workflow_type = WorkflowType(
@@ -134,4 +203,67 @@ def init_sample_data():
             )
             db.session.add(workflow_type)
 
+    # Create default projects as sample
+    from models import Project, User
+    from datetime import datetime, timedelta
+    admin_user = User.query.filter_by(user_type_id='UT001').first()
+    admin_id = admin_user.id if admin_user else 'USR001'  # fallback if no admin user exists
+    now = datetime.now()
+    default_projects = [
+        {
+            'id': 'PRJ001',
+            'project_name': 'Office Network Upgrade',
+            'description': 'Upgrade office network infrastructure',
+            'state': 'active',
+            'priority': 'high',
+            'start_date': now - timedelta(days=30),
+            'end_date': now + timedelta(days=60),
+            'person_in_charge_id': admin_id,
+            'work_order_ids': '[]',
+            'process_log_ids': '[]',
+            'created_at': now,
+        },
+        {
+            'id': 'PRJ002',
+            'project_name': 'Warehouse Cabling',
+            'description': 'Install new cabling in warehouse',
+            'state': 'pending',
+            'priority': 'medium',
+            'start_date': now + timedelta(days=10),
+            'end_date': now + timedelta(days=90),
+            'person_in_charge_id': admin_id,
+            'work_order_ids': '[]',
+            'process_log_ids': '[]',
+            'created_at': now,
+        },
+        {
+            'id': 'PRJ003',
+            'project_name': 'Retail POS Setup',
+            'description': 'Setup POS systems for retail locations',
+            'state': 'completed',
+            'priority': 'low',
+            'start_date': now - timedelta(days=120),
+            'end_date': now - timedelta(days=10),
+            'person_in_charge_id': admin_id,
+            'work_order_ids': '[]',
+            'process_log_ids': '[]',
+            'created_at': now,
+        }
+    ]
+    for prj in default_projects:
+        if not Project.query.filter_by(id=prj['id']).first():
+            project = Project(
+                id=prj['id'],
+                project_name=prj['project_name'],
+                description=prj['description'],
+                state=prj['state'],
+                priority=prj['priority'],
+                start_date=prj['start_date'],
+                end_date=prj['end_date'],
+                person_in_charge_id=prj['person_in_charge_id'],
+                work_order_ids=prj['work_order_ids'],
+                process_log_ids=prj['process_log_ids'],
+                created_at=prj['created_at'],
+            )
+            db.session.add(project)
     db.session.commit()

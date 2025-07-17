@@ -10,6 +10,7 @@ const PermissionGate = ({
   children,
   fallback = null,
   requireAll = false,
+  header = "身份驗證",
 }) => {
   const { hasPermission, canRead, canWrite, canDelete, canCreate, loading } =
     usePermissions();
@@ -17,7 +18,7 @@ const PermissionGate = ({
   if (loading) {
     return (
       <>
-        <Header title={"身份驗證"} />
+        <Header title={header} />
         <div className="flex h-64 items-center justify-center">
           <LoadingSpinner variant="circular" size={30} message="載入中" />
         </div>

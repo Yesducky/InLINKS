@@ -5,7 +5,7 @@ Authentication routes for user registration and login
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import User
+from models import User, UserType
 from utils.db_utils import generate_id
 from __init__ import db
 
@@ -42,6 +42,15 @@ def register():
 
     db.session.add(user)
     db.session.commit()
+
+    # Append user id to userType's user_ids list
+    user_type = UserType.query.filter_by(id=user.user_type_id).first()
+    if user_type:
+        import json
+        user_ids = json.loads(user_type.user_ids) if user_type.user_ids else []
+        user_ids.append(user_id)
+        user_type.user_ids = json.dumps(user_ids)
+        db.session.commit()
 
     return jsonify({'message': 'User created successfully', 'user_id': user_id}), 201
 

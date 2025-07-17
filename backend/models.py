@@ -113,11 +113,15 @@ class Project(db.Model):
     __tablename__ = 'projects'
     id = db.Column(db.String(20), primary_key=True)  # PRJ001, PRJ002, etc.
     project_name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    state = db.Column(db.String(50), nullable=True)  # e.g. planning, active, completed
+    start_date = db.Column(db.DateTime, nullable=True)
+    end_date = db.Column(db.DateTime, nullable=True)
     person_in_charge_id = db.Column(db.String(20), db.ForeignKey('users.id'), nullable=False)
     work_order_ids = db.Column(db.Text)  # JSON string of work order IDs
     process_log_ids = db.Column(db.Text)  # JSON string of process log IDs
     created_at = db.Column(db.DateTime, default=get_hk_time)
-
+    priority = db.Column(db.String(20), nullable=True)  # e.g. low, medium, high, urgent
     person_in_charge = db.relationship('User', backref='managed_projects')
 
 class WorkOrder(db.Model):

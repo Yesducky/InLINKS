@@ -18,6 +18,8 @@ import LotOverview from "./pages/LotOverview.jsx";
 import ItemOverview from "./pages/ItemOverview.jsx";
 import Lot from "./pages/Lot.jsx";
 import Item from "./pages/Item.jsx";
+import ProjectManagement from "./pages/ProjectManagement.jsx";
+import ProjectWorkOrders from "./pages/ProjectWorkOrders.jsx";
 import BackButton from "./componenets/BackButton.jsx";
 
 const ProtectedRoute = ({ children, user }) => {
@@ -27,23 +29,31 @@ const ProtectedRoute = ({ children, user }) => {
 // Global BackButton component
 const GlobalBackButton = () => {
   const location = useLocation();
-  const shouldShowBackButton = !['/login', '/dashboard'].includes(location.pathname);
-  
+  const shouldShowBackButton = !["/login", "/dashboard"].includes(
+    location.pathname,
+  );
+
   if (!shouldShowBackButton) return null;
-  
+
   // Determine back navigation based on current route
   const getBackTo = () => {
     const path = location.pathname;
-    if (path === '/settings' || path === '/add_material' || path === '/user_management' || path === '/inventory_overview') {
-      return '/dashboard';
+    if (
+      path === "/settings" ||
+      path === "/add_material" ||
+      path === "/user_management" ||
+      path === "/inventory_overview" ||
+      path === "/project_management"
+    ) {
+      return "/dashboard";
     }
-    if (path === '/lot_overview' || path.startsWith('/lot_overview/')) {
-      return '/inventory_overview';
+    if (path === "/lot_overview" || path.startsWith("/lot_overview/")) {
+      return "/inventory_overview";
     }
     // For dynamic routes like /lot/:id or /item/:id, use browser back
     return undefined;
   };
-  
+
   return <BackButton to={getBackTo()} />;
 };
 
@@ -141,6 +151,22 @@ const AnimatedRoutes = ({ user, handleLogin, handleLogout }) => {
           element={
             <ProtectedRoute user={user}>
               <Item />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/project_management"
+          element={
+            <ProtectedRoute user={user}>
+              <ProjectManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/project/:projectId"
+          element={
+            <ProtectedRoute user={user}>
+              <ProjectWorkOrders />
             </ProtectedRoute>
           }
         />
