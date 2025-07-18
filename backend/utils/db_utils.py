@@ -103,6 +103,11 @@ def init_default_data():
         {'id': 'project.write', 'resource': 'project', 'action': 'write', 'description': 'Edit project details'},
         {'id': 'project.delete', 'resource': 'project', 'action': 'delete', 'description': 'Delete project'},
         {'id': 'project.create', 'resource': 'project', 'action': 'create', 'description': 'Create new project'},
+        # Workorder permissions
+        {'id': 'workorder.read', 'resource': 'workorder', 'action': 'read', 'description': 'View workorder details'},
+        {'id': 'workorder.write', 'resource': 'workorder', 'action': 'write', 'description': 'Edit workorder details'},
+        {'id': 'workorder.delete', 'resource': 'workorder', 'action': 'delete', 'description': 'Delete workorder'},
+        {'id': 'workorder.create', 'resource': 'workorder', 'action': 'create', 'description': 'Create new workorder'},
     ]
     for perm in default_permissions:
         if not Permission.query.filter_by(id=perm['id']).first():
@@ -217,7 +222,9 @@ def init_default_data():
             'state': 'active',
             'priority': 'high',
             'start_date': now - timedelta(days=30),
-            'end_date': now + timedelta(days=60),
+            'due_date': now + timedelta(days=60),
+            'completed_at': None,
+            'status': 'in_progress',
             'person_in_charge_id': admin_id,
             'work_order_ids': '[]',
             'process_log_ids': '[]',
@@ -230,7 +237,9 @@ def init_default_data():
             'state': 'pending',
             'priority': 'medium',
             'start_date': now + timedelta(days=10),
-            'end_date': now + timedelta(days=90),
+            'due_date': now + timedelta(days=90),
+            'completed_at': None,
+            'status': 'not_started',
             'person_in_charge_id': admin_id,
             'work_order_ids': '[]',
             'process_log_ids': '[]',
@@ -243,7 +252,9 @@ def init_default_data():
             'state': 'completed',
             'priority': 'low',
             'start_date': now - timedelta(days=120),
-            'end_date': now - timedelta(days=10),
+            'due_date': now - timedelta(days=10),
+            'completed_at': now - timedelta(days=5),
+            'status': 'completed',
             'person_in_charge_id': admin_id,
             'work_order_ids': '[]',
             'process_log_ids': '[]',
@@ -252,6 +263,29 @@ def init_default_data():
     ]
     for prj in default_projects:
         if not Project.query.filter_by(id=prj['id']).first():
+            # Create sample work orders for each project
+            sample_work_orders = []
+            for i in range(1, 3):
+                wo_id = f"WO{prj['id'][-3:]}{i:02d}"
+                work_order = WorkOrder(
+                    id=wo_id,
+                    work_order_name=f"Work Order {i} for {prj['project_name']}",
+                    description=f"Sample work order {i} for project {prj['project_name']}",
+                    state='pending',
+                    start_date=prj['start_date'],
+                    due_date=prj['due_date'],
+                    completed_at=None,
+                    assignee_id=None,
+                    estimated_hour=40.0 + i * 10,
+                    workflow_type_id='WT001',
+                    parent_project_id=prj['id'],
+                    lot_id=None,
+                    task_ids='[]',
+                    process_log_ids='[]',
+                    created_at=prj['created_at']
+                )
+                db.session.add(work_order)
+                sample_work_orders.append(wo_id)
             project = Project(
                 id=prj['id'],
                 project_name=prj['project_name'],
@@ -259,9 +293,11 @@ def init_default_data():
                 state=prj['state'],
                 priority=prj['priority'],
                 start_date=prj['start_date'],
-                end_date=prj['end_date'],
+                due_date=prj.get('due_date'),
+                completed_at=prj.get('completed_at'),
+                status=prj.get('status'),
                 person_in_charge_id=prj['person_in_charge_id'],
-                work_order_ids=prj['work_order_ids'],
+                work_order_ids=str(sample_work_orders),
                 process_log_ids=prj['process_log_ids'],
                 created_at=prj['created_at'],
             )

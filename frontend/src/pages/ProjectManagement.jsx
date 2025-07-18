@@ -10,10 +10,12 @@ import {
   CheckCircle,
   HourglassEmpty,
   HourglassFull,
+  History,
 } from "@mui/icons-material";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
 import PermissionGate from "../componenets/PermissionGate";
+import ProcessLog from "../componenets/ProcessLog.jsx";
 
 const ProjectManagement = () => {
   const [projects, setProjects] = useState([]);
@@ -22,6 +24,7 @@ const ProjectManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [viewMode, setViewMode] = useState("grid");
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
   const navigate = useNavigate();
 
   const [stats, setStats] = useState({
@@ -103,6 +106,7 @@ const ProjectManagement = () => {
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString("zh-TW", {
       year: "numeric",
       month: "2-digit",
@@ -181,13 +185,15 @@ const ProjectManagement = () => {
   const filteredProjects = projects.filter((project) => {
     const matchesSearch =
       project.id?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.project_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       project.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.assigned_to?.toLowerCase().includes(searchTerm.toLowerCase());
+      (project.person_in_charge?.name || "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
 
     let matchesStatus = true;
     if (selectedStatus !== "all") {
-      matchesStatus = project.status === selectedStatus;
+      matchesStatus = project.state === selectedStatus;
     }
 
     return matchesSearch && matchesStatus;
@@ -466,7 +472,7 @@ const ProjectManagement = () => {
                             {formatDate(project.start_date)}
                           </td>
                           <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
-                            {formatDate(project.end_date)}
+                            {formatDate(project.due_date)}
                           </td>
                         </motion.tr>
                       ))}
@@ -521,7 +527,7 @@ const ProjectManagement = () => {
                         </div>
                         <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {formatDate(project.end_date)}
+                            {formatDate(project.due_date)}
                           </div>
                           <div className="text-xs text-gray-500">結束日期</div>
                         </div>

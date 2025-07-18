@@ -19,7 +19,8 @@ import ItemOverview from "./pages/ItemOverview.jsx";
 import Lot from "./pages/Lot.jsx";
 import Item from "./pages/Item.jsx";
 import ProjectManagement from "./pages/ProjectManagement.jsx";
-import ProjectWorkOrders from "./pages/ProjectWorkOrders.jsx";
+import Project from "./pages/Project.jsx";
+import WorkOrder from "./pages/WorkOrder.jsx";
 import BackButton from "./componenets/BackButton.jsx";
 
 const ProtectedRoute = ({ children, user }) => {
@@ -166,7 +167,15 @@ const AnimatedRoutes = ({ user, handleLogin, handleLogout }) => {
           path="/project/:projectId"
           element={
             <ProtectedRoute user={user}>
-              <ProjectWorkOrders />
+              <Project />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/workorder/:workOrderId"
+          element={
+            <ProtectedRoute user={user}>
+              <WorkOrder />
             </ProtectedRoute>
           }
         />

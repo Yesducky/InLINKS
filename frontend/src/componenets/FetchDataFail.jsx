@@ -21,7 +21,7 @@ const FetchDataFail = ({
   };
 
   //if error is 422, jump to login page
-  if (error === 422) {
+  if (error === 422 || error === 401) {
     window.location.href = "/login";
     localStorage.removeItem("token");
     localStorage.removeItem("user");

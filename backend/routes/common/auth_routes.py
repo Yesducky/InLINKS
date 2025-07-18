@@ -35,9 +35,6 @@ def register():
         user_type_id=data.get('user_type_id', 'UT001'),  # Default to first user type
         email=data.get('email'),
         is_active=data.get('is_active', True),  # Default to active
-        project_ids='[]',
-        work_order_ids='[]',
-        task_ids='[]'
     )
 
     db.session.add(user)

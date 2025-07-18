@@ -28,9 +28,6 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=True)
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     last_login = db.Column(db.DateTime, nullable=True)
-    project_ids = db.Column(db.Text)  # JSON string of project IDs
-    work_order_ids = db.Column(db.Text)  # JSON string of work order IDs
-    task_ids = db.Column(db.Text)  # JSON string of task IDs
     created_at = db.Column(db.DateTime, default=get_hk_time)
 
     user_type = db.relationship('UserType', backref='users')
@@ -116,18 +113,28 @@ class Project(db.Model):
     description = db.Column(db.Text, nullable=True)
     state = db.Column(db.String(50), nullable=True)  # e.g. planning, active, completed
     start_date = db.Column(db.DateTime, nullable=True)
-    end_date = db.Column(db.DateTime, nullable=True)
+    due_date = db.Column(db.DateTime, nullable=True)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    priority = db.Column(db.String(20), nullable=True)  # e.g. low, medium, high, urgent
+    status = db.Column(db.String(20), nullable=True)
     person_in_charge_id = db.Column(db.String(20), db.ForeignKey('users.id'), nullable=False)
     work_order_ids = db.Column(db.Text)  # JSON string of work order IDs
     process_log_ids = db.Column(db.Text)  # JSON string of process log IDs
     created_at = db.Column(db.DateTime, default=get_hk_time)
-    priority = db.Column(db.String(20), nullable=True)  # e.g. low, medium, high, urgent
+
     person_in_charge = db.relationship('User', backref='managed_projects')
 
 class WorkOrder(db.Model):
     __tablename__ = 'work_orders'
     id = db.Column(db.String(20), primary_key=True)  # WO001, WO002, etc.
     work_order_name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    state = db.Column(db.String(50), nullable=True)  # e.g. pending, in_progress, completed
+    start_date = db.Column(db.DateTime, nullable=True)
+    due_date = db.Column(db.DateTime, nullable=True)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    assignee_id = db.Column(db.String(20), db.ForeignKey('users.id'))
+    estimated_hour = db.Column(db.Float, nullable=True)
     workflow_type_id = db.Column(db.String(20), db.ForeignKey('workflow_types.id'), nullable=False)
     parent_project_id = db.Column(db.String(20), db.ForeignKey('projects.id'), nullable=False)
     lot_id = db.Column(db.String(20), db.ForeignKey('lots.id'))
@@ -138,44 +145,69 @@ class WorkOrder(db.Model):
     workflow_type = db.relationship('WorkflowType', backref='work_orders')
     parent_project = db.relationship('Project', backref='work_orders')
     lot = db.relationship('Lot', backref='work_orders')
+    assignee = db.relationship('User', backref='assigned_workorders')
 
 class Task(db.Model):
     __tablename__ = 'tasks'
     id = db.Column(db.String(20), primary_key=True)  # TSK001, TSK002, etc.
-    task_type = db.Column(db.String(50), nullable=False)
-    item_ids = db.Column(db.Text)  # JSON string of item IDs
-    status = db.Column(db.String(20), nullable=False)
-    user_ids = db.Column(db.Text)  # JSON string of user IDs
+    task_name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    state = db.Column(db.String(50), nullable=True)  # e.g. pending, in_progress, completed
+    start_date = db.Column(db.DateTime, nullable=True)
+    due_date = db.Column(db.DateTime, nullable=True)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    assignee_id = db.Column(db.String(20), db.ForeignKey('users.id'))
+    estimated_hour = db.Column(db.Float, nullable=True)
+    work_order_id = db.Column(db.String(20), db.ForeignKey('work_orders.id'))
     subtask_ids = db.Column(db.Text)  # JSON string of subtask IDs
-    process_log_ids = db.Column(db.Text)  # JSON string of process log IDs
-    parent_work_order_id = db.Column(db.String(20), db.ForeignKey('work_orders.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=get_hk_time)
 
-    parent_work_order = db.relationship('WorkOrder', backref='tasks')
+    work_order = db.relationship('WorkOrder', backref='tasks')
+    assignee = db.relationship('User', backref='assigned_tasks')
 
 class SubTask(db.Model):
     __tablename__ = 'subtasks'
-    id = db.Column(db.String(20), primary_key=True)  # ST001, ST002, etc.
-    status = db.Column(db.String(20), nullable=False)  # design, pulling_cable, terminated, completed
-    item_ids = db.Column(db.Text)  # JSON string of item IDs
-    user_ids = db.Column(db.Text)  # JSON string of user IDs
-    parent_task_id = db.Column(db.String(20), db.ForeignKey('tasks.id'), nullable=False)
-    process_log_ids = db.Column(db.Text)  # JSON string of process log IDs
+    id = db.Column(db.String(20), primary_key=True)  # SUB001, SUB002, etc.
+    subtask_name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    state = db.Column(db.String(50), nullable=True)  # e.g. pending, in_progress, completed
+    start_date = db.Column(db.DateTime, nullable=True)
+    due_date = db.Column(db.DateTime, nullable=True)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    assignee_id = db.Column(db.String(20), db.ForeignKey('users.id'))
+    estimated_hour = db.Column(db.Float, nullable=True)
+    task_id = db.Column(db.String(20), db.ForeignKey('tasks.id'))
     created_at = db.Column(db.DateTime, default=get_hk_time)
 
-    parent_task = db.relationship('Task', backref='subtasks')
+    task = db.relationship('Task', backref='subtasks')
+    assignee = db.relationship('User', backref='assigned_subtasks')
 
 class ProcessLog(db.Model):
     __tablename__ = 'process_logs'
     id = db.Column(db.String(20), primary_key=True)  # PL001, PL002, etc.
-    log_type_id = db.Column(db.String(20), db.ForeignKey('log_types.id'), nullable=False)
     date = db.Column(db.DateTime, default=get_hk_time)
-    user_id = db.Column(db.String(20), db.ForeignKey('users.id'), nullable=False)
     description = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=get_hk_time)
 
+
+    log_type_id = db.Column(db.String(20), db.ForeignKey('log_types.id'), nullable=False)
     log_type = db.relationship('LogType', backref='process_logs')
+
+    user_id = db.Column(db.String(20), db.ForeignKey('users.id'), nullable=False)
     user = db.relationship('User', backref='process_logs')
+
+    project_id = db.Column(db.String(20), db.ForeignKey('projects.id'))
+    project = db.relationship('Project', backref='process_logs')
+
+    work_order_id = db.Column(db.String(20), db.ForeignKey('work_orders.id'))
+    work_order = db.relationship('WorkOrder', backref='process_logs')
+
+    task_id = db.Column(db.String(20), db.ForeignKey('tasks.id'))
+    task = db.relationship('Task', backref='process_logs')
+
+    subtask_id = db.Column(db.String(20), db.ForeignKey('subtasks.id'))
+    subtask = db.relationship('SubTask', backref='process_logs')
+
 
 # Database Models - Menu Collection
 class CardMenu(db.Model):
@@ -215,3 +247,5 @@ class PermissionAudit(db.Model):
     timestamp = db.Column(db.DateTime, default=get_hk_time)
     ip_address = db.Column(db.String(45))
     user_agent = db.Column(db.Text)
+
+

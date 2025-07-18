@@ -8,7 +8,6 @@ import {
   ViewList,
   ViewModule,
   CheckCircle,
-  Warning,
   HourglassEmpty,
   HourglassFull,
   ListAlt,
@@ -16,8 +15,9 @@ import {
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
 import PermissionGate from "../componenets/PermissionGate";
+import ProcessLog from "../componenets/ProcessLog";
 
-const ProjectWorkOrders = () => {
+const Project = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const [workOrders, setWorkOrders] = useState([]);
@@ -27,6 +27,7 @@ const ProjectWorkOrders = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [viewMode, setViewMode] = useState("grid");
+  const [showLogModal, setShowLogModal] = useState(false);
 
   const [stats, setStats] = useState({
     totalWorkOrders: 0,
@@ -119,6 +120,7 @@ const ProjectWorkOrders = () => {
 
       if (response.ok) {
         const projectData = await response.json();
+        console.log("Project Data:", projectData);
         setProjectInfo(projectData);
       }
     } catch (err) {
@@ -127,6 +129,7 @@ const ProjectWorkOrders = () => {
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString("zh-TW", {
       year: "numeric",
       month: "2-digit",
@@ -185,11 +188,14 @@ const ProjectWorkOrders = () => {
       workOrder.work_order_name
         ?.toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
-      workOrder.lot_id?.toLowerCase().includes(searchTerm.toLowerCase());
+      workOrder.lot_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (workOrder.assignee?.name || "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
 
     let matchesStatus = true;
     if (selectedStatus !== "all") {
-      matchesStatus = workOrder.status === selectedStatus;
+      matchesStatus = workOrder.state === selectedStatus;
     }
 
     return matchesSearch && matchesStatus;
@@ -205,7 +211,7 @@ const ProjectWorkOrders = () => {
         variants={pageVariants}
         transition={pageTransition}
       >
-        <Header title={`項目 #${projectId} - 工單`} />
+        <Header title={`項目 #${projectId}`} />
         <div className="flex h-64 items-center justify-center">
           <LoadingSpinner variant="circular" size={30} message="載入中" />
         </div>
@@ -247,11 +253,11 @@ const ProjectWorkOrders = () => {
         variants={pageVariants}
         transition={pageTransition}
       >
-        <Header title={`項目 #${projectId} - 工單`} />
+        <Header title={`項目 #${projectId}`} />
 
         <div className="px-6 py-8">
           <div className="mx-auto max-w-6xl">
-            {/* Project Info Card */}
+            {/* Project Info Card - Complete Information */}
             {projectInfo && (
               <motion.div
                 className="mb-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-lg"
@@ -259,7 +265,7 @@ const ProjectWorkOrders = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.3 }}
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-start gap-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
                     <Assignment className="h-6 w-6 text-purple-600" />
                   </div>
@@ -271,11 +277,109 @@ const ProjectWorkOrders = () => {
                       {projectInfo.description || "無描述"}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-gray-800">
-                      {stats.totalWorkOrders}
+                </div>
+
+                <div className="mt-6 grid grid-cols-1 gap-4 border-t border-gray-200 pt-4 md:grid-cols-2 lg:grid-cols-4">
+                  <div>
+                    <div className="text-sm font-medium text-gray-500">
+                      項目ID
                     </div>
-                    <div className="text-sm text-gray-500">總工單數</div>
+                    <div className="text-lg font-semibold text-gray-900">
+                      #{projectInfo.id}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-gray-500">
+                      負責人
+                    </div>
+                    <div className="text-lg font-semibold text-gray-900">
+                      {projectInfo.person_in_charge_name || "未指派"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-gray-500">
+                      優先級
+                    </div>
+                    <div className="text-lg font-semibold text-gray-900">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          projectInfo.priority === "high"
+                            ? "bg-red-100 text-red-800"
+                            : projectInfo.priority === "medium"
+                              ? "bg-orange-100 text-orange-800"
+                              : projectInfo.priority === "low"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {projectInfo.priority === "high"
+                          ? "高"
+                          : projectInfo.priority === "medium"
+                            ? "中"
+                            : projectInfo.priority === "low"
+                              ? "低"
+                              : "未知"}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-gray-500">
+                      狀態
+                    </div>
+                    <div className="text-lg font-semibold text-gray-900">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          projectInfo.state === "active"
+                            ? "bg-green-100 text-green-800"
+                            : projectInfo.state === "completed"
+                              ? "bg-blue-100 text-blue-800"
+                              : projectInfo.state === "pending"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {projectInfo.state === "active"
+                          ? "進行中"
+                          : projectInfo.state === "completed"
+                            ? "已完成"
+                            : projectInfo.state === "pending"
+                              ? "待開始"
+                              : "未知"}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-gray-500">
+                      開始日期
+                    </div>
+                    <div className="text-lg font-semibold text-gray-900">
+                      {formatDate(projectInfo.start_date)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-gray-500">
+                      結束日期
+                    </div>
+                    <div className="text-lg font-semibold text-gray-900">
+                      {formatDate(projectInfo.due_date)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-gray-500">
+                      創建時間
+                    </div>
+                    <div className="text-lg font-semibold text-gray-900">
+                      {formatDate(projectInfo.created_at)}
+                    </div>
+                  </div>
+                  <div>
+                    <button
+                      onClick={() => setShowLogModal(true)}
+                      className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-100 px-4 py-2 text-sm font-medium text-blue-800 hover:bg-blue-200"
+                    >
+                      <Assignment className="h-5 w-5" />
+                      查看日誌
+                    </button>
                   </div>
                 </div>
               </motion.div>
@@ -373,6 +477,11 @@ const ProjectWorkOrders = () => {
               </motion.div>
             </motion.div>
 
+            {/* Process Log Section */}
+            <div className="mb-8">
+              <ProcessLog projectId={projectId} />
+            </div>
+
             {/* Search and Filter */}
             <motion.div
               className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
@@ -440,6 +549,9 @@ const ProjectWorkOrders = () => {
                           工單名稱
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                          指派給
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                           批次號
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
@@ -447,6 +559,15 @@ const ProjectWorkOrders = () => {
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                           狀態
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                          預估工時
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                          開始日期
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                          截止日期
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                           創建時間
@@ -479,20 +600,38 @@ const ProjectWorkOrders = () => {
                             {workOrder.work_order_name}
                           </td>
                           <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
-                            {workOrder.lot_id || "N/A"}
+                            {workOrder.assignee?.name || "未指派"}
                           </td>
                           <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
-                            {workOrder.workflow_type_id || "N/A"}
+                            {workOrder.lot?.lot_name ||
+                              workOrder.lot_id ||
+                              "N/A"}
+                          </td>
+                          <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+                            {workOrder.workflow_type?.name ||
+                              workOrder.workflow_type_id ||
+                              "N/A"}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span
                               className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(
-                                workOrder.status,
+                                workOrder.state,
                               )}`}
                             >
-                              {getStatusIcon(workOrder.status)}
-                              {getStatusText(workOrder.status)}
+                              {getStatusIcon(workOrder.state)}
+                              {getStatusText(workOrder.state)}
                             </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+                            {workOrder.estimated_hour
+                              ? `${workOrder.estimated_hour}h`
+                              : "N/A"}
+                          </td>
+                          <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+                            {formatDate(workOrder.start_date)}
+                          </td>
+                          <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+                            {formatDate(workOrder.due_date)}
                           </td>
                           <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
                             {formatDate(workOrder.created_at)}
@@ -529,26 +668,62 @@ const ProjectWorkOrders = () => {
                         </div>
                         <span
                           className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(
-                            workOrder.status,
+                            workOrder.state,
                           )}`}
                         >
-                          {getStatusIcon(workOrder.status)}
-                          {getStatusText(workOrder.status)}
+                          {getStatusIcon(workOrder.state)}
+                          {getStatusText(workOrder.state)}
                         </span>
                       </div>
 
                       <div className="mt-4 grid grid-cols-2 gap-4">
                         <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {workOrder.lot_id || "N/A"}
+                            {workOrder.assignee?.name || "未指派"}
+                          </div>
+                          <div className="text-xs text-gray-500">指派給</div>
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {workOrder.estimated_hour
+                              ? `${workOrder.estimated_hour}h`
+                              : "N/A"}
+                          </div>
+                          <div className="text-xs text-gray-500">預估工時</div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-2 gap-4">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {workOrder.lot?.lot_name ||
+                              workOrder.lot_id ||
+                              "N/A"}
                           </div>
                           <div className="text-xs text-gray-500">批次號</div>
                         </div>
                         <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {workOrder.workflow_type_id || "N/A"}
+                            {workOrder.workflow_type?.name ||
+                              workOrder.workflow_type_id ||
+                              "N/A"}
                           </div>
                           <div className="text-xs text-gray-500">工作流程</div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-2 gap-4">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {formatDate(workOrder.start_date)}
+                          </div>
+                          <div className="text-xs text-gray-500">開始日期</div>
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {formatDate(workOrder.due_date)}
+                          </div>
+                          <div className="text-xs text-gray-500">截止日期</div>
                         </div>
                       </div>
 
@@ -563,8 +738,14 @@ const ProjectWorkOrders = () => {
           </div>
         </div>
       </motion.div>
+      <ProcessLog
+        isOpen={showLogModal}
+        onClose={() => setShowLogModal(false)}
+        entityType="project"
+        entityId={projectId}
+      />
     </PermissionGate>
   );
 };
 
-export default ProjectWorkOrders;
+export default Project;

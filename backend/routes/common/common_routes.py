@@ -89,9 +89,6 @@ def get_users():
         'id': u.id,
         'username': u.username,
         'user_type_id': u.user_type_id,
-        'project_ids': u.project_ids,
-        'work_order_ids': u.work_order_ids,
-        'task_ids': u.task_ids,
         'created_at': u.created_at.isoformat(),
         'is_active': u.is_active,
         'email': u.email,
@@ -112,9 +109,6 @@ def user_detail(user_id):
             'email': user.email,
             'is_active': user.is_active,
             'last_login': user.last_login.isoformat() if user.last_login else None,
-            'project_ids': user.project_ids,
-            'work_order_ids': user.work_order_ids,
-            'task_ids': user.task_ids,
             'created_at': user.created_at.isoformat()
         })
 
@@ -123,9 +117,6 @@ def user_detail(user_id):
         user.user_type_id = data.get('user_type_id', user.user_type_id)
         user.email = data.get('email', user.email)
         user.is_active = data.get('is_active', user.is_active)
-        user.project_ids = data.get('project_ids', user.project_ids)
-        user.work_order_ids = data.get('work_order_ids', user.work_order_ids)
-        user.task_ids = data.get('task_ids', user.task_ids)
 
         db.session.commit()
         return jsonify({'message': 'User updated'})

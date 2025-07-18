@@ -22,17 +22,18 @@ def create_app():
     jwt.init_app(app)
 
     # Register blueprints
-    from routes.auth_routes import auth_bp
-    from routes.common_routes import common_bp
-    from routes.stock_routes import stock_bp
-    from routes.carton_routes import carton_bp
-    from routes.lot_routes import lot_bp
-    from routes.material_routes import material_bp
+    from routes.common.auth_routes import auth_bp
+    from routes.common.common_routes import common_bp
+    from routes.inventory.stock_routes import stock_bp
+    from routes.inventory.carton_routes import carton_bp
+    from routes.inventory.lot_routes import lot_bp
+    from routes.inventory.material_routes import material_bp
     from routes.process_routes import process_bp
-    from routes.utility_routes import utility_bp
-    from routes.menu_routes import menu_bp
-    from routes.item_routes import item_bp
-    from routes.permission_routes import permission_bp
+    from routes.common.utility_routes import utility_bp
+    from routes.common.menu_routes import menu_bp
+    from routes.inventory.item_routes import item_bp
+    from routes.common.permission_routes import permission_bp
+    from routes.project_routes import project_bp
 
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(common_bp, url_prefix='/api')
@@ -45,6 +46,7 @@ def create_app():
     app.register_blueprint(menu_bp, url_prefix='/api')
     app.register_blueprint(item_bp, url_prefix='/api')
     app.register_blueprint(permission_bp, url_prefix='/api')
+    app.register_blueprint(project_bp, url_prefix='/api')
 
     # Create tables and initialize data
     with app.app_context():
