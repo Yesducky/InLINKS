@@ -28,12 +28,12 @@ def create_app():
     from routes.inventory.carton_routes import carton_bp
     from routes.inventory.lot_routes import lot_bp
     from routes.inventory.material_routes import material_bp
-    from routes.process_routes import process_bp
+    from backend.routes.project.process_routes import process_bp
     from routes.common.utility_routes import utility_bp
     from routes.common.menu_routes import menu_bp
     from routes.inventory.item_routes import item_bp
     from routes.common.permission_routes import permission_bp
-    from routes.project_routes import project_bp
+    from backend.routes.project.project_routes import project_bp
 
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(common_bp, url_prefix='/api')

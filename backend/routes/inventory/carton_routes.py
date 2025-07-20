@@ -7,6 +7,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import Carton, MaterialType
 from utils.db_utils import generate_id
 from utils.item_utils import get_item_with_children_recursive
+from utils.stock_logger import StockLogger
 from __init__ import db
 import json
 
@@ -41,6 +42,7 @@ def cartons():
 
         carton_id = generate_id('CTN', Carton)
 
+        user_id = get_jwt_identity()
         carton = Carton(
             id=carton_id,
             parent_lot_id=data['parent_lot_id'],
@@ -51,6 +53,11 @@ def cartons():
 
         try:
             db.session.add(carton)
+            db.session.flush()
+            
+            # Log carton creation
+            StockLogger.log_create(user_id, 'carton', carton_id)
+            
             db.session.commit()
             return jsonify({'message': 'Carton created successfully', 'id': carton_id}), 201
         except Exception as e:
@@ -85,14 +92,26 @@ def carton_detail(carton_id):
 
     elif request.method == 'PUT':
         data = request.get_json()
+        user_id = get_jwt_identity()
 
-        # Update only allowed fields
+        # Get old values for logging
+        old_data = {
+            'item_ids': carton.item_ids,
+            'log_ids': carton.log_ids
+        }
+        
+        new_data = {}
         if 'item_ids' in data:
+            new_data['item_ids'] = data['item_ids']
             carton.item_ids = data['item_ids']
         if 'log_ids' in data:
+            new_data['log_ids'] = data['log_ids']
             carton.log_ids = data['log_ids']
 
         try:
+            # Log the update
+            StockLogger.log_update(user_id, 'carton', carton_id, carton, new_data)
+            
             db.session.commit()
             return jsonify({'message': 'Carton updated successfully'})
         except Exception as e:
@@ -101,6 +120,11 @@ def carton_detail(carton_id):
 
     elif request.method == 'DELETE':
         try:
+            user_id = get_jwt_identity()
+            
+            # Log deletion before removing
+            StockLogger.log_delete(user_id, 'carton', carton_id)
+            
             db.session.delete(carton)
             db.session.commit()
             return jsonify({'message': 'Carton deleted successfully'})

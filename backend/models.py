@@ -100,10 +100,14 @@ class StockLog(db.Model):
     description = db.Column(db.Text)
     task_id = db.Column(db.String(20))
     item_id = db.Column(db.String(20), db.ForeignKey('items.id'), nullable=False)
+    carton_id = db.Column(db.String(20), db.ForeignKey('cartons.id'), nullable=True)
+    lot_id = db.Column(db.String(20), db.ForeignKey('lots.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=get_hk_time)
 
     user = db.relationship('User', backref='stock_logs')
     item = db.relationship('Item', backref='stock_logs')
+    carton = db.relationship('Carton', backref='stock_logs')
+    lot = db.relationship('Lot', backref='stock_logs')
 
 # Database Models - Process Collection
 class Project(db.Model):
@@ -247,5 +251,3 @@ class PermissionAudit(db.Model):
     timestamp = db.Column(db.DateTime, default=get_hk_time)
     ip_address = db.Column(db.String(45))
     user_agent = db.Column(db.Text)
-
-

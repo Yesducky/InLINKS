@@ -3,10 +3,11 @@ Item routes - Handle all item-related operations
 """
 
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import Item, Carton
 from utils.db_utils import generate_id
 from utils.item_utils import get_item_with_children_recursive
+from utils.stock_logger import StockLogger
 from __init__ import db
 from utils.auth_middleware import require_permission
 
@@ -95,6 +96,12 @@ def items():
 
         try:
             db.session.add(item)
+            db.session.flush()
+            
+            # Log item creation
+            user_id = get_jwt_identity()
+            StockLogger.log_create(user_id, 'item', item_id)
+            
             db.session.commit()
             return jsonify({'message': 'Item created successfully', 'id': item_id}), 201
         except Exception as e:
@@ -145,22 +152,41 @@ def item_detail(item_id):
 
     elif request.method == 'PUT':
         data = request.get_json()
+        user_id = get_jwt_identity()
 
-        # Update fields if provided
+        # Get old values for logging
+        old_data = {
+            'quantity': item.quantity,
+            'status': item.status,
+            'parent_id': item.parent_id,
+            'child_item_ids': item.child_item_ids,
+            'task_ids': item.task_ids
+        }
+        
+        new_data = {}
         if 'quantity' in data:
+            new_data['quantity'] = data['quantity']
             item.quantity = data['quantity']
         if 'status' in data:
+            new_data['status'] = data['status']
             item.status = data['status']
         if 'parent_id' in data:
+            new_data['parent_id'] = data['parent_id']
             item.parent_id = data['parent_id']
         if 'child_item_ids' in data:
+            new_data['child_item_ids'] = data['child_item_ids']
             item.child_item_ids = data['child_item_ids']
         if 'log_ids' in data:
+            new_data['log_ids'] = data['log_ids']
             item.log_ids = data['log_ids']
         if 'task_ids' in data:
+            new_data['task_ids'] = data['task_ids']
             item.task_ids = data['task_ids']
 
         try:
+            # Log the update
+            StockLogger.log_update(user_id, 'item', item_id, item, new_data)
+            
             db.session.commit()
             return jsonify({'message': 'Item updated successfully'})
         except Exception as e:
@@ -169,6 +195,11 @@ def item_detail(item_id):
 
     elif request.method == 'DELETE':
         try:
+            user_id = get_jwt_identity()
+            
+            # Log deletion before removing
+            StockLogger.log_delete(user_id, 'item', item_id)
+            
             db.session.delete(item)
             db.session.commit()
             return jsonify({'message': 'Item deleted successfully'})
