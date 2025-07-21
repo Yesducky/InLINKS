@@ -6,14 +6,15 @@ import {
   Search,
   ViewList,
   ViewModule,
-  Inventory2,
   Warning,
   CheckCircle,
-  Archive,
   AssignmentTurnedIn,
 } from "@mui/icons-material";
+import { CartonIcon, LotIcon, UsedIcon } from "../componenets/CustomIcons.jsx";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
+import StockLog from "../componenets/StockLog.jsx";
+import LogButton from "../componenets/LogButton.jsx";
 
 const Lot = () => {
   const { lotId } = useParams();
@@ -24,6 +25,7 @@ const Lot = () => {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState("grid");
+  const [showLogModal, setShowLogModal] = useState(false);
 
   // Updated animation variants for fade in/fade out - matching LotOverview
   const pageVariants = {
@@ -110,11 +112,11 @@ const Lot = () => {
   };
 
   const getStatusIcon = (availableItems, totalItems) => {
-    if (totalItems === 0) return <Inventory2 className="h-4 w-4" />;
+    if (totalItems === 0) return <CartonIcon className="h-4 w-4" />;
     const ratio = availableItems / totalItems;
     if (ratio === 1) return <CheckCircle className="h-4 w-4" />;
     if (ratio > 0) return <Warning className="h-4 w-4" />;
-    return <Inventory2 className="h-4 w-4" />;
+    return <CartonIcon className="h-4 w-4" />;
   };
 
   const getStatusText = (availableItems, totalItems) => {
@@ -178,36 +180,10 @@ const Lot = () => {
       variants={pageVariants}
       transition={pageTransition}
     >
-      <Header title={`${lot?.id} 批次詳情 `} />
+      <Header title={`批次詳情 `} />
 
       <div className="px-6 py-8">
         <div className="mx-auto max-w-6xl">
-          <motion.div
-            className="mb-8 flex items-start justify-between gap-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.3 }}
-          >
-            <div className="flex-1">
-              <p className="text-gray-600">查看和管理批次</p>
-            </div>
-            <div className="flex-shrink-0">
-              <button
-                onClick={() =>
-                  setViewMode(viewMode === "list" ? "grid" : "list")
-                }
-                className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 whitespace-nowrap text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
-              >
-                {viewMode === "list" ? (
-                  <ViewModule className="h-5 w-5" />
-                ) : (
-                  <ViewList className="h-5 w-5" />
-                )}
-                {/*{viewMode === "list" ? "網格檢視" : "列表檢視"}*/}
-              </button>
-            </div>
-          </motion.div>
-
           {/* Lot Info Card */}
           {lot && (
             <motion.div
@@ -216,31 +192,36 @@ const Lot = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.3 }}
             >
-              <div className="flex items-center gap-4">
-                <div className="flex-1">
-                  <h3 className="text-xl font-semibold text-gray-800">
-                    {lot.id}
-                  </h3>
-                  <p className="text-gray-600">
-                    工廠批次號： <br />
-                    {lot.factory_lot_number}
-                    <br />
-                    物料：{lot.material_name}
-                  </p>
-                </div>
-                <div className="grid grid-cols-2 gap-4 text-center">
-                  <div>
-                    <div className="text-lg font-bold text-gray-800">
-                      {lot.carton_count}
-                    </div>
-                    <div className="text-xs text-gray-500">箱數</div>
+              <div className="flex items-center justify-between">
+                <div className="flex w-full items-center justify-between gap-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-fuchsia-100">
+                    <LotIcon className="h-6 w-6 text-fuchsia-600" />
                   </div>
-                  <div>
-                    <div className="text-lg font-bold text-gray-800">
-                      {lot.total_quantity}{" "}
-                      <span className={`text-xs`}>{lot.material_unit}</span>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-semibold text-gray-800">
+                      批次 {lot.id}
+                    </h3>
+                    <p className="text-gray-600">
+                      工廠批次號： <br />
+                      {lot.factory_lot_number}
+                      <br />
+                      物料：{lot.material_name}
+                    </p>
+                  </div>
+                  <div className="mr-0 ml-auto grid grid-cols-2 gap-4 text-center">
+                    <div>
+                      <div className="text-lg font-bold text-gray-800">
+                        {lot.carton_count}
+                      </div>
+                      <div className="text-xs text-gray-500">箱數</div>
                     </div>
-                    <div className="text-xs text-gray-500">總數量</div>
+                    <div>
+                      <div className="text-lg font-bold text-gray-800">
+                        {lot.total_quantity}
+                        <span className={`text-xs`}>{lot.material_unit}</span>
+                      </div>
+                      <div className="text-xs text-gray-500">總數量</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -265,12 +246,21 @@ const Lot = () => {
                   </div>
                   <div className="text-sm text-gray-500">已使用</div>
                 </div>
-              </div>
-              <div className="flex pt-4">
-                <div className="mr-2 text-sm text-gray-500">創建時間: </div>
-                <div className="text-sm text-gray-700">
-                  {formatDate(lot.created_at)}
+                <div className="text-center">
+                  <div className="text-lg font-semibold text-blue-600">
+                    {lot.total_items}
+                  </div>
+                  <div className="text-sm text-gray-500">總件數</div>
                 </div>
+              </div>
+              <div className="flex items-center justify-between pt-4">
+                <div className="flex">
+                  <div className="mr-2 text-sm text-gray-500">創建時間: </div>
+                  <div className="text-sm text-gray-700">
+                    {formatDate(lot.created_at)}
+                  </div>
+                </div>
+                <LogButton setShowLogModal={setShowLogModal} />
               </div>
             </motion.div>
           )}
@@ -301,15 +291,27 @@ const Lot = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.3 }}
           >
-            <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+            <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-6 py-4">
               <h3 className="text-lg font-semibold text-gray-800">
                 箱子列表 ({filteredCartons.length})
               </h3>
+              <button
+                onClick={() =>
+                  setViewMode(viewMode === "list" ? "grid" : "list")
+                }
+                className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 whitespace-nowrap text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
+              >
+                {viewMode === "list" ? (
+                  <ViewModule className="h-5 w-5" />
+                ) : (
+                  <ViewList className="h-5 w-5" />
+                )}
+              </button>
             </div>
 
             {filteredCartons.length === 0 ? (
               <div className="p-8 text-center">
-                <Archive className="mx-auto h-12 w-12 text-gray-400" />
+                <CartonIcon className="mx-auto h-12 w-12 text-gray-400" />
                 <p className="mt-2 text-gray-500">
                   {searchTerm ? "沒有符合條件的箱子" : "此批次暫無箱子"}
                 </p>
@@ -356,8 +358,8 @@ const Lot = () => {
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100">
-                              <Archive className="h-4 w-4 text-purple-600" />
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-100">
+                              <CartonIcon className="h-4 w-4 text-violet-600" />
                             </div>
                             <div className="ml-3">
                               <div className="text-sm font-medium text-gray-900">
@@ -381,7 +383,7 @@ const Lot = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-3 py-1 text-sm font-semibold text-red-800">
-                            <Inventory2 className="h-3 w-3" />
+                            <UsedIcon className="h-6 w-6" />
                             {carton.used_quantity || 0} {lot?.material_unit}
                           </span>
                         </td>
@@ -428,8 +430,8 @@ const Lot = () => {
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
-                          <Archive className="h-5 w-5 text-purple-600" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100">
+                          <CartonIcon className="h-5 w-5 text-violet-600" />
                         </div>
                         <div>
                           <h4 className="font-medium text-gray-900">
@@ -473,7 +475,7 @@ const Lot = () => {
 
                       <div className="text-center">
                         <div className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-800">
-                          <Inventory2 className="h-3 w-3" />
+                          <UsedIcon className="h-6 w-6" />
                           {carton.used_quantity || 0}
                         </div>
                         <div className="mt-1 text-xs text-gray-500">已使用</div>
@@ -494,6 +496,13 @@ const Lot = () => {
           </motion.div>
         </div>
       </div>
+
+      <StockLog
+        isOpen={showLogModal}
+        onClose={() => setShowLogModal(false)}
+        entityType="lot"
+        entityId={lotId}
+      />
     </motion.div>
   );
 };

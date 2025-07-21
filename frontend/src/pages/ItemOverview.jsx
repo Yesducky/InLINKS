@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import Header from "../componenets/Header.jsx";
 import {
-  Inventory,
   Search,
   ViewList,
   ViewModule,
   CheckCircle,
+  Assignment,
   Warning,
-  Inventory2,
 } from "@mui/icons-material";
+import { CartonIcon, ItemIcon, UsedIcon } from "../componenets/CustomIcons.jsx";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
 import PermissionGate from "../componenets/PermissionGate";
+import StockLog from "../componenets/StockLog.jsx";
+import LogButton from "../componenets/LogButton.jsx";
 
 const ItemOverview = () => {
   const [searchParams] = useSearchParams();
@@ -29,6 +31,7 @@ const ItemOverview = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState(statusFilter);
   const [viewMode, setViewMode] = useState("grid");
+  const [showLogModal, setShowLogModal] = useState(false);
   const navigate = useNavigate();
 
   const [stats, setStats] = useState({
@@ -194,9 +197,9 @@ const ItemOverview = () => {
       case "assigned":
         return <Warning className="h-4 w-4" />;
       case "used":
-        return <Inventory2 className="h-4 w-4" />;
+        return <ItemIcon className="h-4 w-4" />;
       default:
-        return <Inventory2 className="h-4 w-4" />;
+        return <ItemIcon className="h-4 w-4" />;
     }
   };
 
@@ -253,7 +256,7 @@ const ItemOverview = () => {
         variants={pageVariants}
         transition={pageTransition}
       >
-        <Header title="物料總覽" />
+        <Header title="物料清單" />
         <div className="flex h-64 items-center justify-center">
           <LoadingSpinner variant="circular" size={30} message="載入中" />
         </div>
@@ -271,14 +274,14 @@ const ItemOverview = () => {
         variants={pageVariants}
         transition={pageTransition}
       >
-        <Header title="物料總覽" />
+        <Header title="物料清單" />
         <FetchDataFail error={error} onRetry={fetchItems} className="h-64" />
       </motion.div>
     );
   }
 
   return (
-    <PermissionGate resource="items" action="read" header={`物料總覽`}>
+    <PermissionGate resource="items" action="read" header={`物料清單`}>
       <motion.div
         className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
         initial="initial"
@@ -287,41 +290,10 @@ const ItemOverview = () => {
         variants={pageVariants}
         transition={pageTransition}
       >
-        <Header title={cartonId ? `箱子 ${cartonId} - 物料清單` : "物料總覽"} />
+        <Header title={cartonId ? `箱子詳情 - 物料清單` : "物料清單"} />
 
         <div className="px-6 py-8">
           <div className="mx-auto max-w-6xl">
-            {/* Page Header */}
-            <motion.div
-              className="mb-8 flex items-center justify-between"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.3 }}
-            >
-              <div className={`w-auto overflow-auto`}>
-                <p className="text-gray-600">
-                  {cartonId
-                    ? `查看箱子 ${cartonId} 內的所有物料`
-                    : "查看和管理所有物料"}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() =>
-                    setViewMode(viewMode === "list" ? "grid" : "list")
-                  }
-                  className="flex w-fit items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
-                >
-                  {viewMode === "list" ? (
-                    <ViewModule className="h-5 w-5" />
-                  ) : (
-                    <ViewList className="h-5 w-5" />
-                  )}
-                  {/*{viewMode === "list" ? "網格檢視" : "列表檢視"}*/}
-                </button>
-              </div>
-            </motion.div>
-
             {/* Carton Info Card - only show when viewing specific carton */}
             {cartonId && cartonInfo && (
               <motion.div
@@ -330,33 +302,74 @@ const ItemOverview = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.25, duration: 0.3 }}
               >
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
-                    <Inventory className="h-6 w-6 text-purple-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-800">
-                      箱子 {cartonInfo.id}
-                    </h3>
-                    <p
-                      className="text-gray-600"
-                      onClick={() => {
-                        console.log(materialTypes);
-                      }}
-                    >
-                      工廠批次號： <br />
-                      {cartonInfo.factory_lot_number || "未知"}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-gray-800">
-                      {cartonStat.total_quantity}
-                      <span className={`ml-1 text-sm text-gray-800`}>
-                        {getMaterialTypeUnit(cartonInfo.material_type_id)}
-                      </span>
+                <div className="flex items-center justify-between">
+                  <div className="flex w-full items-center justify-between gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100">
+                      <CartonIcon className="h-6 w-6 text-violet-600" />
                     </div>
-                    <div className="text-sm text-gray-500">物料總數</div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-semibold text-gray-800">
+                        箱子 {cartonInfo.id}
+                      </h3>
+                      <p className="text-gray-600">
+                        工廠批次號：
+                        <br />
+                        {cartonInfo.factory_lot_number || "未知"}
+                        <br />
+                        物料：{cartonInfo.material_type.name || "未知"}
+                      </p>
+                    </div>
+                    <div className="mr-0 ml-auto text-center">
+                      <div>
+                        <div className="text-lg font-bold text-gray-800">
+                          {cartonStat.total_quantity ?? "-"}
+                          <span className="ml-1 text-xs">
+                            {cartonInfo.material_type.unit || "件"}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-500">物料總數</div>
+                      </div>
+                    </div>
                   </div>
+                </div>
+                {/* Status Summary */}
+                <div className="border-gray mt-4 grid grid-cols-4 gap-4 border-t border-b py-4">
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-green-600">
+                      {cartonStat.available_quantity ?? "-"}{" "}
+                      {getMaterialTypeUnit(cartonInfo.material_type_id)}
+                    </div>
+                    <div className="text-sm text-gray-500">可用數量</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-yellow-600">
+                      {cartonStat.assigned_quantity ?? "-"}{" "}
+                      {getMaterialTypeUnit(cartonInfo.material_type_id)}
+                    </div>
+                    <div className="text-sm text-gray-500">已分配</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-red-600">
+                      {cartonStat.used_quantity ?? "-"}{" "}
+                      {getMaterialTypeUnit(cartonInfo.material_type_id)}
+                    </div>
+                    <div className="text-sm text-gray-500">已使用</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-blue-600">
+                      {cartonStat.total_items ?? "-"}
+                    </div>
+                    <div className="text-sm text-gray-500">物料件數</div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between pt-4">
+                  <div className="flex">
+                    <div className="mr-2 text-sm text-gray-500">創建時間: </div>
+                    <div className="text-sm text-gray-700">
+                      {formatDate(cartonInfo.created_at)}
+                    </div>
+                  </div>
+                  <LogButton setShowLogModal={setShowLogModal} />
                 </div>
               </motion.div>
             )}
@@ -378,7 +391,7 @@ const ItemOverview = () => {
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-                    <Inventory className="h-6 w-6 text-blue-600" />
+                    <ItemIcon className="text-blue h-6 w-6" />
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">總物件</p>
@@ -420,7 +433,7 @@ const ItemOverview = () => {
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100">
-                    <Warning className="h-6 w-6 text-yellow-600" />
+                    <Assignment className="h-6 w-6 text-yellow-600" />
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">已分配</p>
@@ -441,7 +454,7 @@ const ItemOverview = () => {
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-                    <Inventory2 className="h-6 w-6 text-red-600" />
+                    <UsedIcon className="h-6 w-6 text-red-600" />
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">已使用</p>
@@ -479,15 +492,27 @@ const ItemOverview = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.3 }}
             >
-              <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+              <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-6 py-4">
                 <h3 className="text-lg font-semibold text-gray-800">
                   物料清單 ({filteredItems.length})
                 </h3>
+                <button
+                  onClick={() =>
+                    setViewMode(viewMode === "list" ? "grid" : "list")
+                  }
+                  className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 whitespace-nowrap text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
+                >
+                  {viewMode === "list" ? (
+                    <ViewModule className="h-5 w-5" />
+                  ) : (
+                    <ViewList className="h-5 w-5" />
+                  )}
+                </button>
               </div>
 
               {filteredItems.length === 0 ? (
                 <div className="p-8 text-center">
-                  <Inventory className="mx-auto h-12 w-12 text-gray-400" />
+                  <ItemIcon className="mx-auto h-12 w-12 text-gray-400" />
                   <p className="mt-2 text-gray-500">
                     {searchTerm || selectedStatus !== "all"
                       ? "沒有符合條件的物料"
@@ -532,7 +557,7 @@ const ItemOverview = () => {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
-                                <Inventory2 className="text-blue h-4 w-4" />
+                                <ItemIcon className="text-blue h-4 w-4" />
                               </div>
                               <div className="ml-3">
                                 <div className="text-sm font-medium text-gray-900">
@@ -583,7 +608,7 @@ const ItemOverview = () => {
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
                           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
-                            <Inventory2 className="text-blue h-5 w-5" />
+                            <ItemIcon className="text-blue h-5 w-5" />
                           </div>
                           <div>
                             <h4 className="font-medium text-gray-900">
@@ -628,6 +653,13 @@ const ItemOverview = () => {
           </div>
         </div>
       </motion.div>
+
+      <StockLog
+        isOpen={showLogModal}
+        onClose={() => setShowLogModal(false)}
+        entityType={"carton"}
+        entityId={cartonId || null}
+      />
     </PermissionGate>
   );
 };

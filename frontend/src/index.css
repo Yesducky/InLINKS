@@ -1,16 +1,23 @@
 @import "tailwindcss";
 
+@theme {
+  --color-primary: #4a90e2;
+  --color-blue: #052639;
+  --color-lightblue: #234A5E;
+  --color-gray: #c6c6c6;
+}
+
 /* Custom styles */
 .container {
   @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
 }
 
 .btn-primary {
-  @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  @apply bg-blue hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
 }
 
 .btn-secondary {
-  @apply bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  @apply bg-gray hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
 }
 
 .input-field {
@@ -20,3 +27,4 @@
 .card {
   @apply bg-white rounded-lg shadow-md p-6;
 }
+

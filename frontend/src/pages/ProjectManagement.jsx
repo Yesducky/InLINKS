@@ -10,12 +10,10 @@ import {
   CheckCircle,
   HourglassEmpty,
   HourglassFull,
-  History,
 } from "@mui/icons-material";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
 import PermissionGate from "../componenets/PermissionGate";
-import ProcessLog from "../componenets/ProcessLog.jsx";
 
 const ProjectManagement = () => {
   const [projects, setProjects] = useState([]);
@@ -247,109 +245,99 @@ const ProjectManagement = () => {
 
         <div className="px-6 py-8">
           <div className="mx-auto max-w-6xl">
-            {/* Page Header */}
-            <motion.div
-              className="mb-8 flex items-center justify-between"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.3 }}
-            >
-              <div>
-                <p className="text-gray-600">查看和管理所有項目</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() =>
-                    setViewMode(viewMode === "list" ? "grid" : "list")
-                  }
-                  className="flex w-fit items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
-                >
-                  {viewMode === "list" ? (
-                    <ViewModule className="h-5 w-5" />
-                  ) : (
-                    <ViewList className="h-5 w-5" />
-                  )}
-                </button>
-              </div>
-            </motion.div>
-
             {/* Statistics Cards */}
             <motion.div
-              className="mb-8 grid grid-cols-4 gap-2"
+              className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.3 }}
             >
-              {/* 所有項目 */}
+              {/* All Projects */}
               <motion.div
-                className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border border-gray-100 bg-white p-2 shadow transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "all" ? "ring-2 ring-blue-500" : ""}`}
+                className={`cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "all" ? "ring-2 ring-blue-500" : ""}`}
                 variants={cardVariants}
                 initial="hidden"
                 animate="visible"
                 transition={{ delay: 0.1 }}
                 onClick={() => setSelectedStatus("all")}
               >
-                <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
-                  <Assignment className="text-blue h-5 w-5" />
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
+                    <Assignment className="text-blue h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">所有項目</p>
+                    <p className="text-2xl font-bold text-gray-800">
+                      {stats.totalProjects}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-600">所有項目</p>
-                <p className="text-lg font-bold text-gray-800">
-                  {stats.totalProjects}
-                </p>
               </motion.div>
 
-              {/* 進行中 */}
+              {/* Active Projects */}
               <motion.div
-                className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border border-gray-100 bg-white p-2 shadow transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "active" ? "ring-2 ring-green-500" : ""}`}
+                className={`cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "active" ? "ring-2 ring-green-500" : ""}`}
                 variants={cardVariants}
                 initial="hidden"
                 animate="visible"
                 transition={{ delay: 0.2 }}
                 onClick={() => setSelectedStatus("active")}
               >
-                <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                    <CheckCircle className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">進行中</p>
+                    <p className="text-2xl font-bold text-gray-800">
+                      {stats.activeProjects}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-600">進行中</p>
-                <p className="text-lg font-bold text-gray-800">
-                  {stats.activeProjects}
-                </p>
               </motion.div>
 
-              {/* 待開始 */}
+              {/* Pending Projects */}
               <motion.div
-                className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border border-gray-100 bg-white p-2 shadow transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "pending" ? "ring-2 ring-yellow-500" : ""}`}
+                className={`cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "pending" ? "ring-2 ring-yellow-500" : ""}`}
                 variants={cardVariants}
                 initial="hidden"
                 animate="visible"
                 transition={{ delay: 0.3 }}
                 onClick={() => setSelectedStatus("pending")}
               >
-                <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-yellow-100">
-                  <HourglassEmpty className="h-5 w-5 text-yellow-600" />
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100">
+                    <HourglassEmpty className="h-6 w-6 text-yellow-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">待開始</p>
+                    <p className="text-2xl font-bold text-gray-800">
+                      {stats.pendingProjects}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-600">待開始</p>
-                <p className="text-lg font-bold text-gray-800">
-                  {stats.pendingProjects}
-                </p>
               </motion.div>
 
-              {/* 已完成 */}
+              {/* Completed Projects */}
               <motion.div
-                className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border border-gray-100 bg-white p-2 shadow transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "completed" ? "ring-2 ring-red-500" : ""}`}
+                className={`cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "completed" ? "ring-2 ring-red-500" : ""}`}
                 variants={cardVariants}
                 initial="hidden"
                 animate="visible"
                 transition={{ delay: 0.4 }}
                 onClick={() => setSelectedStatus("completed")}
               >
-                <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-red-100">
-                  <HourglassFull className="h-5 w-5 text-red-600" />
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                    <HourglassFull className="h-6 w-6 text-red-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">已完成</p>
+                    <p className="text-2xl font-bold text-gray-800">
+                      {stats.completedProjects}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-600">已完成</p>
-                <p className="text-lg font-bold text-gray-800">
-                  {stats.completedProjects}
-                </p>
               </motion.div>
             </motion.div>
 
@@ -378,10 +366,22 @@ const ProjectManagement = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.3 }}
             >
-              <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+              <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-6 py-4">
                 <h3 className="text-lg font-semibold text-gray-800">
                   項目列表 ({filteredProjects.length})
                 </h3>
+                <button
+                  onClick={() =>
+                    setViewMode(viewMode === "list" ? "grid" : "list")
+                  }
+                  className="flex w-fit items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
+                >
+                  {viewMode === "list" ? (
+                    <ViewModule className="h-5 w-5" />
+                  ) : (
+                    <ViewList className="h-5 w-5" />
+                  )}
+                </button>
               </div>
 
               {filteredProjects.length === 0 ? (

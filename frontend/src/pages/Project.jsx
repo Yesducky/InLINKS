@@ -229,7 +229,7 @@ const Project = () => {
         variants={pageVariants}
         transition={pageTransition}
       >
-        <Header title={`項目 #${projectId} - 工單`} />
+        <Header title={`項目 #${projectId}`} />
         <FetchDataFail
           error={error}
           onRetry={fetchProjectWorkOrders}
@@ -243,7 +243,7 @@ const Project = () => {
     <PermissionGate
       resource="project"
       action="read"
-      header={`項目 #${projectId} - 工單`}
+      header={`項目 #${projectId}`}
     >
       <motion.div
         className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
@@ -375,7 +375,7 @@ const Project = () => {
                   <div>
                     <button
                       onClick={() => setShowLogModal(true)}
-                      className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-100 px-4 py-2 text-sm font-medium text-blue-800 hover:bg-blue-200"
+                      className="text-blue mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-100 px-4 py-2 text-sm font-medium hover:bg-blue-200"
                     >
                       <Assignment className="h-5 w-5" />
                       查看日誌
@@ -402,7 +402,7 @@ const Project = () => {
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-                    <ListAlt className="h-6 w-6 text-blue-600" />
+                    <Assignment className="text-blue h-6 w-6" />
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">總工單</p>
@@ -464,8 +464,8 @@ const Project = () => {
                 onClick={() => setSelectedStatus("completed")}
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-                    <HourglassFull className="h-6 w-6 text-blue-600" />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                    <HourglassFull className="h-6 w-6 text-red-600" />
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">已完成</p>
@@ -476,11 +476,6 @@ const Project = () => {
                 </div>
               </motion.div>
             </motion.div>
-
-            {/* Process Log Section */}
-            <div className="mb-8">
-              <ProcessLog projectId={projectId} />
-            </div>
 
             {/* Search and Filter */}
             <motion.div
@@ -499,7 +494,19 @@ const Project = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <div className="flex items-center gap-2">
+            </motion.div>
+
+            {/* Work Orders List/Grid */}
+            <motion.div
+              className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.3 }}
+            >
+              <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-6 py-4">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  工單清單 ({filteredWorkOrders.length})
+                </h3>
                 <button
                   onClick={() =>
                     setViewMode(viewMode === "list" ? "grid" : "list")
@@ -512,20 +519,6 @@ const Project = () => {
                     <ViewList className="h-5 w-5" />
                   )}
                 </button>
-              </div>
-            </motion.div>
-
-            {/* Work Orders List/Grid */}
-            <motion.div
-              className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.3 }}
-            >
-              <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
-                <h3 className="text-lg font-semibold text-gray-800">
-                  工單清單 ({filteredWorkOrders.length})
-                </h3>
               </div>
 
               {filteredWorkOrders.length === 0 ? (
@@ -653,27 +646,23 @@ const Project = () => {
                       onClick={() => navigate(`/workorder/${workOrder.id}`)}
                     >
                       <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
-                            <ListAlt className="h-5 w-5" />
-                          </div>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`inline-flex aspect-square h-10 w-10 items-center justify-center rounded-full text-xs font-semibold ${getStatusColor(
+                              workOrder.state,
+                            )}`}
+                          >
+                            {getStatusIcon(workOrder.state)}
+                          </span>
                           <div>
                             <h4 className="font-medium text-gray-900">
                               {workOrder.work_order_name}
                             </h4>
                             <p className="text-sm text-gray-500">
-                              #{workOrder.id}
+                              {workOrder.workflow_type}
                             </p>
                           </div>
                         </div>
-                        <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(
-                            workOrder.state,
-                          )}`}
-                        >
-                          {getStatusIcon(workOrder.state)}
-                          {getStatusText(workOrder.state)}
-                        </span>
                       </div>
 
                       <div className="mt-4 grid grid-cols-2 gap-4">
@@ -685,30 +674,11 @@ const Project = () => {
                         </div>
                         <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {workOrder.estimated_hour
-                              ? `${workOrder.estimated_hour}h`
-                              : "N/A"}
-                          </div>
-                          <div className="text-xs text-gray-500">預估工時</div>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 grid grid-cols-2 gap-4">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">
                             {workOrder.lot?.lot_name ||
                               workOrder.lot_id ||
                               "N/A"}
                           </div>
                           <div className="text-xs text-gray-500">批次號</div>
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {workOrder.workflow_type?.name ||
-                              workOrder.workflow_type_id ||
-                              "N/A"}
-                          </div>
-                          <div className="text-xs text-gray-500">工作流程</div>
                         </div>
                       </div>
 
@@ -725,10 +695,6 @@ const Project = () => {
                           </div>
                           <div className="text-xs text-gray-500">截止日期</div>
                         </div>
-                      </div>
-
-                      <div className="mt-3 text-xs text-gray-500">
-                        創建時間：{formatDate(workOrder.created_at)}
                       </div>
                     </motion.div>
                   ))}

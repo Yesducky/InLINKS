@@ -190,7 +190,7 @@ const AddMaterial = () => {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("/api/add_material", {
+      const response = await fetch("/api/add_lot", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

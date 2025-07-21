@@ -7,15 +7,14 @@ import FetchDataFail from "../componenets/FetchDataFail.jsx";
 import {
   Inventory,
   Search,
-  FilterList,
   ViewList,
   ViewModule,
-  TrendingUp,
   Inventory2,
   CheckCircle,
   Category,
   AssignmentTurnedIn,
 } from "@mui/icons-material";
+import { ItemIcon, LotIcon } from "../componenets/CustomIcons.jsx";
 
 const InventoryOverview = () => {
   const navigate = useNavigate();
@@ -194,33 +193,6 @@ const InventoryOverview = () => {
 
       <div className="px-6 py-8">
         <div className="mx-auto max-w-6xl">
-          {/* Page Header */}
-          <motion.div
-            className="mb-8 flex items-center justify-between"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.3 }}
-          >
-            <div>
-              <p className="text-gray-600">管理和監控所有庫存物料</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() =>
-                  setViewMode(viewMode === "list" ? "grid" : "list")
-                }
-                className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
-              >
-                {viewMode === "list" ? (
-                  <ViewModule className="h-5 w-5" />
-                ) : (
-                  <ViewList className="h-5 w-5" />
-                )}
-                {/*{viewMode === "list" ? "網格檢視" : "列表檢視"}*/}
-              </button>
-            </div>
-          </motion.div>
-
           {/* Statistics Cards */}
           <motion.div
             className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6"
@@ -238,7 +210,7 @@ const InventoryOverview = () => {
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
-                  <Inventory className="h-5 w-5 text-blue-600" />
+                  <ItemIcon className="text-blue h-5 w-5" />
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">總物件</p>
@@ -259,7 +231,7 @@ const InventoryOverview = () => {
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <CheckCircle className="h-5 w-5 text-green-800" />
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">可用</p>
@@ -280,7 +252,7 @@ const InventoryOverview = () => {
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100">
-                  <AssignmentTurnedIn className="h-5 w-5 text-yellow-600" />
+                  <AssignmentTurnedIn className="h-5 w-5 text-yellow-800" />
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">已分配</p>
@@ -301,7 +273,7 @@ const InventoryOverview = () => {
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
-                  <Inventory2 className="h-5 w-5 text-red-600" />
+                  <Inventory2 className="h-5 w-5 text-red-800" />
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">已使用</p>
@@ -321,8 +293,8 @@ const InventoryOverview = () => {
               onClick={() => navigate("/lot_overview")}
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
-                  <TrendingUp className="h-5 w-5 text-purple-600" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-fuchsia-100">
+                  <LotIcon className="h-5 w-5 text-fuchsia-600" />
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">批次數</p>
@@ -341,8 +313,8 @@ const InventoryOverview = () => {
               transition={{ delay: 0.6 }}
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100">
-                  <Category className="h-5 w-5 text-indigo-600" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-100">
+                  <Category className="h-5 w-5 text-cyan-600" />
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">物料類型</p>
@@ -371,21 +343,6 @@ const InventoryOverview = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <FilterList className="h-5 w-5 text-gray-400" />
-                <select
-                  className="rounded-xl border border-gray-300 px-4 py-3 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
-                >
-                  <option value="all">所有狀態</option>
-                  <option value="available">可用</option>
-                  <option value="assigned">已分配</option>
-                  <option value="used">已使用</option>
-                </select>
-              </div>
-            </div>
           </motion.div>
 
           {/* Items List/Grid */}
@@ -395,10 +352,22 @@ const InventoryOverview = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.3 }}
           >
-            <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+            <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-6 py-4">
               <h3 className="text-lg font-semibold text-gray-800">
                 物料類型清單 ({filteredMaterialTypes.length})
               </h3>
+              <button
+                onClick={() =>
+                  setViewMode(viewMode === "list" ? "grid" : "list")
+                }
+                className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
+              >
+                {viewMode === "list" ? (
+                  <ViewModule className="h-5 w-5" />
+                ) : (
+                  <ViewList className="h-5 w-5" />
+                )}
+              </button>
             </div>
 
             {filteredMaterialTypes.length === 0 ? (
@@ -451,8 +420,11 @@ const InventoryOverview = () => {
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100">
-                              <Category className="h-4 w-4 text-indigo-600" />
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-100">
+                              <Category
+                                className="text-cyan-600"
+                                sx={{ fontSize: 18 }}
+                              />
                             </div>
                             <div className="ml-3">
                               <div className="text-sm font-medium text-gray-900">
@@ -514,16 +486,15 @@ const InventoryOverview = () => {
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100">
-                          <Category className="h-5 w-5 text-indigo-600" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-100">
+                          <Category className="h-5 w-5 text-cyan-600" />
                         </div>
                         <div>
                           <h4 className="font-medium text-gray-900">
                             {materialType.material_name}
                           </h4>
                           <p className="text-sm text-gray-500">
-                            {materialType.material_type_id} •{" "}
-                            {materialType.material_unit}
+                            {materialType.material_type_id}
                           </p>
                         </div>
                       </div>
