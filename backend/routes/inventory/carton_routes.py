@@ -84,21 +84,20 @@ def carton_detail(carton_id):
             'id': carton.id,
             'parent_lot_id': carton.parent_lot_id,
             'factory_lot_number': factory_lot_number,
-            'material_type_id': carton.material_type_id,
             'item_ids': carton.item_ids,
             'log_ids': carton.log_ids,
-            'created_at': carton.created_at.isoformat()
+            'created_at': carton.created_at.isoformat(),
+            'material_type': {
+                'id': carton.material_type_id,
+                'name': MaterialType.query.get(carton.material_type_id).material_name if carton.material_type_id else None,
+                'unit': MaterialType.query.get(carton.material_type_id).material_unit if carton.material_type_id else None
+            }
         })
 
     elif request.method == 'PUT':
         data = request.get_json()
         user_id = get_jwt_identity()
 
-        # Get old values for logging
-        old_data = {
-            'item_ids': carton.item_ids,
-            'log_ids': carton.log_ids
-        }
         
         new_data = {}
         if 'item_ids' in data:
@@ -131,6 +130,8 @@ def carton_detail(carton_id):
         except Exception as e:
             db.session.rollback()
             return jsonify({'error': 'Failed to delete carton', 'details': str(e)}), 500
+    return None
+
 
 @carton_bp.route('/cartons/<string:carton_id>/items', methods=['GET'])
 @jwt_required()
