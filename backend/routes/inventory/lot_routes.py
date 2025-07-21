@@ -3,10 +3,11 @@ Lot management routes
 """
 
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import Lot, Item, MaterialType
 from utils.db_utils import generate_id
 from utils.item_utils import get_item_with_children_recursive
+from utils.stock_logger import StockLogger
 from __init__ import db
 import json
 
@@ -73,6 +74,7 @@ def lots():
 
     elif request.method == 'POST':
         data = request.get_json()
+        user_id = get_jwt_identity()
         lot_id = generate_id('LOT', Lot)
 
         lot = Lot(
@@ -80,10 +82,16 @@ def lots():
             material_type_id=data['material_type_id'],
             factory_lot_number=data['factory_lot_number'],
             carton_ids=data.get('carton_ids', '[]'),
-            log_ids=data.get('log_ids', '[]')
+            log_ids=data.get('log_ids', '[]'),
+            created_user_id=user_id
         )
 
         db.session.add(lot)
+        db.session.flush()
+        
+        # Log lot creation
+        StockLogger.log_create(user_id, 'lot', lot_id, lot.factory_lot_number)
+        
         db.session.commit()
 
         return jsonify({'message': 'Lot created', 'id': lot_id}), 201
@@ -144,14 +152,37 @@ def lot_detail(lot_id):
 
     elif request.method == 'PUT':
         data = request.get_json()
-        lot.factory_lot_number = data.get('factory_lot_number', lot.factory_lot_number)
-        lot.carton_ids = data.get('carton_ids', lot.carton_ids)
+        user_id = get_jwt_identity()
+        
+        # Get old values for logging
+        old_data = {
+            'factory_lot_number': lot.factory_lot_number,
+            'carton_ids': lot.carton_ids
+        }
+        
+        new_data = {
+            'factory_lot_number': data.get('factory_lot_number', lot.factory_lot_number),
+            'carton_ids': data.get('carton_ids', lot.carton_ids)
+        }
+        
+        # Update the lot
+        lot.factory_lot_number = new_data['factory_lot_number']
+        lot.carton_ids = new_data['carton_ids']
         lot.log_ids = data.get('log_ids', lot.log_ids)
 
+        # Log the update
+        StockLogger.log_update(user_id, 'lot', lot_id, lot, new_data)
+        
         db.session.commit()
         return jsonify({'message': 'Lot updated'})
 
     elif request.method == 'DELETE':
+        user_id = get_jwt_identity()
+        factory_lot_number = lot.factory_lot_number
+        
+        # Log deletion before removing
+        StockLogger.log_delete(user_id, 'lot', lot_id, factory_lot_number)
+        
         db.session.delete(lot)
         db.session.commit()
         return jsonify({'message': 'Lot deleted'})

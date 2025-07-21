@@ -57,6 +57,8 @@ def stock_logs():
         except Exception as e:
             db.session.rollback()
             return jsonify({'error': 'Failed to create stock log', 'details': str(e)}), 500
+    return None
+
 
 @stock_bp.route('/stock_logs/<string:log_id>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
@@ -103,3 +105,36 @@ def stock_log_detail(log_id):
         except Exception as e:
             db.session.rollback()
             return jsonify({'error': 'Failed to delete stock log', 'details': str(e)}), 500
+    return None
+
+
+@stock_bp.route('/get_stock_logs', methods=['GET'])
+@jwt_required()
+def get_stock_logs():
+    item_id = request.args.get('item_id')
+    lot_id = request.args.get('lot_id')
+    carton_id = request.args.get('carton_id')
+
+    query = StockLog.query
+    if item_id:
+        query = query.filter_by(item_id=item_id)
+    if lot_id:
+        query = query.filter_by(lot_id=lot_id)
+    if carton_id:
+        query = query.filter_by(carton_id=carton_id)
+
+    logs = query.all()
+    return jsonify([
+        {
+            'id': log.id,
+            'date': log.date.isoformat() if log.date else None,
+            'user_id': log.user_id,
+            'description': log.description,
+            'item_id': getattr(log, 'item_id', None),
+            'lot_id': getattr(log, 'lot_id', None),
+            'carton_id': getattr(log, 'carton_id', None),
+            'task_id': getattr(log, 'task_id', None),
+            'created_at': log.created_at.isoformat() if log.created_at else None
+        }
+        for log in logs
+    ])

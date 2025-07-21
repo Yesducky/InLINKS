@@ -79,7 +79,6 @@ def init_default_data():
     db.session.commit()
 
     # Insert default permissions if not exist
-    from models import Permission
     default_permissions = [
         {'id': 'items.read', 'resource': 'items', 'action': 'read', 'description': 'View item details'},
         {'id': 'items.write', 'resource': 'items', 'action': 'write', 'description': 'Edit item details'},
@@ -115,7 +114,6 @@ def init_default_data():
     db.session.commit()
     
     # Assign all permissions to admin user type (UT001)
-    from models import UserTypePermission
     admin_user_type = UserType.query.filter_by(id='UT001').first()
     if admin_user_type:
         # Remove existing permissions for admin
@@ -209,7 +207,6 @@ def init_default_data():
             db.session.add(workflow_type)
 
     # Create default projects as sample
-    from models import Project, User
     from datetime import datetime, timedelta
     admin_user = User.query.filter_by(user_type_id='UT001').first()
     admin_id = admin_user.id if admin_user else 'USR001'  # fallback if no admin user exists
@@ -286,6 +283,9 @@ def init_default_data():
                 )
                 db.session.add(work_order)
                 sample_work_orders.append(wo_id)
+                # Add process log for work order creation
+                from utils.process_logger import ProcessLogger
+                ProcessLogger.log_create(admin_id, 'work_order', wo_id, work_order.work_order_name)
             project = Project(
                 id=prj['id'],
                 project_name=prj['project_name'],
@@ -302,4 +302,30 @@ def init_default_data():
                 created_at=prj['created_at'],
             )
             db.session.add(project)
+            # Add process log for project creation
+            from utils.process_logger import ProcessLogger
+            ProcessLogger.log_create(admin_id, 'project', prj['id'], prj['project_name'])
+    db.session.commit()
+
+    # Create default stock logs for sample items, lots, and cartons
+    from utils.stock_logger import StockLogger
+    for i in range(1, 3):
+        item_id = f"ITM00100{i}"
+        lot_id = f"LOT00100{i}"
+        carton_id = f"CTN00100{i}"
+
+        # Create stock log for item
+        item = Item.query.get(item_id)
+        if item:
+            StockLogger.log_create(admin_id, 'item', item.id, getattr(item, 'id', item.id))
+
+        # Create stock log for lot
+        lot = Lot.query.get(lot_id)
+        if lot:
+            StockLogger.log_create(admin_id, 'lot', lot.id, getattr(lot, 'factory_lot_number', lot.id))
+
+        # Create stock log for carton
+        carton = Carton.query.get(carton_id)
+        if carton:
+            StockLogger.log_create(admin_id, 'carton', carton.id, getattr(carton, 'id', carton.id))
     db.session.commit()

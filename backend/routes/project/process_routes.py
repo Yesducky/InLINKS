@@ -3,9 +3,10 @@ Process collection routes - Work Orders, Tasks, Sub Tasks
 """
 
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required
-from models import WorkOrder, Task, SubTask, ProcessLog
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from models import WorkOrder, Task, SubTask, ProcessLog, User
 from utils.db_utils import generate_id
+from utils.process_logger import ProcessLogger
 from __init__ import db
 
 process_bp = Blueprint('process', __name__)
@@ -36,6 +37,7 @@ def work_orders():
 
     elif request.method == 'POST':
         data = request.get_json()
+        current_user_id = get_jwt_identity()
         work_order_id = generate_id('WO', WorkOrder)
         work_order = WorkOrder(
             id=work_order_id,
@@ -50,10 +52,20 @@ def work_orders():
             workflow_type_id=data['workflow_type_id'],
             parent_project_id=data['parent_project_id'],
             lot_id=data.get('lot_id'),
-            task_ids=data.get('task_ids', '[]'),
-            process_log_ids=data.get('process_log_ids', '[]')
+            task_ids='[]',
+            process_log_ids='[]'
         )
         db.session.add(work_order)
+        db.session.flush()
+        
+        # Log the creation
+        ProcessLogger.log_create(
+            user_id=current_user_id,
+            entity_type='work_order',
+            entity_id=work_order_id,
+            entity_name=data['work_order_name']
+        )
+        
         db.session.commit()
         return jsonify({'message': 'Work order created', 'id': work_order_id}), 201
 
@@ -81,6 +93,22 @@ def work_order_detail(work_order_id):
         })
     elif request.method == 'PUT':
         data = request.get_json()
+        current_user_id = get_jwt_identity()
+        
+        # Track changes before updating
+        changes = {}
+        fields_to_check = ['work_order_name', 'description', 'state', 'start_date', 'due_date', 
+                          'completed_at', 'assignee_id', 'estimated_hour', 'workflow_type_id', 
+                          'parent_project_id', 'lot_id']
+        
+        for field in fields_to_check:
+            if field in data:
+                old_value = getattr(work_order, field)
+                new_value = data[field]
+                if old_value != new_value:
+                    changes[field] = {'old': old_value, 'new': new_value}
+        
+        # Update the work order
         work_order.work_order_name = data.get('work_order_name', work_order.work_order_name)
         work_order.description = data.get('description', work_order.description)
         work_order.state = data.get('state', work_order.state)
@@ -93,13 +121,36 @@ def work_order_detail(work_order_id):
         work_order.parent_project_id = data.get('parent_project_id', work_order.parent_project_id)
         work_order.lot_id = data.get('lot_id', work_order.lot_id)
         work_order.task_ids = data.get('task_ids', work_order.task_ids)
-        work_order.process_log_ids = data.get('process_log_ids', work_order.process_log_ids)
+        
+        # Log the changes
+        if changes:
+            ProcessLogger.log_update(
+                user_id=current_user_id,
+                entity_type='work_order',
+                entity_id=work_order_id,
+                old_obj=work_order,
+                new_data=data,
+                entity_name=work_order.work_order_name
+            )
+        
         db.session.commit()
         return jsonify({'message': 'Work order updated'})
     elif request.method == 'DELETE':
+        current_user_id = get_jwt_identity()
+        
+        # Log the deletion
+        ProcessLogger.log_delete(
+            user_id=current_user_id,
+            entity_type='work_order',
+            entity_id=work_order_id,
+            entity_name=work_order.work_order_name
+        )
+        
         db.session.delete(work_order)
         db.session.commit()
         return jsonify({'message': 'Work order deleted'})
+    return None
+
 
 # Tasks endpoints
 @process_bp.route('/tasks', methods=['GET', 'POST'])
@@ -124,6 +175,7 @@ def tasks():
 
     elif request.method == 'POST':
         data = request.get_json()
+        current_user_id = get_jwt_identity()
         task_id = generate_id('TSK', Task)
         task = Task(
             id=task_id,
@@ -136,9 +188,19 @@ def tasks():
             assignee_id=data.get('assignee_id'),
             estimated_hour=data.get('estimated_hour'),
             work_order_id=data['work_order_id'],
-            subtask_ids=data.get('subtask_ids', '[]')
+            subtask_ids='[]'
         )
         db.session.add(task)
+        db.session.flush()
+        
+        # Log the creation
+        ProcessLogger.log_create(
+            user_id=current_user_id,
+            entity_type='task',
+            entity_id=task_id,
+            entity_name=data['task_name']
+        )
+        
         db.session.commit()
         return jsonify({'message': 'Task created', 'id': task_id}), 201
 
@@ -163,6 +225,21 @@ def task_detail(task_id):
         })
     elif request.method == 'PUT':
         data = request.get_json()
+        current_user_id = get_jwt_identity()
+        
+        # Track changes before updating
+        changes = {}
+        fields_to_check = ['task_name', 'description', 'state', 'start_date', 'due_date', 
+                          'completed_at', 'assignee_id', 'estimated_hour', 'work_order_id']
+        
+        for field in fields_to_check:
+            if field in data:
+                old_value = getattr(task, field)
+                new_value = data[field]
+                if old_value != new_value:
+                    changes[field] = {'old': old_value, 'new': new_value}
+        
+        # Update the task
         task.task_name = data.get('task_name', task.task_name)
         task.description = data.get('description', task.description)
         task.state = data.get('state', task.state)
@@ -173,12 +250,36 @@ def task_detail(task_id):
         task.estimated_hour = data.get('estimated_hour', task.estimated_hour)
         task.work_order_id = data.get('work_order_id', task.work_order_id)
         task.subtask_ids = data.get('subtask_ids', task.subtask_ids)
+        
+        # Log the changes
+        if changes:
+            ProcessLogger.log_update(
+                user_id=current_user_id,
+                entity_type='task',
+                entity_id=task_id,
+                old_obj=task,
+                new_data=data,
+                entity_name=task.task_name
+            )
+        
         db.session.commit()
         return jsonify({'message': 'Task updated'})
     elif request.method == 'DELETE':
+        current_user_id = get_jwt_identity()
+        
+        # Log the deletion
+        ProcessLogger.log_delete(
+            user_id=current_user_id,
+            entity_type='task',
+            entity_id=task_id,
+            entity_name=task.task_name
+        )
+        
         db.session.delete(task)
         db.session.commit()
         return jsonify({'message': 'Task deleted'})
+    return None
+
 
 # Sub Tasks endpoints
 @process_bp.route('/subtasks', methods=['GET', 'POST'])
@@ -202,6 +303,7 @@ def subtasks():
 
     elif request.method == 'POST':
         data = request.get_json()
+        current_user_id = get_jwt_identity()
         subtask_id = generate_id('SUB', SubTask)
         subtask = SubTask(
             id=subtask_id,
@@ -216,8 +318,20 @@ def subtasks():
             task_id=data['task_id']
         )
         db.session.add(subtask)
+        db.session.flush()
+        
+        # Log the creation
+        ProcessLogger.log_create(
+            user_id=current_user_id,
+            entity_type='subtask',
+            entity_id=subtask_id,
+            entity_name=data['subtask_name']
+        )
+        
         db.session.commit()
         return jsonify({'message': 'Subtask created', 'id': subtask_id}), 201
+    return None
+
 
 @process_bp.route('/subtasks/<string:subtask_id>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
@@ -239,6 +353,21 @@ def subtask_detail(subtask_id):
         })
     elif request.method == 'PUT':
         data = request.get_json()
+        current_user_id = get_jwt_identity()
+        
+        # Track changes before updating
+        changes = {}
+        fields_to_check = ['subtask_name', 'description', 'state', 'start_date', 'due_date', 
+                          'completed_at', 'assignee_id', 'estimated_hour', 'task_id']
+        
+        for field in fields_to_check:
+            if field in data:
+                old_value = getattr(subtask, field)
+                new_value = data[field]
+                if old_value != new_value:
+                    changes[field] = {'old': old_value, 'new': new_value}
+        
+        # Update the subtask
         subtask.subtask_name = data.get('subtask_name', subtask.subtask_name)
         subtask.description = data.get('description', subtask.description)
         subtask.state = data.get('state', subtask.state)
@@ -248,39 +377,38 @@ def subtask_detail(subtask_id):
         subtask.assignee_id = data.get('assignee_id', subtask.assignee_id)
         subtask.estimated_hour = data.get('estimated_hour', subtask.estimated_hour)
         subtask.task_id = data.get('task_id', subtask.task_id)
+        
+        # Log the changes
+        if changes:
+            ProcessLogger.log_update(
+                user_id=current_user_id,
+                entity_type='subtask',
+                entity_id=subtask_id,
+                old_obj=subtask,
+                new_data=data,
+                entity_name=subtask.subtask_name
+            )
+        
         db.session.commit()
         return jsonify({'message': 'Subtask updated'})
     elif request.method == 'DELETE':
+        current_user_id = get_jwt_identity()
+        
+        # Log the deletion
+        ProcessLogger.log_delete(
+            user_id=current_user_id,
+            entity_type='subtask',
+            entity_id=subtask_id,
+            entity_name=subtask.subtask_name
+        )
+        
         db.session.delete(subtask)
         db.session.commit()
         return jsonify({'message': 'Subtask deleted'})
+    return None
 
-@process_bp.route('/projects/<string:project_id>/work_orders', methods=['GET'])
-@jwt_required()
-def get_project_work_orders(project_id):
-    work_orders = WorkOrder.query.filter_by(parent_project_id=project_id).all()
-    return jsonify([
-        {
-            'id': wo.id,
-            'work_order_name': wo.work_order_name,
-            'description': wo.description,
-            'state': wo.state,
-            'start_date': wo.start_date.isoformat() if wo.start_date else None,
-            'due_date': wo.due_date.isoformat() if wo.due_date else None,
-            'completed_at': wo.completed_at.isoformat() if wo.completed_at else None,
-            'assignee_id': wo.assignee_id,
-            'estimated_hour': wo.estimated_hour,
-            'workflow_type_id': wo.workflow_type_id,
-            'parent_project_id': wo.parent_project_id,
-            'lot_id': wo.lot_id,
-            'task_ids': wo.task_ids,
-            'process_log_ids': wo.process_log_ids,
-            'created_at': wo.created_at.isoformat() if wo.created_at else None
-        }
-        for wo in work_orders
-    ])
 
-@process_bp.route('/process_logs', methods=['GET'])
+@process_bp.route('/get_process_logs', methods=['GET'])
 @jwt_required()
 def get_process_logs():
     project_id = request.args.get('project_id')
