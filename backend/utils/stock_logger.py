@@ -19,38 +19,37 @@ class StockLogger:
 
     @staticmethod
     def _get_field_changes(old_obj, new_data):
-        """Compare old object with new data to identify changed fields"""
+        """Compare old object (dict or model) with new data to identify changed fields"""
         changes = {}
         if not old_obj:
             return changes
-            
         for field, new_value in new_data.items():
-            if hasattr(old_obj, field):
-                old_value = getattr(old_obj, field)
-                
-                # Handle datetime objects
-                if hasattr(old_value, 'isoformat'):
-                    old_value = old_value.isoformat() if old_value else None
-                if hasattr(new_value, 'isoformat'):
-                    new_value = new_value.isoformat() if new_value else None
-                    
-                # Handle JSON strings
-                if isinstance(old_value, str) and (old_value.startswith('[') or old_value.startswith('{')):
-                    try:
-                        old_value = json.loads(old_value)
-                    except:
-                        pass
-                if isinstance(new_value, str) and (new_value.startswith('[') or new_value.startswith('{')):
-                    try:
-                        new_value = json.loads(new_value)
-                    except:
-                        pass
-                        
-                if old_value != new_value:
-                    changes[field] = {
-                        'old': old_value,
-                        'new': new_value
-                    }
+            # Support both dict and object for old_obj
+            if isinstance(old_obj, dict):
+                old_value = old_obj.get(field, None)
+            else:
+                old_value = getattr(old_obj, field, None)
+            # Handle datetime objects
+            if hasattr(old_value, 'isoformat'):
+                old_value = old_value.isoformat() if old_value else None
+            if hasattr(new_value, 'isoformat'):
+                new_value = new_value.isoformat() if new_value else None
+            # Handle JSON strings
+            if isinstance(old_value, str) and (old_value.startswith('[') or old_value.startswith('{')):
+                try:
+                    old_value = json.loads(old_value)
+                except:
+                    pass
+            if isinstance(new_value, str) and (new_value.startswith('[') or new_value.startswith('{')):
+                try:
+                    new_value = json.loads(new_value)
+                except:
+                    pass
+            if old_value != new_value:
+                changes[field] = {
+                    'old': old_value,
+                    'new': new_value
+                }
         return changes
 
     @staticmethod
@@ -147,19 +146,21 @@ class StockLogger:
         log_id = generate_id('SL', StockLog)
         description = StockLogger._format_description(action_type, entity_type, entity_name, changes, details)
         
-        # For lots and cartons, we need to handle the NOT NULL constraint on item_id
-        # We'll create a dummy item ID for system-level logging or use a special convention
         log_entry = StockLog(
             id=log_id,
             user_id=user_id,
             description=description,
-            item_id='SYSTEM'  # Use SYSTEM as special identifier for non-item logs
+            item_id=None,
+            carton_id=None,
+            lot_id=None
         )
-        
         # Set appropriate foreign keys
         if entity_type == 'item':
             log_entry.item_id = entity_id
-        
+        elif entity_type == 'carton':
+            log_entry.carton_id = entity_id
+        elif entity_type == 'lot':
+            log_entry.lot_id = entity_id
         db.session.add(log_entry)
         
         # Add log to entity's log_ids
@@ -185,6 +186,7 @@ class StockLogger:
     def log_update(user_id, entity_type, entity_id, old_obj, new_data, entity_name=None):
         """Log updates to an existing entity"""
         changes = StockLogger._get_field_changes(old_obj, new_data)
+        print(f"Detected changes: {changes}")
         if not changes:
             return None
             

@@ -99,7 +99,7 @@ class StockLog(db.Model):
     user_id = db.Column(db.String(20), db.ForeignKey('users.id'), nullable=False)
     description = db.Column(db.Text)
     task_id = db.Column(db.String(20))
-    item_id = db.Column(db.String(20), db.ForeignKey('items.id'), nullable=False)
+    item_id = db.Column(db.String(20), db.ForeignKey('items.id'), nullable=True)
     carton_id = db.Column(db.String(20), db.ForeignKey('cartons.id'), nullable=True)
     lot_id = db.Column(db.String(20), db.ForeignKey('lots.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=get_hk_time)

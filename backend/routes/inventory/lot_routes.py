@@ -4,7 +4,7 @@ Lot management routes
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import Lot, Item, MaterialType
+from models import Lot, Item, MaterialType, Carton, StockLog
 from utils.db_utils import generate_id
 from utils.item_utils import get_item_with_children_recursive
 from utils.stock_logger import StockLogger
@@ -265,3 +265,144 @@ def lots_by_material_type(material_type_id):
 
     except Exception as e:
         return jsonify({'error': f'Failed to get lots for material type: {str(e)}'}), 500
+
+@lot_bp.route('/add_lot', methods=['POST'])
+@jwt_required()
+def add_lot():
+    data = request.get_json()
+    current_user_id = get_jwt_identity()
+
+    # Extract required fields
+    material_type_id = data.get('material_type_id')
+    factory_lot_number = data.get('factory_lot_number')
+    total_quantity = data.get('total_quantity')
+    carton_count = data.get('carton_count')
+    items_per_carton = data.get('items_per_carton')
+    item_quantity = data.get('item_quantity')
+
+    # Validate required fields
+    if not all([material_type_id, factory_lot_number, total_quantity, carton_count, items_per_carton]):
+        return jsonify({'error': 'All fields are required'}), 400
+
+    try:
+        # Convert to appropriate types
+        total_quantity = float(total_quantity)
+        carton_count = int(carton_count)
+        items_per_carton = int(items_per_carton)
+        item_quantity = float(item_quantity)
+
+        # Validate the math
+        if total_quantity != carton_count * items_per_carton * item_quantity:
+            return jsonify({
+                'error': f'Invalid quantities: total_quantity ({total_quantity}) must equal carton_count ({carton_count}) × items_per_carton ({items_per_carton}) × item_quantity ({item_quantity})'
+            }), 400
+
+        if carton_count <= 0 or items_per_carton <= 0 or total_quantity <= 0 or item_quantity <= 0:
+            return jsonify({'error': 'All quantities must be positive numbers'}), 400
+
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Quantities must be valid numbers'}), 400
+
+    try:
+        # Start transaction
+        db.session.begin()
+
+        # 1. Pre-generate all IDs to avoid conflicts
+        lot_id = generate_id('LOT', Lot)
+
+        # Get the latest carton ID and generate sequential IDs
+        latest_carton = Carton.query.filter(Carton.id.like('CTN%')).order_by(Carton.id.desc()).first()
+        carton_start_num = int(latest_carton.id[3:]) + 1 if latest_carton else 1
+
+        # Get the latest item ID and generate sequential IDs
+        latest_item = Item.query.filter(Item.id.like('ITM%')).order_by(Item.id.desc()).first()
+        item_start_num = int(latest_item.id[3:]) + 1 if latest_item else 1
+
+        # Generate all carton IDs sequentially
+        carton_ids = []
+        for i in range(carton_count):
+            carton_id = f'CTN{carton_start_num + i:05d}'
+            carton_ids.append(carton_id)
+
+        # Generate all item IDs sequentially
+        all_item_ids = []
+        item_ids_per_carton = []
+        item_counter = 0
+        for i in range(carton_count):
+            item_ids = []
+            for j in range(items_per_carton):
+                item_id = f'ITM{item_start_num + item_counter:06d}'
+                item_ids.append(item_id)
+                all_item_ids.append(item_id)
+                item_counter += 1
+            item_ids_per_carton.append(item_ids)
+
+        # 2. Create Items and their StockLogs
+        item_stock_log_ids = []
+        for carton_idx, carton_id in enumerate(carton_ids):
+            item_ids = item_ids_per_carton[carton_idx]
+            for item_id in item_ids:
+                # Create Item
+                item = Item(
+                    id=item_id,
+                    material_type_id=material_type_id,
+                    quantity=item_quantity,
+                    status='available',
+                    parent_id=carton_id,
+                    child_item_ids='[]',
+                    log_ids='[]',
+                    task_ids='[]'
+                )
+                db.session.add(item)
+                # Use StockLogger to log item creation
+                item_log_id = StockLogger.log_create(current_user_id, 'item', item_id)
+                item_stock_log_ids.append(item_log_id)
+
+        # 3. Create Cartons and their StockLogs
+        carton_stock_log_ids = []
+        for carton_idx, carton_id in enumerate(carton_ids):
+            item_ids = item_ids_per_carton[carton_idx]
+            carton = Carton(
+                id=carton_id,
+                parent_lot_id=lot_id,
+                material_type_id=material_type_id,
+                item_ids=json.dumps(item_ids),
+                log_ids='[]'
+            )
+            db.session.add(carton)
+            # Use StockLogger to log carton creation
+            carton_log_id = StockLogger.log_create(current_user_id, 'carton', carton_id)
+            carton_stock_log_ids.append(carton_log_id)
+
+        # 4. Create Lot with carton IDs and its StockLog
+        lot = Lot(
+            id=lot_id,
+            material_type_id=material_type_id,
+            factory_lot_number=factory_lot_number,
+            carton_ids=json.dumps(carton_ids),
+            log_ids='[]',
+            created_user_id=current_user_id
+        )
+        db.session.add(lot)
+        # Use StockLogger to log lot creation
+        lot_stock_log_id = StockLogger.log_create(current_user_id, 'lot', lot_id)
+        lot.log_ids = json.dumps([lot_stock_log_id])
+
+        # Commit transaction
+        db.session.commit()
+
+        return jsonify({
+            'message': 'Material added successfully',
+            'lot_id': lot_id,
+            'carton_count': carton_count,
+            'total_items': total_quantity,
+            'carton_ids': carton_ids,
+            'lot_stock_log_id': lot_stock_log_id,
+            'carton_stock_log_ids': carton_stock_log_ids,
+            'item_stock_log_ids': item_stock_log_ids
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error adding material: {str(e)}")
+        return jsonify({'error': f'Failed to add material: {str(e)}'}), 500

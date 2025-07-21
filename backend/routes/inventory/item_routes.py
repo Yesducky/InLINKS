@@ -107,6 +107,8 @@ def items():
         except Exception as e:
             db.session.rollback()
             return jsonify({'error': 'Failed to create item', 'details': str(e)}), 500
+    return None
+
 
 @item_bp.route('/items/<string:item_id>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
@@ -152,41 +154,58 @@ def item_detail(item_id):
 
     elif request.method == 'PUT':
         data = request.get_json()
-        user_id = get_jwt_identity()
+        # Validate required fields
 
-        # Get old values for logging
+        user_id = get_jwt_identity()
         old_data = {
+            'material_type_id': item.material_type_id,
             'quantity': item.quantity,
             'status': item.status,
             'parent_id': item.parent_id,
             'child_item_ids': item.child_item_ids,
-            'task_ids': item.task_ids
+            'log_ids': item.log_ids,
+            'task_ids': item.task_ids,
         }
-        
-        new_data = {}
-        if 'quantity' in data:
-            new_data['quantity'] = data['quantity']
-            item.quantity = data['quantity']
-        if 'status' in data:
-            new_data['status'] = data['status']
-            item.status = data['status']
-        if 'parent_id' in data:
-            new_data['parent_id'] = data['parent_id']
-            item.parent_id = data['parent_id']
-        if 'child_item_ids' in data:
-            new_data['child_item_ids'] = data['child_item_ids']
-            item.child_item_ids = data['child_item_ids']
-        if 'log_ids' in data:
-            new_data['log_ids'] = data['log_ids']
-            item.log_ids = data['log_ids']
-        if 'task_ids' in data:
-            new_data['task_ids'] = data['task_ids']
-            item.task_ids = data['task_ids']
+
+        new_data = {
+            'material_type_id': data.get('material_type_id', item.material_type_id),
+            'quantity': data.get('quantity', item.quantity),
+            'status': data.get('status', item.status),
+            'parent_id': data.get('parent_id', item.parent_id),
+            'child_item_ids': data.get('child_item_ids', item.child_item_ids),
+            'log_ids': data.get('log_ids', item.log_ids),
+            'task_ids': data.get('task_ids', item.task_ids)
+        }
+
+        # Validate required fields
+        if not new_data['material_type_id']:
+            return jsonify({'error': 'material_type_id is required'}), 400
+        if new_data['quantity'] is None:
+            return jsonify({'error': 'quantity is required'}), 400
+        if new_data['status'] not in ['available', 'used', 'assigned']:
+            return jsonify({'error': 'status must be one of: available, used, assigned'}), 400
+        if new_data['parent_id'] and new_data['parent_id'] == item.id:
+            return jsonify({'error': 'parent_id cannot be the same as item id'}), 400
+        if new_data['child_item_ids'] is None:
+            new_data['child_item_ids'] = '[]'
+        if new_data['task_ids'] is None:
+            new_data['task_ids'] = '[]'
+        if new_data['log_ids'] is None:
+            new_data['log_ids'] = '[]'
+        # Update item fields
+        item.material_type_id = new_data['material_type_id']
+        item.quantity = new_data['quantity']
+        item.status = new_data['status']
+        item.parent_id = new_data['parent_id']
+        item.child_item_ids = new_data['child_item_ids']
+        item.log_ids = new_data['log_ids']
+        item.task_ids = new_data['task_ids']
 
         try:
-            # Log the update
-            StockLogger.log_update(user_id, 'item', item_id, item, new_data)
-            
+            # Log the update (compare old_data to new_data)
+            print(f"Old Data: {old_data}")
+            print(f"New Data: {new_data}")
+            StockLogger.log_update(user_id, 'item', item_id, old_data, new_data)
             db.session.commit()
             return jsonify({'message': 'Item updated successfully'})
         except Exception as e:
@@ -206,6 +225,8 @@ def item_detail(item_id):
         except Exception as e:
             db.session.rollback()
             return jsonify({'error': 'Failed to delete item', 'details': str(e)}), 500
+    return None
+
 
 @item_bp.route('/cartons/<string:carton_id>/items', methods=['GET'])
 @jwt_required()
