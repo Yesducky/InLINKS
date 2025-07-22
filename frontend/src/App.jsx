@@ -171,6 +171,7 @@ const AnimatedRoutes = ({ user, handleLogin, handleLogout }) => {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/workorder/:workOrderId"
           element={

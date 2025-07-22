@@ -2,18 +2,18 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import Header from "../componenets/Header.jsx";
-import {
-  Assignment,
-  Search,
-  ViewList,
-  ViewModule,
-  CheckCircle,
-  HourglassEmpty,
-  HourglassFull,
-} from "@mui/icons-material";
+import { Search, ViewList, ViewModule } from "@mui/icons-material";
+import EditProjectModal from "../componenets/EditProjectModal.jsx";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
 import PermissionGate from "../componenets/PermissionGate";
+import AddButton from "../componenets/AddButton.jsx";
+import {
+  ProjectIcon,
+  ActiveIcon,
+  PendingIcon,
+  CompletedIcon,
+} from "../componenets/CustomIcons.jsx";
 
 const ProjectManagement = () => {
   const [projects, setProjects] = useState([]);
@@ -21,8 +21,8 @@ const ProjectManagement = () => {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [showAddModal, setShowAddModal] = useState(false);
   const [viewMode, setViewMode] = useState("grid");
-  const [selectedProjectId, setSelectedProjectId] = useState(null);
   const navigate = useNavigate();
 
   const [stats, setStats] = useState({
@@ -109,8 +109,8 @@ const ProjectManagement = () => {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
+      // hour: "2-digit",
+      // minute: "2-digit",
     });
   };
 
@@ -130,13 +130,13 @@ const ProjectManagement = () => {
   const getStatusIcon = (status) => {
     switch (status) {
       case "active":
-        return <CheckCircle className="h-4 w-4" />;
+        return <ActiveIcon className="h-6 w-6" />;
       case "completed":
-        return <HourglassFull className="h-4 w-4" />;
+        return <CompletedIcon className="h-6 w-6" />;
       case "pending":
-        return <HourglassEmpty className="h-4 w-4" />;
+        return <PendingIcon className="h-6 w-6" />;
       default:
-        return <Assignment className="h-4 w-4" />;
+        return <ProjectIcon className="h-6 w-6" />;
     }
   };
 
@@ -254,7 +254,7 @@ const ProjectManagement = () => {
             >
               {/* All Projects */}
               <motion.div
-                className={`cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "all" ? "ring-2 ring-blue-500" : ""}`}
+                className={`cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "all" ? "ring-2 ring-orange-500" : ""}`}
                 variants={cardVariants}
                 initial="hidden"
                 animate="visible"
@@ -262,8 +262,8 @@ const ProjectManagement = () => {
                 onClick={() => setSelectedStatus("all")}
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-                    <Assignment className="text-blue h-6 w-6" />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
+                    <ProjectIcon className="h-6 w-6 text-orange-600" />
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">所有項目</p>
@@ -285,7 +285,7 @@ const ProjectManagement = () => {
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-                    <CheckCircle className="h-6 w-6 text-green-600" />
+                    <ActiveIcon className="h-6 w-6 text-green-600" />
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">進行中</p>
@@ -307,7 +307,7 @@ const ProjectManagement = () => {
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100">
-                    <HourglassEmpty className="h-6 w-6 text-yellow-600" />
+                    <PendingIcon className="h-6 w-6 text-yellow-600" />
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">待開始</p>
@@ -329,7 +329,7 @@ const ProjectManagement = () => {
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-                    <HourglassFull className="h-6 w-6 text-red-600" />
+                    <CompletedIcon className="h-6 w-6 text-red-600" />
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">已完成</p>
@@ -386,7 +386,7 @@ const ProjectManagement = () => {
 
               {filteredProjects.length === 0 ? (
                 <div className="p-8 text-center">
-                  <Assignment className="mx-auto h-12 w-12 text-gray-400" />
+                  <ProjectIcon className="mx-auto h-12 w-12 text-gray-400" />
                   <p className="mt-2 text-gray-500">
                     {searchTerm || selectedStatus !== "all"
                       ? "無符合的項目"
@@ -433,8 +433,8 @@ const ProjectManagement = () => {
                         >
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
-                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100">
-                                <Assignment className="text-purple h-4 w-4" />
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100">
+                                <ProjectIcon className="h-4 w-4 text-orange-600" />
                               </div>
                               <div className="ml-3">
                                 <div className="text-sm font-medium text-gray-900">
@@ -492,9 +492,9 @@ const ProjectManagement = () => {
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex w-full items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full">
                             <span
-                              className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(
+                              className={`inline-flex items-center rounded-full p-2 text-xs font-semibold ${getStatusColor(
                                 project.state,
                               )}`}
                             >
@@ -550,6 +550,17 @@ const ProjectManagement = () => {
           </div>
         </div>
       </motion.div>
+      <EditProjectModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        project={null}
+        onSave={() => {
+          fetchProjects();
+        }}
+      />
+      <PermissionGate resource="project" action="create" show={false}>
+        <AddButton action={() => setShowAddModal(true)} />
+      </PermissionGate>
     </PermissionGate>
   );
 };

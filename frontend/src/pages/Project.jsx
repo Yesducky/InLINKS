@@ -2,20 +2,22 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "../componenets/Header.jsx";
-import {
-  Assignment,
-  Search,
-  ViewList,
-  ViewModule,
-  CheckCircle,
-  HourglassEmpty,
-  HourglassFull,
-  ListAlt,
-} from "@mui/icons-material";
+import { Search, ViewList, ViewModule, Edit } from "@mui/icons-material";
+import EditProjectModal from "../componenets/EditProjectModal.jsx";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
 import PermissionGate from "../componenets/PermissionGate";
 import ProcessLog from "../componenets/ProcessLog";
+import LogButton from "../componenets/LogButton";
+import {
+  ProjectIcon,
+  WorkOrderIcon,
+  PendingIcon,
+  ActiveIcon,
+  CompletedIcon,
+} from "../componenets/customIcons.jsx";
+import AddButton from "../componenets/AddButton.jsx";
+import EditWorkOrderModal from "../componenets/EditWorkOrderModal.jsx";
 
 const Project = () => {
   const { projectId } = useParams();
@@ -27,7 +29,9 @@ const Project = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [viewMode, setViewMode] = useState("grid");
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showLogModal, setShowLogModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const [stats, setStats] = useState({
     totalWorkOrders: 0,
@@ -82,13 +86,13 @@ const Project = () => {
         // Calculate stats
         const totalWorkOrders = workOrders.length;
         const activeWorkOrders = workOrders.filter(
-          (wo) => wo.status === "active",
+          (wo) => wo.state === "active",
         ).length;
         const completedWorkOrders = workOrders.filter(
-          (wo) => wo.status === "completed",
+          (wo) => wo.state === "completed",
         ).length;
         const pendingWorkOrders = workOrders.filter(
-          (wo) => wo.status === "pending",
+          (wo) => wo.state === "pending",
         ).length;
 
         setStats({
@@ -130,12 +134,12 @@ const Project = () => {
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("zh-TW", {
+    return new Date(dateString).toLocaleDateString("zh-hk", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
+      // hour: "2-digit",
+      // minute: "2-digit",
     });
   };
 
@@ -155,13 +159,13 @@ const Project = () => {
   const getStatusIcon = (status) => {
     switch (status) {
       case "active":
-        return <CheckCircle className="h-4 w-4" />;
+        return <ActiveIcon className="h-4 w-4" />;
       case "completed":
-        return <HourglassFull className="h-4 w-4" />;
+        return <CompletedIcon className="h-4 w-4" />;
       case "pending":
-        return <HourglassEmpty className="h-4 w-4" />;
+        return <PendingIcon className="h-4 w-4" />;
       default:
-        return <ListAlt className="h-4 w-4" />;
+        return <WorkOrderIcon className="h-4 w-4" />;
     }
   };
 
@@ -267,7 +271,7 @@ const Project = () => {
               >
                 <div className="flex items-start gap-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
-                    <Assignment className="h-6 w-6 text-purple-600" />
+                    <ProjectIcon className="h-6 w-6 text-purple-600" />
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-gray-800">
@@ -372,14 +376,21 @@ const Project = () => {
                       {formatDate(projectInfo.created_at)}
                     </div>
                   </div>
-                  <div>
-                    <button
-                      onClick={() => setShowLogModal(true)}
-                      className="text-blue mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-100 px-4 py-2 text-sm font-medium hover:bg-blue-200"
+                  <div className={`flex justify-between`}>
+                    <LogButton setShowLogModal={setShowLogModal} />
+                    <PermissionGate
+                      resource="project"
+                      action="write"
+                      show={false}
                     >
-                      <Assignment className="h-5 w-5" />
-                      查看日誌
-                    </button>
+                      <button
+                        onClick={() => setShowEditModal(true)}
+                        className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
+                      >
+                        <Edit className="h-4 w-4" />
+                        編輯
+                      </button>
+                    </PermissionGate>
                   </div>
                 </div>
               </motion.div>
@@ -402,7 +413,7 @@ const Project = () => {
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-                    <Assignment className="text-blue h-6 w-6" />
+                    <WorkOrderIcon className="text-blue h-6 w-6" />
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">總工單</p>
@@ -423,7 +434,7 @@ const Project = () => {
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-                    <CheckCircle className="h-6 w-6 text-green-600" />
+                    <ActiveIcon className="h-6 w-6 text-green-600" />
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">進行中</p>
@@ -444,7 +455,7 @@ const Project = () => {
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100">
-                    <HourglassEmpty className="h-6 w-6 text-yellow-600" />
+                    <PendingIcon className="h-6 w-6 text-yellow-600" />
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">待開始</p>
@@ -456,7 +467,7 @@ const Project = () => {
               </motion.div>
 
               <motion.div
-                className={`cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "completed" ? "ring-2 ring-blue-500" : ""}`}
+                className={`cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "completed" ? "ring-2 ring-red-500" : ""}`}
                 variants={cardVariants}
                 initial="hidden"
                 animate="visible"
@@ -465,7 +476,7 @@ const Project = () => {
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-                    <HourglassFull className="h-6 w-6 text-red-600" />
+                    <CompletedIcon className="h-6 w-6 text-red-600" />
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">已完成</p>
@@ -523,7 +534,7 @@ const Project = () => {
 
               {filteredWorkOrders.length === 0 ? (
                 <div className="p-8 text-center">
-                  <ListAlt className="mx-auto h-12 w-12 text-gray-400" />
+                  <WorkOrderIcon className="mx-auto h-12 w-12 text-gray-400" />
                   <p className="mt-2 text-gray-500">
                     {searchTerm || selectedStatus !== "all"
                       ? "沒有符合條件的工單"
@@ -580,7 +591,7 @@ const Project = () => {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100">
-                                <ListAlt className="text-purple h-4 w-4" />
+                                <WorkOrderIcon className="text-purple h-4 w-4" />
                               </div>
                               <div className="ml-3">
                                 <div className="text-sm font-medium text-gray-900">
@@ -710,6 +721,28 @@ const Project = () => {
         entityType="project"
         entityId={projectId}
       />
+      <EditProjectModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        project={projectInfo}
+        onSave={(updatedProject) => {
+          setProjectInfo(updatedProject);
+          fetchProjectWorkOrders();
+          fetchProjectInfo();
+        }}
+      />
+      <EditWorkOrderModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        projectId={projectId}
+        onSave={() => {
+          fetchProjectWorkOrders();
+          fetchProjectInfo();
+        }}
+      />
+      <PermissionGate resource="workorder" action="create" show={false}>
+        <AddButton action={() => setShowAddModal(true)} />
+      </PermissionGate>
     </PermissionGate>
   );
 };

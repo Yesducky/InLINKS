@@ -9,6 +9,10 @@ import QrCodeIcon from "../assets/icons/qr-code.svg?react";
 import SettingIcon from "../assets/icons/setting.svg?react";
 import UsedIcon from "../assets/icons/used.svg?react";
 import UserManagementIcon from "../assets/icons/user-management.svg?react";
+import ActiveIcon from "../assets/icons/active.svg?react";
+import CompletedIcon from "../assets/icons/complete.svg?react";
+import PendingIcon from "../assets/icons/pending.svg?react";
+import WorkOrderIcon from "../assets/icons/work-order.svg?react";
 
 export {
   LotIcon,
@@ -22,4 +26,8 @@ export {
   UserManagementIcon,
   SettingIcon,
   UsedIcon,
+  ActiveIcon,
+  CompletedIcon,
+  PendingIcon,
+  WorkOrderIcon,
 };
