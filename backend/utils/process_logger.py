@@ -19,38 +19,38 @@ class ProcessLogger:
 
     @staticmethod
     def _get_field_changes(old_obj, new_data):
-        """Compare old object with new data to identify changed fields"""
+        """Compare old object (dict or model) with new data to identify changed fields"""
         changes = {}
         if not old_obj:
             return changes
-            
         for field, new_value in new_data.items():
-            if hasattr(old_obj, field):
-                old_value = getattr(old_obj, field)
-                
-                # Handle datetime objects
-                if hasattr(old_value, 'isoformat'):
-                    old_value = old_value.isoformat() if old_value else None
-                if hasattr(new_value, 'isoformat'):
-                    new_value = new_value.isoformat() if new_value else None
-                    
-                # Handle JSON strings
-                if isinstance(old_value, str) and (old_value.startswith('[') or old_value.startswith('{')):
-                    try:
-                        old_value = json.loads(old_value)
-                    except:
-                        pass
-                if isinstance(new_value, str) and (new_value.startswith('[') or new_value.startswith('{')):
-                    try:
-                        new_value = json.loads(new_value)
-                    except:
-                        pass
-                        
-                if old_value != new_value:
-                    changes[field] = {
-                        'old': old_value,
-                        'new': new_value
-                    }
+            # Support both dict and object for old_obj
+            if isinstance(old_obj, dict):
+                old_value = old_obj.get(field, None)
+            else:
+                old_value = getattr(old_obj, field, None)
+            # Handle datetime objects
+            if hasattr(old_value, 'isoformat'):
+                old_value = old_value.isoformat() if old_value else None
+            if hasattr(new_value, 'isoformat'):
+                new_value = new_value.isoformat() if new_value else None
+            # Handle JSON strings
+            if isinstance(old_value, str) and (old_value.startswith('[') or old_value.startswith('{')):
+                try:
+                    old_value = json.loads(old_value)
+                except:
+                    pass
+            if isinstance(new_value, str) and (new_value.startswith('[') or new_value.startswith('{')):
+                try:
+                    new_value = json.loads(new_value)
+                except:
+                    pass
+            # print(field, new_value, old_value, new_value==old_value, )  # Debugging line
+            if old_value != new_value:
+                changes[field] = {
+                    'old': old_value,
+                    'new': new_value
+                }
         return changes
 
     @staticmethod
@@ -103,21 +103,16 @@ class ProcessLogger:
         
         # Get the entity based on type
         entity = None
-        entity_class = None
-        
+
         if entity_type == 'project':
             entity = Project.query.get(entity_id)
-            entity_class = Project
         elif entity_type == 'work_order':
             entity = WorkOrder.query.get(entity_id)
-            entity_class = WorkOrder
         elif entity_type == 'task':
             entity = Task.query.get(entity_id)
-            entity_class = Task
         elif entity_type == 'subtask':
             entity = SubTask.query.get(entity_id)
-            entity_class = SubTask
-            
+
         entity_name = entity_name or (entity.task_name if hasattr(entity, 'task_name') else 
                                      entity.work_order_name if hasattr(entity, 'work_order_name') else 
                                      entity.subtask_name if hasattr(entity, 'subtask_name') else 
@@ -182,6 +177,7 @@ class ProcessLogger:
     def log_update(user_id, entity_type, entity_id, old_obj, new_data, entity_name=None):
         """Log updates to an existing entity"""
         changes = ProcessLogger._get_field_changes(old_obj, new_data)
+        print(f"Changes detected: {changes}")  # Debugging line
         if not changes:
             return None
             

@@ -4,9 +4,19 @@ from models import Project, WorkOrder, User
 from utils.db_utils import generate_id
 from utils.process_logger import ProcessLogger
 from __init__ import db
+import datetime
 
 
 project_bp = Blueprint('project', __name__)
+
+def parse_date(date_str):
+    if date_str is None:
+        return None
+    try:
+        return datetime.datetime.fromisoformat(date_str)
+    except ValueError:
+        return None
+
 
 @project_bp.route('/projects', methods=['GET', 'POST'])
 @jwt_required()
@@ -37,10 +47,10 @@ def projects():
             project_name=data['project_name'],
             description=data.get('description'),
             state=data.get('state'),
-            start_date=data.get('start_date'),
-            due_date=data.get('due_date'),
+            start_date= parse_date(data.get('start_date')),
+            due_date= parse_date(data.get('due_date')),
             completed_at=data.get('completed_at'),
-            person_in_charge_id=data['person_in_charge_id'],
+            person_in_charge_id=current_user_id,
             work_order_ids=data.get('work_order_ids', '[]'),
             process_log_ids='[]',
             priority=data.get('priority', 'medium'),
@@ -85,42 +95,36 @@ def project_detail(project_id):
     elif request.method == 'PUT':
         data = request.get_json()
         current_user_id = get_jwt_identity()
-        
-        # Track changes before updating
-        changes = {}
-        fields_to_check = ['project_name', 'description', 'state', 'start_date', 'due_date', 
-                          'completed_at', 'person_in_charge_id', 'priority', 'status']
-        
-        for field in fields_to_check:
-            if field in data:
-                old_value = getattr(project, field)
-                new_value = data[field]
-                if old_value != new_value:
-                    changes[field] = {'old': old_value, 'new': new_value}
-        
-        # Update the project
-        project.project_name = data.get('project_name', project.project_name)
-        project.description = data.get('description', project.description)
-        project.state = data.get('state', project.state)
-        project.start_date = data.get('start_date', project.start_date)
-        project.due_date = data.get('due_date', project.due_date)
-        project.completed_at = data.get('completed_at', project.completed_at)
-        project.person_in_charge_id = data.get('person_in_charge_id', project.person_in_charge_id)
-        project.work_order_ids = data.get('work_order_ids', project.work_order_ids)
-        project.priority = data.get('priority', project.priority)
-        project.status = data.get('status', project.status)
-        
-        # Log the changes
-        if changes:
-            ProcessLogger.log_update(
-                user_id=current_user_id,
-                entity_type='project',
-                entity_id=project_id,
-                old_obj=project,
-                new_data=data,
-                entity_name=project.project_name
-            )
-        
+
+        # Prepare old and new data for logging
+        old_data = {field: getattr(project, field) for field in [
+            'project_name', 'description', 'state', 'start_date', 'due_date',
+            'completed_at', 'person_in_charge_id', 'work_order_ids', 'priority', 'status']}
+
+        # Use data.get with fallback to old value, and parse dates only if present
+        new_data = {}
+        for field in old_data:
+            if field in ['start_date', 'due_date']:
+                val = data.get(field)
+                new_data[field] = parse_date(val) if val is not None else old_data[field]
+            elif field == 'completed_at':
+                new_data[field] = datetime.datetime.now() if data.get('state', project.state) == 'completed' else old_data[field]
+            else:
+                new_data[field] = data.get(field, old_data[field])
+
+        # Update the project attributes
+        for field in new_data:
+            setattr(project, field, new_data[field])
+
+        ProcessLogger.log_update(
+            user_id=current_user_id,
+            entity_type='project',
+            entity_id=project_id,
+            old_obj=old_data,
+            new_data=new_data,
+            entity_name=project.project_name
+        )
+
         db.session.commit()
         return jsonify({'message': 'Project updated'})
     elif request.method == 'DELETE':

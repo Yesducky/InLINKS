@@ -34,6 +34,7 @@ def create_app():
     from routes.inventory.item_routes import item_bp
     from routes.common.permission_routes import permission_bp
     from backend.routes.project.project_routes import project_bp
+    from backend.routes.project.workorder_routes import workorder_bp
 
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(common_bp, url_prefix='/api')
@@ -47,6 +48,7 @@ def create_app():
     app.register_blueprint(item_bp, url_prefix='/api')
     app.register_blueprint(permission_bp, url_prefix='/api')
     app.register_blueprint(project_bp, url_prefix='/api')
+    app.register_blueprint(workorder_bp, url_prefix='/api')
 
     # Create tables and initialize data
     with app.app_context():
