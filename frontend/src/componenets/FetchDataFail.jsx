@@ -38,16 +38,16 @@ const FetchDataFail = ({
       transition={pageTransition}
     >
       <motion.div
-        className="mb-4 flex h-16 w-16 items-center justify-center self-center rounded-full bg-red-100"
+        className="mb-4 flex h-20 w-20 items-center justify-center self-center rounded-full bg-red-100"
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
       >
-        <ErrorOutline className="text-red-600" sx={{ fontSize: 40 }} />
+        <ErrorOutline className="text-red-600" sx={{ fontSize: 60 }} />
       </motion.div>
 
       <motion.div
-        className="text-center"
+        className="flex flex-col items-center justify-center self-center text-center"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.3 }}
@@ -61,7 +61,7 @@ const FetchDataFail = ({
         {showRetryButton && onRetry && (
           <motion.button
             onClick={onRetry}
-            className="bg-lightblue hover:bg-blue bottom-0 cursor-pointer self-end rounded-xl px-6 py-3 font-medium text-white shadow-lg transition-all duration-200 hover:shadow-xl"
+            className="bg-lightblue hover:bg-blue bottom-0 flex cursor-pointer items-center justify-center rounded-xl px-6 py-3 font-medium text-white shadow-lg transition-all duration-200 hover:shadow-xl"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             initial={{ opacity: 0, y: 10 }}
@@ -69,7 +69,7 @@ const FetchDataFail = ({
             transition={{ delay: 0.4, duration: 0.3 }}
           >
             <Refresh className="h-5 w-5" />
-            重新載入
+            &nbsp; 重新載入
           </motion.button>
         )}
       </motion.div>

@@ -8,12 +8,12 @@ import {
   ViewList,
   ViewModule,
   Category,
-  LocalShipping,
   Inventory2,
   Warning,
   CheckCircle,
   AssignmentTurnedIn,
 } from "@mui/icons-material";
+import { LotIcon } from "../componenets/CustomIcons.jsx";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
 
@@ -170,41 +170,10 @@ const LotOverview = () => {
       variants={pageVariants}
       transition={pageTransition}
     >
-      <Header title={materialType ? `${materialType.name} 批次` : "批次總覽"} />
+      <Header title={materialType ? `${materialType.name} 物料` : "批次總覽"} />
 
       <div className="px-6 py-8">
         <div className="mx-auto max-w-6xl">
-          {/* Page Header */}
-          <motion.div
-            className="mb-8 flex items-start justify-between gap-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.3 }}
-          >
-            <div className="flex-1">
-              <p className="text-gray-600">
-                {materialType
-                  ? `查看 ${materialType.name} 的所有批次`
-                  : "查看和管理所有物料批次"}
-              </p>
-            </div>
-            <div className="flex-shrink-0">
-              <button
-                onClick={() =>
-                  setViewMode(viewMode === "list" ? "grid" : "list")
-                }
-                className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 whitespace-nowrap text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
-              >
-                {viewMode === "list" ? (
-                  <ViewModule className="h-5 w-5" />
-                ) : (
-                  <ViewList className="h-5 w-5" />
-                )}
-                {/*{viewMode === "list" ? "網格檢視" : "列表檢視"}*/}
-              </button>
-            </div>
-          </motion.div>
-
           {/* Material Type Info Card (if specific material type) */}
           {materialType && (
             <motion.div
@@ -214,8 +183,8 @@ const LotOverview = () => {
               transition={{ delay: 0.3, duration: 0.3 }}
             >
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100">
-                  <Category className="text-lightblue h-6 w-6" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-100">
+                  <Category className="h-6 w-6 text-cyan-600" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-800">
@@ -263,10 +232,22 @@ const LotOverview = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.3 }}
           >
-            <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+            <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-6 py-4">
               <h3 className="text-lg font-semibold text-gray-800">
                 批次列表 ({filteredLots.length})
               </h3>
+              <button
+                onClick={() =>
+                  setViewMode(viewMode === "list" ? "grid" : "list")
+                }
+                className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
+              >
+                {viewMode === "list" ? (
+                  <ViewModule className="h-5 w-5" />
+                ) : (
+                  <ViewList className="h-5 w-5" />
+                )}
+              </button>
             </div>
 
             {filteredLots.length === 0 ? (
@@ -319,8 +300,8 @@ const LotOverview = () => {
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
-                              <LocalShipping className="text-blue h-4 w-4" />
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-fuchsia-100">
+                              <LotIcon className="h-4 w-4 text-fuchsia-600" />
                             </div>
                             <div className="ml-3">
                               <div className="text-sm font-medium text-gray-900">
@@ -397,8 +378,8 @@ const LotOverview = () => {
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
-                          <LocalShipping className="text-blue h-5 w-5" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-fuchsia-100">
+                          <LotIcon className="h-5 w-5 text-fuchsia-600" />
                         </div>
                         <div>
                           <h4 className="font-medium text-gray-900">

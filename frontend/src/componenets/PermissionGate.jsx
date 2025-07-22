@@ -11,16 +11,25 @@ const PermissionGate = ({
   fallback = null,
   requireAll = false,
   header = "身份驗證",
+  show = true,
 }) => {
   const { hasPermission, canRead, canWrite, canDelete, canCreate, loading } =
     usePermissions();
 
-  if (loading) {
+  if (loading && show) {
     return (
       <>
-        <Header title={header} />
-        <div className="flex h-64 items-center justify-center">
-          <LoadingSpinner variant="circular" size={30} message="載入中" />
+        <div
+          className={`h-full w-full bg-gradient-to-br from-gray-50 to-gray-100`}
+        >
+          <Header title={header} />
+          <div className="flex h-64 items-center justify-center">
+            <LoadingSpinner
+              variant="circular"
+              size={30}
+              message="Permission Check"
+            />
+          </div>
         </div>
       </>
     );

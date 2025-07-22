@@ -3,8 +3,10 @@ import { useParams, useLocation } from "react-router-dom";
 import Header from "../componenets/Header.jsx";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
-import { Inventory2, CheckCircle, Warning } from "@mui/icons-material";
+import { Inventory2, CheckCircle, Warning, History } from "@mui/icons-material";
 import PermissionGate from "../componenets/PermissionGate.jsx";
+import StockLog from "../componenets/StockLog.jsx";
+import { motion } from "framer-motion";
 
 const statusOptions = [
   {
@@ -26,6 +28,20 @@ const Item = () => {
   const [form, setForm] = useState({ quantity: "", status: "" });
   const [saving, setSaving] = useState(false);
   const [userType, setUserType] = useState("");
+  const [showLogModal, setShowLogModal] = useState(false);
+
+  // Animation variants
+  const pageVariants = {
+    initial: { opacity: 0 },
+    in: { opacity: 1 },
+    out: { opacity: 0 },
+  };
+
+  const pageTransition = {
+    type: "tween",
+    ease: "easeInOut",
+    duration: 0.3,
+  };
 
   useEffect(() => {
     fetchItem();
@@ -130,12 +146,19 @@ const Item = () => {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen w-full flex-col bg-gradient-to-br from-gray-50 to-gray-100">
+      <motion.div
+        className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
+        initial="initial"
+        animate="in"
+        exit="out"
+        variants={pageVariants}
+        transition={pageTransition}
+      >
         <Header title="物料資訊" />
-        <div className="flex flex-1 items-center justify-center">
-          <LoadingSpinner message="載入中..." />
+        <div className="flex h-64 items-center justify-center">
+          <LoadingSpinner variant="circular" size={30} message="載入中" />
         </div>
-      </div>
+      </motion.div>
     );
   }
   if (error) {
@@ -152,10 +175,10 @@ const Item = () => {
   }
 
   return (
-    <div className="item-container flex min-h-screen flex-col">
+    <div className="item-container flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-gray-100">
       <Header title={`物料 ${item.id} 詳細資訊`} />
-      <div className="mx-auto max-w-2xl flex-1 px-6 py-8">
-        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-lg">
+      <div className="mt-2">
+        <div className="bg-white px-8 py-6 shadow-lg">
           <div className="mb-6 flex items-center gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
               <Inventory2 className="text-blue h-6 w-6" />
@@ -338,6 +361,13 @@ const Item = () => {
             </div>
           </div>
           <div className="mt-8 flex gap-3">
+            <button
+              onClick={() => setShowLogModal(true)}
+              className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 whitespace-nowrap text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
+            >
+              <History className="h-5 w-5" />
+              查看日誌
+            </button>
             {editMode ? (
               <div className={`mr-0 ml-auto w-fit`}>
                 <button
@@ -356,7 +386,7 @@ const Item = () => {
                 </button>
               </div>
             ) : (
-              <PermissionGate resource="items" action="write">
+              <PermissionGate resource="items" action="write" show={false}>
                 <button
                   className="bg-blue hover:bg-lightblue mr-0 ml-auto rounded-xl px-6 py-2 font-semibold text-white shadow"
                   onClick={() => setEditMode(true)}
@@ -370,11 +400,12 @@ const Item = () => {
         </div>
       </div>
 
-      <PermissionGate permission="admin.users">
-        <div className="admin-only-fields">
-          {/* Admin-only content, editable fields for admin */}
-        </div>
-      </PermissionGate>
+      <StockLog
+        isOpen={showLogModal}
+        onClose={() => setShowLogModal(false)}
+        entityType="item"
+        entityId={itemId}
+      />
     </div>
   );
 };

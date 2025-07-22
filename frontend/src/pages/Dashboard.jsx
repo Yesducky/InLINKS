@@ -2,17 +2,17 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import Header from "../componenets/Header.jsx";
-import {
-  Inventory,
-  Add,
-  QrCodeScanner,
-  Assignment,
-  People,
-  Label,
-  Settings,
-} from "@mui/icons-material";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
+import {
+  CreateLabelIcon,
+  InventoryIcon,
+  AddMaterialIcon,
+  QrCodeIcon,
+  ProjectIcon,
+  UserManagementIcon,
+  SettingIcon,
+} from "../componenets/CustomIcons.jsx";
 
 const Dashboard = () => {
   const [cardMenus, setCardMenus] = useState([]);
@@ -22,12 +22,12 @@ const Dashboard = () => {
 
   // Icon mapping object
   const iconMapping = {
-    Inventory: Inventory,
-    Add: Add,
-    QrCodeScanner: QrCodeScanner,
-    Assignment: Assignment,
-    People: People,
-    Label: Label,
+    Inventory: InventoryIcon,
+    Add: AddMaterialIcon,
+    QrCodeScanner: QrCodeIcon,
+    Assignment: ProjectIcon,
+    People: UserManagementIcon,
+    Label: CreateLabelIcon,
   };
 
   // Get username from localStorage
@@ -93,11 +93,11 @@ const Dashboard = () => {
 
   const renderIcon = (iconName, iconColor) => {
     const IconComponent = iconMapping[iconName];
+    console.log(iconColor);
     if (!IconComponent) {
-      return <div className="h-16 w-16 rounded bg-gray-300" />; // Fallback
+      return <div className="h-12 w-12 rounded bg-gray-300" />; // Fallback
     }
-
-    return <IconComponent fontSize={"large"} style={{ color: iconColor }} />;
+    return <IconComponent className="h-12 w-12" style={{ color: iconColor }} />;
   };
 
   // Animation variants
@@ -199,7 +199,7 @@ const Dashboard = () => {
             whileTap={{ scale: 0.95 }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
-            <Settings className="h-6 w-6 text-gray-700" />
+            <SettingIcon className="text-blue h-6 w-6" />
           </motion.button>
         </motion.div>
 
