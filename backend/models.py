@@ -96,14 +96,18 @@ class StockLog(db.Model):
     __tablename__ = 'stock_logs'
     id = db.Column(db.String(20), primary_key=True)  # SL001, SL002, etc.
     date = db.Column(db.DateTime, default=get_hk_time)
-    user_id = db.Column(db.String(20), db.ForeignKey('users.id'), nullable=False)
+    user_id = db.Column(db.String(20), db.ForeignKey('users.id'))
     description = db.Column(db.Text)
     task_id = db.Column(db.String(20))
-    item_id = db.Column(db.String(20), db.ForeignKey('items.id'), nullable=False)
+    item_id = db.Column(db.String(20), db.ForeignKey('items.id'))
+    lot_id = db.Column(db.String(20), db.ForeignKey('lots.id'))
+    carton_id = db.Column(db.String(20), db.ForeignKey('cartons.id'))
     created_at = db.Column(db.DateTime, default=get_hk_time)
 
     user = db.relationship('User', backref='stock_logs')
     item = db.relationship('Item', backref='stock_logs')
+    carton = db.relationship('Carton', backref='stock_logs')
+    lot = db.relationship('Lot', backref='stock_logs')
 
 # Database Models - Process Collection
 class Project(db.Model):

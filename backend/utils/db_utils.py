@@ -230,125 +230,125 @@ def init_default_data():
             db.session.add(workflow_type)
 
     # Create default projects as sample
-    from datetime import datetime, timedelta
-    admin_user = User.query.filter_by(user_type_id='UT001').first()
-    admin_id = admin_user.id if admin_user else 'USR001'  # fallback if no admin user exists
-    now = datetime.now()
-    default_projects = [
-        {
-            'id': 'PRJ001',
-            'project_name': 'Office Network Upgrade',
-            'description': 'Upgrade office network infrastructure',
-            'state': 'active',
-            'priority': 'high',
-            'start_date': now - timedelta(days=30),
-            'due_date': now + timedelta(days=60),
-            'completed_at': None,
-            'status': 'in_progress',
-            'person_in_charge_id': admin_id,
-            'work_order_ids': '[]',
-            'process_log_ids': '[]',
-            'created_at': now,
-        },
-        {
-            'id': 'PRJ002',
-            'project_name': 'Warehouse Cabling',
-            'description': 'Install new cabling in warehouse',
-            'state': 'pending',
-            'priority': 'medium',
-            'start_date': now + timedelta(days=10),
-            'due_date': now + timedelta(days=90),
-            'completed_at': None,
-            'status': 'not_started',
-            'person_in_charge_id': admin_id,
-            'work_order_ids': '[]',
-            'process_log_ids': '[]',
-            'created_at': now,
-        },
-        {
-            'id': 'PRJ003',
-            'project_name': 'Retail POS Setup',
-            'description': 'Setup POS systems for retail locations',
-            'state': 'completed',
-            'priority': 'low',
-            'start_date': now - timedelta(days=120),
-            'due_date': now - timedelta(days=10),
-            'completed_at': now - timedelta(days=5),
-            'status': 'completed',
-            'person_in_charge_id': admin_id,
-            'work_order_ids': '[]',
-            'process_log_ids': '[]',
-            'created_at': now,
-        }
-    ]
-    for prj in default_projects:
-        if not Project.query.filter_by(id=prj['id']).first():
-            # Create sample work orders for each project
-            sample_work_orders = []
-            for i in range(1, 3):
-                wo_id = f"WO{prj['id'][-3:]}{i:02d}"
-                work_order = WorkOrder(
-                    id=wo_id,
-                    work_order_name=f"Work Order {i} for {prj['project_name']}",
-                    description=f"Sample work order {i} for project {prj['project_name']}",
-                    state='pending',
-                    start_date=prj['start_date'],
-                    due_date=prj['due_date'],
-                    completed_at=None,
-                    assignee_id=None,
-                    estimated_hour=40.0 + i * 10,
-                    workflow_type_id='WT001',
-                    parent_project_id=prj['id'],
-                    lot_id=None,
-                    task_ids='[]',
-                    process_log_ids='[]',
-                    created_at=prj['created_at']
-                )
-                db.session.add(work_order)
-                sample_work_orders.append(wo_id)
-                # Add process log for work order creation
-                from utils.process_logger import ProcessLogger
-                ProcessLogger.log_create(admin_id, 'work_order', wo_id, work_order.work_order_name)
-            project = Project(
-                id=prj['id'],
-                project_name=prj['project_name'],
-                description=prj['description'],
-                state=prj['state'],
-                priority=prj['priority'],
-                start_date=prj['start_date'],
-                due_date=prj.get('due_date'),
-                completed_at=prj.get('completed_at'),
-                status=prj.get('status'),
-                person_in_charge_id=prj['person_in_charge_id'],
-                work_order_ids=str(sample_work_orders),
-                process_log_ids=prj['process_log_ids'],
-                created_at=prj['created_at'],
-            )
-            db.session.add(project)
-            # Add process log for project creation
-            from utils.process_logger import ProcessLogger
-            ProcessLogger.log_create(admin_id, 'project', prj['id'], prj['project_name'])
-    db.session.commit()
+    # from datetime import datetime, timedelta
+    # admin_user = User.query.filter_by(user_type_id='UT001').first()
+    # admin_id = admin_user.id if admin_user else 'USR001'  # fallback if no admin user exists
+    # now = datetime.now()
+    # default_projects = [
+    #     {
+    #         'id': 'PRJ001',
+    #         'project_name': 'Office Network Upgrade',
+    #         'description': 'Upgrade office network infrastructure',
+    #         'state': 'active',
+    #         'priority': 'high',
+    #         'start_date': now - timedelta(days=30),
+    #         'due_date': now + timedelta(days=60),
+    #         'completed_at': None,
+    #         'status': 'in_progress',
+    #         'person_in_charge_id': admin_id,
+    #         'work_order_ids': '[]',
+    #         'process_log_ids': '[]',
+    #         'created_at': now,
+    #     },
+    #     {
+    #         'id': 'PRJ002',
+    #         'project_name': 'Warehouse Cabling',
+    #         'description': 'Install new cabling in warehouse',
+    #         'state': 'pending',
+    #         'priority': 'medium',
+    #         'start_date': now + timedelta(days=10),
+    #         'due_date': now + timedelta(days=90),
+    #         'completed_at': None,
+    #         'status': 'not_started',
+    #         'person_in_charge_id': admin_id,
+    #         'work_order_ids': '[]',
+    #         'process_log_ids': '[]',
+    #         'created_at': now,
+    #     },
+    #     {
+    #         'id': 'PRJ003',
+    #         'project_name': 'Retail POS Setup',
+    #         'description': 'Setup POS systems for retail locations',
+    #         'state': 'completed',
+    #         'priority': 'low',
+    #         'start_date': now - timedelta(days=120),
+    #         'due_date': now - timedelta(days=10),
+    #         'completed_at': now - timedelta(days=5),
+    #         'status': 'completed',
+    #         'person_in_charge_id': admin_id,
+    #         'work_order_ids': '[]',
+    #         'process_log_ids': '[]',
+    #         'created_at': now,
+    #     }
+    # ]
+    # for prj in default_projects:
+    #     if not Project.query.filter_by(id=prj['id']).first():
+    #         # Create sample work orders for each project
+    #         sample_work_orders = []
+    #         for i in range(1, 3):
+    #             wo_id = f"WO{prj['id'][-3:]}{i:02d}"
+    #             work_order = WorkOrder(
+    #                 id=wo_id,
+    #                 work_order_name=f"Work Order {i} for {prj['project_name']}",
+    #                 description=f"Sample work order {i} for project {prj['project_name']}",
+    #                 state='pending',
+    #                 start_date=prj['start_date'],
+    #                 due_date=prj['due_date'],
+    #                 completed_at=None,
+    #                 assignee_id=None,
+    #                 estimated_hour=40.0 + i * 10,
+    #                 workflow_type_id='WT001',
+    #                 parent_project_id=prj['id'],
+    #                 lot_id=None,
+    #                 task_ids='[]',
+    #                 process_log_ids='[]',
+    #                 created_at=prj['created_at']
+    #             )
+    #             db.session.add(work_order)
+    #             sample_work_orders.append(wo_id)
+    #             # Add process log for work order creation
+    #             from utils.process_logger import ProcessLogger
+    #             ProcessLogger.log_create(admin_id, 'work_order', wo_id, work_order.work_order_name)
+    #         project = Project(
+    #             id=prj['id'],
+    #             project_name=prj['project_name'],
+    #             description=prj['description'],
+    #             state=prj['state'],
+    #             priority=prj['priority'],
+    #             start_date=prj['start_date'],
+    #             due_date=prj.get('due_date'),
+    #             completed_at=prj.get('completed_at'),
+    #             status=prj.get('status'),
+    #             person_in_charge_id=prj['person_in_charge_id'],
+    #             work_order_ids=str(sample_work_orders),
+    #             process_log_ids=prj['process_log_ids'],
+    #             created_at=prj['created_at'],
+    #         )
+    #         db.session.add(project)
+    #         # Add process log for project creation
+    #         from utils.process_logger import ProcessLogger
+    #         ProcessLogger.log_create(admin_id, 'project', prj['id'], prj['project_name'])
+    # db.session.commit()
 
     # Create default stock logs for sample items, lots, and cartons
-    from utils.stock_logger import StockLogger
-    for i in range(1, 3):
-        item_id = f"ITM00100{i}"
-        lot_id = f"LOT00100{i}"
-        carton_id = f"CTN00100{i}"
-
-        # Create stock log for item
-        item = Item.query.get(item_id)
-        if item:
-            StockLogger.log_create(admin_id, 'item', item.id, getattr(item, 'id', item.id))
-
-        # Create stock log for lot
-        lot = Lot.query.get(lot_id)
-        if lot:
-            StockLogger.log_create(admin_id, 'lot', lot.id, getattr(lot, 'factory_lot_number', lot.id))
-
-        # Create stock log for carton
-        carton = Carton.query.get(carton_id)
-        if carton:
-            StockLogger.log_create(admin_id, 'carton', carton.id, getattr(carton, 'id', carton.id))
-    db.session.commit()
+    # from utils.stock_logger import StockLogger
+    # for i in range(1, 3):
+    #     item_id = f"ITM00100{i}"
+    #     lot_id = f"LOT00100{i}"
+    #     carton_id = f"CTN00100{i}"
+    #
+    #     # Create stock log for item
+    #     item = Item.query.get(item_id)
+    #     if item:
+    #         StockLogger.log_create(admin_id, 'item', item.id, getattr(item, 'id', item.id))
+    #
+    #     # Create stock log for lot
+    #     lot = Lot.query.get(lot_id)
+    #     if lot:
+    #         StockLogger.log_create(admin_id, 'lot', lot.id, getattr(lot, 'factory_lot_number', lot.id))
+    #
+    #     # Create stock log for carton
+    #     carton = Carton.query.get(carton_id)
+    #     if carton:
+    #         StockLogger.log_create(admin_id, 'carton', carton.id, getattr(carton, 'id', carton.id))
+    # db.session.commit()
