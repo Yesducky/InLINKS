@@ -3,26 +3,26 @@ import { motion } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "../componenets/Header.jsx";
 import { Search, ViewList, ViewModule, Edit } from "@mui/icons-material";
-import EditWorkOrderModal from "../componenets/EditWorkOrderModal.jsx";
+import EditTaskModal from "../componenets/EditTaskModal.jsx";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
 import PermissionGate from "../componenets/PermissionGate";
 import ProcessLog from "../componenets/ProcessLog";
 import LogButton from "../componenets/LogButton.jsx";
 import {
-  WorkOrderIcon,
+  TaskIcon,
   PendingIcon,
   ActiveIcon,
   CompletedIcon,
 } from "../componenets/CustomIcons.jsx";
 import AddButton from "../componenets/AddButton.jsx";
-import EditTaskModal from "../componenets/EditTaskModal.jsx";
+import EditSubTaskModal from "../componenets/EditSubTaskModal.jsx";
 
-const WorkOrder = () => {
-  const { workOrderId } = useParams();
+const Task = () => {
+  const { taskId } = useParams();
   const navigate = useNavigate();
-  const [tasks, setTasks] = useState([]);
-  const [workOrderInfo, setWorkOrderInfo] = useState(null);
+  const [subTasks, setSubTasks] = useState([]);
+  const [taskInfo, setTaskInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -33,10 +33,10 @@ const WorkOrder = () => {
   const [showAddModal, setShowAddModal] = useState(false);
 
   const [stats, setStats] = useState({
-    totalTasks: 0,
-    activeTasks: 0,
-    completedTasks: 0,
-    pendingTasks: 0,
+    totalSubTasks: 0,
+    activeSubTasks: 0,
+    completedSubTasks: 0,
+    pendingSubTasks: 0,
   });
 
   // Animation variants
@@ -58,17 +58,17 @@ const WorkOrder = () => {
   };
 
   useEffect(() => {
-    fetchWorkOrderTasks();
-    fetchWorkOrderInfo();
-  }, [workOrderId]);
+    fetchTaskSubTasks();
+    fetchTaskInfo();
+  }, [taskId]);
 
-  const fetchWorkOrderTasks = async () => {
+  const fetchTaskSubTasks = async () => {
     try {
       setIsLoading(true);
       setError("");
       const token = localStorage.getItem("token");
 
-      const response = await fetch(`/api/work_orders/${workOrderId}/tasks`, {
+      const response = await fetch(`/api/tasks/${taskId}/sub_tasks`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -76,45 +76,45 @@ const WorkOrder = () => {
       });
 
       if (response.ok) {
-        const tasksData = await response.json();
+        const subTasksData = await response.json();
 
-        // Ensure tasksData is always an array
-        const tasks = Array.isArray(tasksData) ? tasksData : [];
-        setTasks(tasks);
+        // Ensure subTasksData is always an array
+        const subTasks = Array.isArray(subTasksData) ? subTasksData : [];
+        setSubTasks(subTasks);
 
         // Calculate stats
-        const totalTasks = tasks.length;
-        const activeTasks = tasks.filter(
-          (task) => task.state === "active",
+        const totalSubTasks = subTasks.length;
+        const activeSubTasks = subTasks.filter(
+          (subTask) => subTask.state === "active",
         ).length;
-        const completedTasks = tasks.filter(
-          (task) => task.state === "completed",
+        const completedSubTasks = subTasks.filter(
+          (subTask) => subTask.state === "completed",
         ).length;
-        const pendingTasks = tasks.filter(
-          (task) => task.state === "pending",
+        const pendingSubTasks = subTasks.filter(
+          (subTask) => subTask.state === "pending",
         ).length;
 
         setStats({
-          totalTasks,
-          activeTasks,
-          completedTasks,
-          pendingTasks,
+          totalSubTasks,
+          activeSubTasks,
+          completedSubTasks,
+          pendingSubTasks,
         });
       } else {
         setError(response.status);
       }
     } catch (err) {
-      setError("Network error loading tasks");
-      console.error("Error fetching tasks:", err);
+      setError("Network error loading subtasks");
+      console.error("Error fetching subtasks:", err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchWorkOrderInfo = async () => {
+  const fetchTaskInfo = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`/api/work_orders/${workOrderId}`, {
+      const response = await fetch(`/api/tasks/${taskId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -122,12 +122,12 @@ const WorkOrder = () => {
       });
 
       if (response.ok) {
-        const workOrderData = await response.json();
-        console.log("Work Order Data:", workOrderData);
-        setWorkOrderInfo(workOrderData);
+        const taskData = await response.json();
+        console.log("Task Data:", taskData);
+        setTaskInfo(taskData);
       }
     } catch (err) {
-      console.error("Error fetching work order info:", err);
+      console.error("Error fetching task info:", err);
     }
   };
 
@@ -162,7 +162,7 @@ const WorkOrder = () => {
       case "pending":
         return <PendingIcon className="h-4 w-4" />;
       default:
-        return <WorkOrderIcon className="h-4 w-4" />;
+        return <TaskIcon className="h-4 w-4" />;
     }
   };
 
@@ -194,19 +194,19 @@ const WorkOrder = () => {
     }
   };
 
-  // Filter tasks based on search term and status
-  const filteredTasks = tasks.filter((task) => {
+  // Filter subtasks based on search term and status
+  const filteredSubTasks = subTasks.filter((subTask) => {
     const matchesSearch =
-      task.id?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
-      task.task_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      task.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (task.assignee?.name || "")
+      subTask.id?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+      subTask.task_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      subTask.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (subTask.assignee?.name || "")
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
 
     let matchesStatus = true;
     if (selectedStatus !== "all") {
-      matchesStatus = task.state === selectedStatus;
+      matchesStatus = subTask.state === selectedStatus;
     }
 
     return matchesSearch && matchesStatus;
@@ -222,7 +222,7 @@ const WorkOrder = () => {
         variants={pageVariants}
         transition={pageTransition}
       >
-        <Header title={`工單 #${workOrderId}`} />
+        <Header title={`任務 #${taskId}`} />
         <div className="flex h-64 items-center justify-center">
           <LoadingSpinner variant="circular" size={30} message="載入中..." />
         </div>
@@ -240,10 +240,10 @@ const WorkOrder = () => {
         variants={pageVariants}
         transition={pageTransition}
       >
-        <Header title={`工單 #${workOrderId}`} />
+        <Header title={`任務 #${taskId}`} />
         <FetchDataFail
           error={error}
-          onRetry={fetchWorkOrderTasks}
+          onRetry={fetchTaskSubTasks}
           className="h-64"
         />
       </motion.div>
@@ -251,11 +251,7 @@ const WorkOrder = () => {
   }
 
   return (
-    <PermissionGate
-      resource="work_order"
-      action="read"
-      header={`工單 #${workOrderId}`}
-    >
+    <PermissionGate resource="task" action="read" header={`任務 #${taskId}`}>
       <motion.div
         className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
         initial="initial"
@@ -264,12 +260,12 @@ const WorkOrder = () => {
         variants={pageVariants}
         transition={pageTransition}
       >
-        <Header title={`工單 #${workOrderId}`} />
+        <Header title={`任務 #${taskId}`} />
 
         <div className="px-6 py-8">
           <div className="mx-auto max-w-6xl">
-            {/* Work Order Info Card - Complete Information */}
-            {workOrderInfo && (
+            {/* Task Info Card - Complete Information */}
+            {taskInfo && (
               <motion.div
                 className="mb-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-lg"
                 initial={{ opacity: 0, y: 20 }}
@@ -278,14 +274,14 @@ const WorkOrder = () => {
               >
                 <div className="flex items-start gap-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
-                    <WorkOrderIcon className="h-6 w-6 text-purple-600" />
+                    <TaskIcon className="h-6 w-6 text-purple-600" />
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-gray-800">
-                      {workOrderInfo.work_order_name || `工單 #${workOrderId}`}
+                      {taskInfo.task_name || `任務 #${taskId}`}
                     </h3>
                     <p className="text-gray-600">
-                      {workOrderInfo.description || "無描述"}
+                      {taskInfo.description || "無描述"}
                     </p>
                   </div>
                 </div>
@@ -293,19 +289,19 @@ const WorkOrder = () => {
                 <div className="mt-6 grid grid-cols-1 gap-4 border-t border-gray-200 pt-4 md:grid-cols-2 lg:grid-cols-4">
                   <div>
                     <div className="text-sm font-medium text-gray-500">
-                      工單ID
+                      任務ID
                     </div>
                     <div className="text-lg font-semibold text-gray-900">
-                      #{workOrderInfo.id}
+                      #{taskInfo.id}
                     </div>
                   </div>
                   <div>
                     <div className="text-sm font-medium text-gray-500">
-                      所屬項目
+                      所屬工單
                     </div>
                     <div className="text-lg font-semibold text-gray-900">
-                      {workOrderInfo?.parent_project?.name || "未設定"} (
-                      {workOrderInfo?.parent_project?.id || "未設定"})
+                      {taskInfo?.work_order?.name || "未設定"} (
+                      {taskInfo?.work_order?.id || "未設定"})
                     </div>
                   </div>
                   <div>
@@ -313,25 +309,7 @@ const WorkOrder = () => {
                       指派給
                     </div>
                     <div className="text-lg font-semibold text-gray-900">
-                      {workOrderInfo.assignee?.name || "未指派"}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium text-gray-500">
-                      工作流程
-                    </div>
-                    <div className="text-lg font-semibold text-gray-900">
-                      {workOrderInfo.workflow_type?.name || "未設定"}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium text-gray-500">
-                      批次號
-                    </div>
-                    <div className="text-lg font-semibold text-gray-900">
-                      {workOrderInfo.lot?.lot_name ||
-                        workOrderInfo.lot_id ||
-                        "未設定"}
+                      {taskInfo.assignee?.name || "未指派"}
                     </div>
                   </div>
                   <div>
@@ -341,16 +319,16 @@ const WorkOrder = () => {
                     <div className="text-lg font-semibold text-gray-900">
                       <span
                         className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          workOrderInfo.state === "active"
+                          taskInfo.state === "active"
                             ? "bg-green-100 text-green-800"
-                            : workOrderInfo.state === "completed"
+                            : taskInfo.state === "completed"
                               ? "bg-blue-100 text-blue-800"
-                              : workOrderInfo.state === "pending"
+                              : taskInfo.state === "pending"
                                 ? "bg-yellow-100 text-yellow-800"
                                 : "bg-gray-100 text-gray-800"
                         }`}
                       >
-                        {getStatusText(workOrderInfo.state)}
+                        {getStatusText(taskInfo.state)}
                       </span>
                     </div>
                   </div>
@@ -359,8 +337,8 @@ const WorkOrder = () => {
                       預估工時
                     </div>
                     <div className="text-lg font-semibold text-gray-900">
-                      {workOrderInfo.estimated_hour
-                        ? `${workOrderInfo.estimated_hour}h`
+                      {taskInfo.estimated_hour
+                        ? `${taskInfo.estimated_hour}h`
                         : "未設定"}
                     </div>
                   </div>
@@ -369,7 +347,7 @@ const WorkOrder = () => {
                       開始日期
                     </div>
                     <div className="text-lg font-semibold text-gray-900">
-                      {formatDate(workOrderInfo.start_date)}
+                      {formatDate(taskInfo.start_date)}
                     </div>
                   </div>
                   <div>
@@ -377,7 +355,7 @@ const WorkOrder = () => {
                       截止日期
                     </div>
                     <div className="text-lg font-semibold text-gray-900">
-                      {formatDate(workOrderInfo.due_date)}
+                      {formatDate(taskInfo.due_date)}
                     </div>
                   </div>
                   <div>
@@ -385,16 +363,12 @@ const WorkOrder = () => {
                       創建時間
                     </div>
                     <div className="text-lg font-semibold text-gray-900">
-                      {formatDate(workOrderInfo.created_at)}
+                      {formatDate(taskInfo.created_at)}
                     </div>
                   </div>
                   <div className={`flex justify-between`}>
                     <LogButton setShowLogModal={setShowLogModal} />
-                    <PermissionGate
-                      resource="work_order"
-                      action="write"
-                      show={false}
-                    >
+                    <PermissionGate resource="task" action="write" show={false}>
                       <button
                         onClick={() => setShowEditModal(true)}
                         className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
@@ -425,12 +399,12 @@ const WorkOrder = () => {
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-                    <WorkOrderIcon className="text-blue h-6 w-6" />
+                    <TaskIcon className="text-blue h-6 w-6" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">總任務</p>
+                    <p className="text-sm text-gray-600">總子任務</p>
                     <p className="text-2xl font-bold text-gray-800">
-                      {stats.totalTasks}
+                      {stats.totalSubTasks}
                     </p>
                   </div>
                 </div>
@@ -451,7 +425,7 @@ const WorkOrder = () => {
                   <div>
                     <p className="text-sm text-gray-600">進行中</p>
                     <p className="text-2xl font-bold text-gray-800">
-                      {stats.activeTasks}
+                      {stats.activeSubTasks}
                     </p>
                   </div>
                 </div>
@@ -472,7 +446,7 @@ const WorkOrder = () => {
                   <div>
                     <p className="text-sm text-gray-600">待開始</p>
                     <p className="text-2xl font-bold text-gray-800">
-                      {stats.pendingTasks}
+                      {stats.pendingSubTasks}
                     </p>
                   </div>
                 </div>
@@ -493,7 +467,7 @@ const WorkOrder = () => {
                   <div>
                     <p className="text-sm text-gray-600">已完成</p>
                     <p className="text-2xl font-bold text-gray-800">
-                      {stats.completedTasks}
+                      {stats.completedSubTasks}
                     </p>
                   </div>
                 </div>
@@ -511,7 +485,7 @@ const WorkOrder = () => {
                 <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="搜索任務 ID、名稱或描述..."
+                  placeholder="搜索子任務 ID、名稱或描述..."
                   className="w-full rounded-xl border border-gray-300 py-3 pr-4 pl-10 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -519,7 +493,7 @@ const WorkOrder = () => {
               </div>
             </motion.div>
 
-            {/* Tasks List/Grid */}
+            {/* SubTasks List/Grid */}
             <motion.div
               className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg"
               initial={{ opacity: 0, y: 20 }}
@@ -528,7 +502,7 @@ const WorkOrder = () => {
             >
               <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-6 py-4">
                 <h3 className="text-lg font-semibold text-gray-800">
-                  任務清單 ({filteredTasks.length})
+                  子任務清單 ({filteredSubTasks.length})
                 </h3>
                 <button
                   onClick={() =>
@@ -544,13 +518,13 @@ const WorkOrder = () => {
                 </button>
               </div>
 
-              {filteredTasks.length === 0 ? (
+              {filteredSubTasks.length === 0 ? (
                 <div className="p-8 text-center">
-                  <WorkOrderIcon className="mx-auto h-12 w-12 text-gray-400" />
+                  <TaskIcon className="mx-auto h-12 w-12 text-gray-400" />
                   <p className="mt-2 text-gray-500">
                     {searchTerm || selectedStatus !== "all"
-                      ? "沒有符合條件的任務"
-                      : "暫無任務資料"}
+                      ? "沒有符合條件的子任務"
+                      : "暫無子任務資料"}
                   </p>
                 </div>
               ) : viewMode === "list" ? (
@@ -559,10 +533,10 @@ const WorkOrder = () => {
                     <thead className="bg-gray-50">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                          任務 ID
+                          子任務 ID
                         </th>
-                        <th className="min-w-[100px] px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                          任務名稱
+                        <th className="min-w-[140px] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          子任務名稱
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                           指派給
@@ -585,56 +559,56 @@ const WorkOrder = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 bg-white">
-                      {filteredTasks.map((task, index) => (
+                      {filteredSubTasks.map((subTask, index) => (
                         <motion.tr
-                          key={task.id}
+                          key={subTask.id}
                           className="cursor-pointer hover:bg-gray-50"
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: index * 0.05, duration: 0.2 }}
-                          onClick={() => navigate(`/task/${task.id}`)}
+                          onClick={() => navigate(`/subtask/${subTask.id}`)}
                         >
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100">
-                                <WorkOrderIcon className="text-purple h-4 w-4" />
+                                <TaskIcon className="text-purple h-4 w-4" />
                               </div>
                               <div className="ml-3">
                                 <div className="text-sm font-medium text-gray-900">
-                                  {task.id}
+                                  {subTask.id}
                                 </div>
                               </div>
                             </div>
                           </td>
                           <td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900">
-                            {task.task_name}
+                            {subTask.subtask_name}
                           </td>
                           <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
-                            {task.assignee?.name || "未指派"}
+                            {subTask.assignee?.name || "未指派"}
                           </td>
                           <td className="max-w-xs truncate px-6 py-4 text-sm text-gray-500">
-                            {task.description || "無描述"}
+                            {subTask.description || "無描述"}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span
                               className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(
-                                task.state,
+                                subTask.state,
                               )}`}
                             >
-                              {getStatusIcon(task.state)}
-                              {getSubTaskStatusText(task.state)}
+                              {getStatusIcon(subTask.state)}
+                              {getSubTaskStatusText(subTask.state)}
                             </span>
                           </td>
                           <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
-                            {task.estimated_hour
-                              ? `${task.estimated_hour}h`
+                            {subTask.estimated_hour
+                              ? `${subTask.estimated_hour}h`
                               : "N/A"}
                           </td>
                           <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
-                            {formatDate(task.start_date)}
+                            {formatDate(subTask.start_date)}
                           </td>
                           <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
-                            {formatDate(task.due_date)}
+                            {formatDate(subTask.due_date)}
                           </td>
                         </motion.tr>
                       ))}
@@ -643,50 +617,52 @@ const WorkOrder = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-2 lg:grid-cols-3">
-                  {filteredTasks.map((task, index) => (
+                  {filteredSubTasks.map((subTask, index) => (
                     <motion.div
-                      key={task.id}
+                      key={subTask.id}
                       className="cursor-pointer rounded-xl border border-gray-200 bg-gray-50 p-4 transition-shadow duration-200 hover:shadow-md"
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: index * 0.05, duration: 0.2 }}
-                      onClick={() => navigate(`/task/${task.id}`)}
+                      onClick={() => navigate(`/subtask/${subTask.id}`)}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-2">
                           <span
                             className={`inline-flex aspect-square h-10 w-10 items-center justify-center rounded-full text-xs font-semibold ${getStatusColor(
-                              task.state,
+                              subTask.state,
                             )}`}
                           >
-                            {getStatusIcon(task.state)}
+                            {getStatusIcon(subTask.state)}
                           </span>
                           <div>
                             <h4 className="font-medium text-gray-900">
-                              {task.task_name}
+                              {subTask.subtask_name}
                             </h4>
-                            <p className="text-sm text-gray-500">#{task.id}</p>
+                            <p className="text-sm text-gray-500">
+                              #{subTask.id}
+                            </p>
                           </div>
                         </div>
                       </div>
 
                       <div className="mt-4">
                         <p className="line-clamp-2 text-sm text-gray-600">
-                          {task.description || "無描述"}
+                          {subTask.description || "無描述"}
                         </p>
                       </div>
 
                       <div className="mt-4 grid grid-cols-2 gap-4">
                         <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {task.assignee?.name || "未指派"}
+                            {subTask.assignee?.name || "未指派"}
                           </div>
                           <div className="text-xs text-gray-500">指派給</div>
                         </div>
                         <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {task.estimated_hour
-                              ? `${task.estimated_hour}h`
+                            {subTask.estimated_hour
+                              ? `${subTask.estimated_hour}h`
                               : "未設定"}
                           </div>
                           <div className="text-xs text-gray-500">預估工時</div>
@@ -696,13 +672,13 @@ const WorkOrder = () => {
                       <div className="mt-4 grid grid-cols-2 gap-4">
                         <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {formatDate(task.start_date)}
+                            {formatDate(subTask.start_date)}
                           </div>
                           <div className="text-xs text-gray-500">開始日期</div>
                         </div>
                         <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {formatDate(task.due_date)}
+                            {formatDate(subTask.due_date)}
                           </div>
                           <div className="text-xs text-gray-500">截止日期</div>
                         </div>
@@ -718,34 +694,36 @@ const WorkOrder = () => {
       <ProcessLog
         isOpen={showLogModal}
         onClose={() => setShowLogModal(false)}
-        entityType="workorder"
-        entityId={workOrderId}
-      />
-      <EditWorkOrderModal
-        isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        workOrder={workOrderInfo}
-        onSave={(updatedWorkOrder) => {
-          setWorkOrderInfo(updatedWorkOrder);
-          fetchWorkOrderTasks();
-          fetchWorkOrderInfo();
-        }}
+        entityType="task"
+        entityId={taskId}
       />
       <EditTaskModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        task={taskInfo}
+        onSave={(updatedTask) => {
+          setTaskInfo(updatedTask);
+          fetchTaskSubTasks();
+          fetchTaskInfo();
+        }}
+        workOrderId={taskInfo?.work_order?.id}
+      />
+
+      <EditSubTaskModal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        workOrderId={workOrderId}
+        taskId={taskId}
         onSave={() => {
-          fetchWorkOrderTasks();
-          fetchWorkOrderInfo();
+          fetchTaskSubTasks();
+          fetchTaskInfo();
         }}
       />
 
-      <PermissionGate resource="task" action="create" show={false}>
+      <PermissionGate resource="subtask" action="create" show={false}>
         <AddButton action={() => setShowAddModal(true)} />
       </PermissionGate>
     </PermissionGate>
   );
 };
 
-export default WorkOrder;
+export default Task;

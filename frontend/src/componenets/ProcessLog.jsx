@@ -27,7 +27,7 @@ const ProcessLog = ({ isOpen, onClose, entityType, entityId }) => {
         case "project":
           params.append("project_id", entityId);
           break;
-        case "workorder":
+        case "work_order":
           params.append("work_order_id", entityId);
           break;
         case "task":

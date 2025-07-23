@@ -20,6 +20,18 @@ def generate_id(prefix, model_class):
         return f'{prefix}{new_num:05d}'  # 5 digits for cartons
     elif prefix == 'ITM':
         return f'{prefix}{new_num:06d}'  # 6 digits for items
+    elif prefix == 'PRJ':
+        return f'{prefix}{new_num:03d}'  # 3 digits for projects
+    elif prefix == 'WO':
+        return f'{prefix}{new_num:04d}'  # 4 digits for work orders
+    elif prefix == 'TSK':
+        return f'{prefix}{new_num:05d}'  # 5 digits for tasks
+    elif prefix == 'SUB':
+        return f'{prefix}{new_num:06d}'  # 6 digits for subtasks
+    elif prefix == 'PL':
+        return f'{prefix}{new_num:08d}'  # 8 digits for process logs
+    elif prefix == 'SL':
+        return f'{prefix}{new_num:08d}'  # 8 digits for stock logs
     else:
         return f'{prefix}{new_num:03d}'  # 3 digits for other types (default)
 
@@ -103,10 +115,21 @@ def init_default_data():
         {'id': 'project.delete', 'resource': 'project', 'action': 'delete', 'description': 'Delete project'},
         {'id': 'project.create', 'resource': 'project', 'action': 'create', 'description': 'Create new project'},
         # Workorder permissions
-        {'id': 'workorder.read', 'resource': 'workorder', 'action': 'read', 'description': 'View workorder details'},
-        {'id': 'workorder.write', 'resource': 'workorder', 'action': 'write', 'description': 'Edit workorder details'},
-        {'id': 'workorder.delete', 'resource': 'workorder', 'action': 'delete', 'description': 'Delete workorder'},
-        {'id': 'workorder.create', 'resource': 'workorder', 'action': 'create', 'description': 'Create new workorder'},
+        {'id': 'work_order.read', 'resource': 'work_order', 'action': 'read', 'description': 'View work order details'},
+        {'id': 'work_order.write', 'resource': 'work_order', 'action': 'write', 'description': 'Edit work order details'},
+        {'id': 'work_order.delete', 'resource': 'work_order', 'action': 'delete', 'description': 'Delete work order'},
+        {'id': 'work_order.create', 'resource': 'work_order', 'action': 'create', 'description': 'Create new work order'},
+        # Task permissions
+        {'id': 'task.read', 'resource': 'task', 'action': 'read', 'description': 'View task details'},
+        {'id': 'task.write', 'resource': 'task', 'action': 'write', 'description': 'Edit task details'},
+        {'id': 'task.delete', 'resource': 'task', 'action': 'delete', 'description': 'Delete task'},
+        {'id': 'task.create', 'resource': 'task', 'action': 'create', 'description': 'Create new task'},
+        # SubTask permissions
+        {'id': 'subtask.read', 'resource': 'subtask', 'action': 'read', 'description': 'View subtask details'},
+        {'id': 'subtask.write', 'resource': 'subtask', 'action': 'write', 'description': 'Edit subtask details'},
+        {'id': 'subtask.delete', 'resource': 'subtask', 'action': 'delete', 'description': 'Delete subtask'},
+        {'id': 'subtask.create', 'resource': 'subtask', 'action': 'create', 'description': 'Create new subtask'},
+
     ]
     for perm in default_permissions:
         if not Permission.query.filter_by(id=perm['id']).first():

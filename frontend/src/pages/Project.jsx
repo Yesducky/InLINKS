@@ -549,31 +549,31 @@ const Project = () => {
                         <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                           工單 ID
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                        <th className="min-w-[100px] px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                           工單名稱
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                        <th className="min-w-[100px] px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                           指派給
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                        <th className="min-w-[100px] px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                           批次號
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                        <th className="min-w-[100px] px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                           工作流程
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                           狀態
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                        <th className="min-w-[100px] px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                           預估工時
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                        <th className="min-w-[100px] px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                           開始日期
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                        <th className="min-w-[100px] px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                           截止日期
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                        <th className="min-w-[100px] px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                           創建時間
                         </th>
                       </tr>
@@ -586,7 +586,9 @@ const Project = () => {
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: index * 0.05, duration: 0.2 }}
-                          onClick={() => navigate(`/workorder/${workOrder.id}`)}
+                          onClick={() =>
+                            navigate(`/work_order/${workOrder.id}`)
+                          }
                         >
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
@@ -654,7 +656,7 @@ const Project = () => {
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: index * 0.05, duration: 0.2 }}
-                      onClick={() => navigate(`/workorder/${workOrder.id}`)}
+                      onClick={() => navigate(`/work_order/${workOrder.id}`)}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-2">
@@ -735,12 +737,11 @@ const Project = () => {
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
         projectId={projectId}
-        onSave={() => {
-          fetchProjectWorkOrders();
-          fetchProjectInfo();
+        onSave={(new_id) => {
+          navigate(`/work_order/${new_id}`);
         }}
       />
-      <PermissionGate resource="workorder" action="create" show={false}>
+      <PermissionGate resource="work_order" action="create" show={false}>
         <AddButton action={() => setShowAddModal(true)} />
       </PermissionGate>
     </PermissionGate>

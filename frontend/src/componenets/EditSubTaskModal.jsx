@@ -3,15 +3,26 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Save, Close } from "@mui/icons-material";
 import LoadingSpinner from "./LoadingSpinner";
 
-const EditProjectModal = ({ isOpen, onClose, project, onSave }) => {
+const EditSubTaskModal = ({
+  isOpen,
+  onClose,
+  subTask,
+  onSave,
+  taskId,
+}) => {
   const [formData, setFormData] = useState({
-    project_name: "",
+    subtask_name: "",
     description: "",
-    person_in_charge: "",
-    priority: "medium",
+    assignee: {
+      id: "",
+      name: "",
+    },
     state: "pending",
     start_date: "",
     due_date: "",
+    completed_at: "",
+    estimated_hour: "",
+    task_id: taskId || "",
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -20,15 +31,14 @@ const EditProjectModal = ({ isOpen, onClose, project, onSave }) => {
 
   useEffect(() => {
     if (isOpen) {
-      if (project) {
+      if (subTask) {
         setFormData({
-          project_name: project.project_name || "",
-          description: project.description || "",
-          person_in_charge: project.person_in_charge || "",
-          priority: project.priority || "medium",
-          state: project.state || "pending",
-          start_date: project.start_date
-            ? new Date(project.start_date)
+          subtask_name: subTask.subtask_name || "",
+          description: subTask.description || "",
+          assignee: subTask.assignee || "",
+          state: subTask.state || "pending",
+          start_date: subTask.start_date
+            ? new Date(subTask.start_date)
                 .toLocaleDateString("zh-Hans-CN", {
                   year: "numeric",
                   month: "2-digit",
@@ -37,8 +47,8 @@ const EditProjectModal = ({ isOpen, onClose, project, onSave }) => {
                 })
                 .replace(/\//g, "-")
             : "",
-          due_date: project.due_date
-            ? new Date(project.due_date)
+          due_date: subTask.due_date
+            ? new Date(subTask.due_date)
                 .toLocaleDateString("zh-Hans-CN", {
                   year: "numeric",
                   month: "2-digit",
@@ -47,21 +57,35 @@ const EditProjectModal = ({ isOpen, onClose, project, onSave }) => {
                 })
                 .replace(/\//g, "-")
             : "",
+          completed_at: subTask.completed_at
+            ? new Date(subTask.completed_at)
+                .toLocaleDateString("zh-Hans-CN", {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  timeZone: "Asia/Hong_Kong",
+                })
+                .replace(/\//g, "-")
+            : "",
+          estimated_hour: subTask.estimated_hour || "",
+          task_id: subTask.task_id || taskId,
         });
       } else {
-        // New project defaults
+        // New subtask defaults
         setFormData({
-          project_name: "",
+          subtask_name: "",
           description: "",
-          person_in_charge: "",
-          priority: "medium",
+          assignee_id: "",
           state: "pending",
           start_date: "",
           due_date: "",
+          completed_at: "",
+          estimated_hour: "",
+          task_id: taskId,
         });
       }
     }
-  }, [isOpen, project]);
+  }, [isOpen, subTask, taskId]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -78,8 +102,10 @@ const EditProjectModal = ({ isOpen, onClose, project, onSave }) => {
 
     try {
       const token = localStorage.getItem("token");
-      const url = project ? `/api/projects/${project.id}` : "/api/projects";
-      const method = project ? "PUT" : "POST";
+      const url = subTask
+        ? `/api/subtasks/${subTask.id}`
+        : "/api/subtasks";
+      const method = subTask ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
@@ -96,11 +122,11 @@ const EditProjectModal = ({ isOpen, onClose, project, onSave }) => {
         onClose();
       } else {
         const errorData = await response.json();
-        setError(errorData.message || "Failed to save project");
+        setError(errorData.message || "Failed to save subtask");
       }
     } catch (err) {
-      setError("Network error saving project");
-      console.error("Error saving project:", err);
+      setError("Network error saving subtask");
+      console.error("Error saving subtask:", err);
     } finally {
       setSaving(false);
     }
@@ -138,7 +164,7 @@ const EditProjectModal = ({ isOpen, onClose, project, onSave }) => {
           >
             <div className="flex items-center justify-between border-b border-gray-200 p-6">
               <h2 className="text-xl font-semibold text-gray-800">
-                {project ? "編輯項目" : "新增項目"}
+                {subTask ? "編輯子任務" : "新增子任務"}
               </h2>
               <button
                 onClick={onClose}
@@ -161,20 +187,20 @@ const EditProjectModal = ({ isOpen, onClose, project, onSave }) => {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
                     <label
-                      htmlFor="project_name"
+                      htmlFor="subtask_name"
                       className="block text-sm font-medium text-gray-700"
                     >
-                      項目名稱 *
+                      子任務名稱 *
                     </label>
                     <input
                       type="text"
-                      id="project_name"
-                      name="project_name"
-                      value={formData.project_name}
+                      id="subtask_name"
+                      name="subtask_name"
+                      value={formData.subtask_name}
                       onChange={handleInputChange}
                       required
                       className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                      placeholder="輸入項目名稱"
+                      placeholder="輸入子任務名稱"
                     />
                   </div>
 
@@ -183,7 +209,7 @@ const EditProjectModal = ({ isOpen, onClose, project, onSave }) => {
                       htmlFor="description"
                       className="block text-sm font-medium text-gray-700"
                     >
-                      項目描述
+                      子任務描述
                     </label>
                     <textarea
                       id="description"
@@ -192,52 +218,28 @@ const EditProjectModal = ({ isOpen, onClose, project, onSave }) => {
                       onChange={handleInputChange}
                       rows={3}
                       className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                      placeholder="輸入項目描述"
+                      placeholder="輸入子任務描述"
                     />
                   </div>
-
-                  {/*<div>*/}
-                  {/*  <label*/}
-                  {/*    htmlFor="person_in_charge"*/}
-                  {/*    className="block text-sm font-medium text-gray-700"*/}
-                  {/*  >*/}
-                  {/*    負責人*/}
-                  {/*  </label>*/}
-                  {/*  <select*/}
-                  {/*    id="person_in_charge"*/}
-                  {/*    name="person_in_charge"*/}
-                  {/*    value={formData.person_in_charge}*/}
-                  {/*    onChange={handleInputChange}*/}
-                  {/*    className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"*/}
-                  {/*  >*/}
-                  {/*    <option value="">選擇負責人</option>*/}
-                  {/*    {users.map((user) => (*/}
-                  {/*      <option key={user.id} value={user.id}>*/}
-                  {/*        {user.name}*/}
-                  {/*      </option>*/}
-                  {/*    ))}*/}
-                  {/*  </select>*/}
-                  {/*</div>*/}
 
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <div>
                       <label
-                        htmlFor="priority"
+                        htmlFor="estimated_hour"
                         className="block text-sm font-medium text-gray-700"
                       >
-                        優先級
+                        預估工時 (小時)
                       </label>
-                      <select
-                        id="priority"
-                        name="priority"
-                        value={formData.priority}
+                      <input
+                        type="number"
+                        id="estimated_hour"
+                        name="estimated_hour"
+                        value={formData.estimated_hour}
                         onChange={handleInputChange}
+                        min="0"
                         className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                      >
-                        <option value="high">高</option>
-                        <option value="medium">中</option>
-                        <option value="low">低</option>
-                      </select>
+                        placeholder="輸入預估工時"
+                      />
                     </div>
 
                     <div>
@@ -255,7 +257,9 @@ const EditProjectModal = ({ isOpen, onClose, project, onSave }) => {
                         className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                       >
                         <option value="pending">待開始</option>
-                        <option value="active">進行中</option>
+                        <option value="design">設計階段</option>
+                        <option value="pulling_cable">拉線階段</option>
+                        <option value="terminated">終端階段</option>
                         <option value="completed">已完成</option>
                       </select>
                     </div>
@@ -297,6 +301,64 @@ const EditProjectModal = ({ isOpen, onClose, project, onSave }) => {
                     </div>
                   </div>
 
+                  {formData.state === "completed" && (
+                    <div>
+                      <label
+                        htmlFor="completed_at"
+                        className="block text-sm font-medium text-gray-700"
+                      >
+                        完成日期
+                      </label>
+                      <input
+                        type="date"
+                        id="completed_at"
+                        name="completed_at"
+                        value={formData.completed_at}
+                        onChange={handleInputChange}
+                        className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                      />
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <div>
+                      <label
+                        htmlFor="assignee_id"
+                        className="block text-sm font-medium text-gray-700"
+                      >
+                        指派給
+                      </label>
+                      <input
+                        type="text"
+                        id="assignee_id"
+                        name="assignee_id"
+                        value={formData.assignee?.id}
+                        onChange={handleInputChange}
+                        className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                        placeholder="輸入指派員工ID"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="task_id"
+                        className="block text-sm font-medium text-gray-700"
+                      >
+                        任務ID
+                      </label>
+                      <input
+                        type="text"
+                        id="task_id"
+                        name="task_id"
+                        value={formData.task_id}
+                        onChange={handleInputChange}
+                        className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                        placeholder="輸入任務ID"
+                        readOnly={!!taskId}
+                      />
+                    </div>
+                  </div>
+
                   {error && (
                     <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600">
                       {error}
@@ -317,7 +379,11 @@ const EditProjectModal = ({ isOpen, onClose, project, onSave }) => {
                       className="bg-blue inline-flex items-center gap-2 rounded-xl border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
                     >
                       <Save className="h-4 w-4" />
-                      {saving ? "保存中..." : project ? "更新項目" : "創建項目"}
+                      {saving
+                        ? "保存中..."
+                        : subTask
+                          ? "更新子任務"
+                          : "創建子任務"}
                     </button>
                   </div>
                 </form>
@@ -330,4 +396,4 @@ const EditProjectModal = ({ isOpen, onClose, project, onSave }) => {
   );
 };
 
-export default EditProjectModal;
+export default EditSubTaskModal;

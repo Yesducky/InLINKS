@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, session
-from .models import User, Role, db
+from models import User, Role, db
 
 # Create a Blueprint for API routes
 api = Blueprint('api', __name__)

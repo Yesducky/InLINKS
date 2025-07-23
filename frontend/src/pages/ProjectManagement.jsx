@@ -554,8 +554,9 @@ const ProjectManagement = () => {
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
         project={null}
-        onSave={() => {
-          fetchProjects();
+        onSave={(new_id) => {
+          //navigate to new proj
+          navigate(`/project/${new_id}`);
         }}
       />
       <PermissionGate resource="project" action="create" show={false}>

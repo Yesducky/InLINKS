@@ -15,7 +15,7 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///inlinks.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['JWT_SECRET_KEY'] = 'jwt-secret-string-change-in-production'
-    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = False
 
     # Initialize extensions with app
     db.init_app(app)
@@ -28,13 +28,15 @@ def create_app():
     from routes.inventory.carton_routes import carton_bp
     from routes.inventory.lot_routes import lot_bp
     from routes.inventory.material_routes import material_bp
-    from backend.routes.project.process_routes import process_bp
+    from routes.project.process_routes import process_bp
     from routes.common.utility_routes import utility_bp
     from routes.common.menu_routes import menu_bp
     from routes.inventory.item_routes import item_bp
     from routes.common.permission_routes import permission_bp
-    from backend.routes.project.project_routes import project_bp
-    from backend.routes.project.workorder_routes import workorder_bp
+    from routes.project.project_routes import project_bp
+    from routes.project.work_order_routes import workorder_bp
+    from routes.project.task_routes import task_bp
+    from routes.project.subtask_routes import subtask_bp
 
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(common_bp, url_prefix='/api')
@@ -49,6 +51,8 @@ def create_app():
     app.register_blueprint(permission_bp, url_prefix='/api')
     app.register_blueprint(project_bp, url_prefix='/api')
     app.register_blueprint(workorder_bp, url_prefix='/api')
+    app.register_blueprint(task_bp, url_prefix='/api')
+    app.register_blueprint(subtask_bp, url_prefix='/api')
 
     # Create tables and initialize data
     with app.app_context():

@@ -13,6 +13,8 @@ import ActiveIcon from "../assets/icons/active.svg?react";
 import CompletedIcon from "../assets/icons/complete.svg?react";
 import PendingIcon from "../assets/icons/pending.svg?react";
 import WorkOrderIcon from "../assets/icons/work-order.svg?react";
+import TaskIcon from "../assets/icons/task.svg?react";
+import SubTaskIcon from "../assets/icons/sub-task.svg?react";
 
 export {
   LotIcon,
@@ -30,4 +32,6 @@ export {
   CompletedIcon,
   PendingIcon,
   WorkOrderIcon,
+  TaskIcon,
+  SubTaskIcon,
 };

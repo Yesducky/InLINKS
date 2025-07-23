@@ -7,7 +7,7 @@ from utils.db_utils import generate_id
 from utils.process_logger import ProcessLogger
 from __init__ import db
 
-workorder_bp = Blueprint('workorder', __name__)
+workorder_bp = Blueprint('work_order', __name__)
 
 
 def parse_date(date_str):
@@ -45,6 +45,7 @@ def work_orders():
 
     elif request.method == 'POST':
         data = request.get_json()
+        print(data)
         current_user_id = get_jwt_identity()
         work_order_id = generate_id('WO', WorkOrder)
         work_order = WorkOrder(
@@ -56,7 +57,7 @@ def work_orders():
             due_date=parse_date(data.get('due_date')),
             completed_at=parse_date(data.get('completed_at')),
             assignee_id=data.get('assignee_id'),
-            estimated_hour=data.get('estimated_hour'),
+            estimated_hour=float(data.get('estimated_hour')) if data.get('estimated_hour') not in (None, '') else None,
             workflow_type_id=data['workflow_type_id'],
             parent_project_id=data['parent_project_id'],
             lot_id=data.get('lot_id'),
@@ -117,6 +118,12 @@ def work_order_detail(work_order_id):
                 new_data[field] = parse_date(val) if val is not None else old_data[field]
             elif field == 'completed_at':
                 new_data[field] = datetime.datetime.now() if data.get('state', work_order.state) == 'completed' else old_data[field]
+            elif field == 'estimated_hour':
+                est = data.get('estimated_hour', old_data['estimated_hour'])
+                if est == '' or est is None:
+                    new_data[field] = None
+                else:
+                    new_data[field] = float(est)
             else:
                 new_data[field] = data.get(field, old_data[field])
 

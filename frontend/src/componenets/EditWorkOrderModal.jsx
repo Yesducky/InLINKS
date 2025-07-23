@@ -114,7 +114,7 @@ const EditWorkOrderModal = ({
 
       if (response.ok) {
         const result = await response.json();
-        onSave(result);
+        onSave(result.id);
         onClose();
       } else {
         const errorData = await response.json();
