@@ -15,7 +15,7 @@ import {
   PendingIcon,
   ActiveIcon,
   CompletedIcon,
-} from "../componenets/customIcons.jsx";
+} from "../componenets/CustomIcons.jsx";
 import AddButton from "../componenets/AddButton.jsx";
 import EditWorkOrderModal from "../componenets/EditWorkOrderModal.jsx";
 
