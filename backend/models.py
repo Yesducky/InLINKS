@@ -53,6 +53,19 @@ class LogType(db.Model):
     description = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=get_hk_time)
 
+class ProcessStateType(db.Model):
+    __tablename__ = 'process_state_types'
+    id = db.Column(db.String(20), primary_key=True)  # PST001, PST002, etc.
+    state_name = db.Column(db.String(50), nullable=False)  # e.g., planning, active, completed
+    state_type = db.Column(db.String(20), nullable=False)  # project, workorder, task, subtask
+    description = db.Column(db.Text)
+    bg_color = db.Column(db.String(20), nullable=True)
+    text_color = db.Column(db.String(20), nullable=True)
+    icon = db.Column(db.String(50), nullable=True)
+    order_index = db.Column(db.Integer, nullable=False, default=0)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=get_hk_time)
+
 # Database Models - Stock Collection
 class Lot(db.Model):
     __tablename__ = 'lots'
@@ -115,25 +128,25 @@ class Project(db.Model):
     id = db.Column(db.String(20), primary_key=True)  # PRJ001, PRJ002, etc.
     project_name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    state = db.Column(db.String(50), nullable=True)  # e.g. planning, active, completed
+    state_id = db.Column(db.String(20), db.ForeignKey('process_state_types.id'), nullable=True)
     start_date = db.Column(db.DateTime, nullable=True)
     due_date = db.Column(db.DateTime, nullable=True)
     completed_at = db.Column(db.DateTime, nullable=True)
     priority = db.Column(db.String(20), nullable=True)  # e.g. low, medium, high, urgent
-    status = db.Column(db.String(20), nullable=True)
     person_in_charge_id = db.Column(db.String(20), db.ForeignKey('users.id'), nullable=False)
     work_order_ids = db.Column(db.Text)  # JSON string of work order IDs
     process_log_ids = db.Column(db.Text)  # JSON string of process log IDs
     created_at = db.Column(db.DateTime, default=get_hk_time)
 
     person_in_charge = db.relationship('User', backref='managed_projects')
+    state = db.relationship('ProcessStateType', backref='projects')
 
 class WorkOrder(db.Model):
     __tablename__ = 'work_orders'
     id = db.Column(db.String(20), primary_key=True)  # WO001, WO002, etc.
     work_order_name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
-    state = db.Column(db.String(50), nullable=True)  # e.g. pending, in_progress, completed
+    state_id = db.Column(db.String(20), db.ForeignKey('process_state_types.id'), nullable=True)
     start_date = db.Column(db.DateTime, nullable=True)
     due_date = db.Column(db.DateTime, nullable=True)
     completed_at = db.Column(db.DateTime, nullable=True)
@@ -150,13 +163,14 @@ class WorkOrder(db.Model):
     parent_project = db.relationship('Project', backref='work_orders')
     lot = db.relationship('Lot', backref='work_orders')
     assignee = db.relationship('User', backref='assigned_workorders')
+    state = db.relationship('ProcessStateType', backref='work_orders')
 
 class Task(db.Model):
     __tablename__ = 'tasks'
     id = db.Column(db.String(20), primary_key=True)  # TSK001, TSK002, etc.
     task_name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
-    state = db.Column(db.String(50), nullable=True)  # e.g. pending, in_progress, completed
+    state_id = db.Column(db.String(20), db.ForeignKey('process_state_types.id'), nullable=True)
     start_date = db.Column(db.DateTime, nullable=True)
     due_date = db.Column(db.DateTime, nullable=True)
     completed_at = db.Column(db.DateTime, nullable=True)
@@ -165,16 +179,19 @@ class Task(db.Model):
     work_order_id = db.Column(db.String(20), db.ForeignKey('work_orders.id'))
     subtask_ids = db.Column(db.Text)  # JSON string of subtask IDs
     created_at = db.Column(db.DateTime, default=get_hk_time)
+    label = db.Column(db.String(50), nullable=True)
+    label_count = db.Column(db.Integer, nullable=True, default=0)
 
     work_order = db.relationship('WorkOrder', backref='tasks')
     assignee = db.relationship('User', backref='assigned_tasks')
+    state = db.relationship('ProcessStateType', backref='tasks')
 
 class SubTask(db.Model):
     __tablename__ = 'subtasks'
     id = db.Column(db.String(20), primary_key=True)  # SUB001, SUB002, etc.
     subtask_name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
-    state = db.Column(db.String(50), nullable=True)  # e.g. pending, in_progress, completed
+    state_id = db.Column(db.String(20), db.ForeignKey('process_state_types.id'), nullable=True)
     start_date = db.Column(db.DateTime, nullable=True)
     due_date = db.Column(db.DateTime, nullable=True)
     completed_at = db.Column(db.DateTime, nullable=True)
@@ -185,6 +202,7 @@ class SubTask(db.Model):
 
     task = db.relationship('Task', backref='subtasks')
     assignee = db.relationship('User', backref='assigned_subtasks')
+    state = db.relationship('ProcessStateType', backref='subtasks')
 
 class ProcessLog(db.Model):
     __tablename__ = 'process_logs'

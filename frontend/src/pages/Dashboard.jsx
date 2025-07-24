@@ -5,7 +5,7 @@ import Header from "../componenets/Header.jsx";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import {
-  CreateLabelIcon,
+  TaskIcon,
   InventoryIcon,
   AddMaterialIcon,
   QrCodeIcon,
@@ -27,7 +27,7 @@ const Dashboard = () => {
     QrCodeScanner: QrCodeIcon,
     Assignment: ProjectIcon,
     People: UserManagementIcon,
-    Label: CreateLabelIcon,
+    Task: TaskIcon,
   };
 
   // Get username from localStorage
@@ -80,20 +80,15 @@ const Dashboard = () => {
   }, []);
 
   const handleCardClick = (cardMenu) => {
-    console.log(
-      `Card ${cardMenu.id} clicked - navigating to ${cardMenu.route_path}`,
-    );
     navigate(cardMenu.route_path);
   };
 
   const handleSettingsClick = () => {
-    console.log("Settings clicked");
     navigate("/settings");
   };
 
   const renderIcon = (iconName, iconColor) => {
     const IconComponent = iconMapping[iconName];
-    console.log(iconColor);
     if (!IconComponent) {
       return <div className="h-12 w-12 rounded bg-gray-300" />; // Fallback
     }

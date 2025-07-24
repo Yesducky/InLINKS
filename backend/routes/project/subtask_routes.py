@@ -1,7 +1,7 @@
 import datetime
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import SubTask
+from models import SubTask, ProcessStateType
 from utils.db_utils import generate_id
 from utils.process_logger import ProcessLogger
 from __init__ import db
@@ -26,7 +26,14 @@ def subtasks():
                 'id': s.id,
                 'subtask_name': s.subtask_name,
                 'description': s.description,
-                'state': s.state,
+                'state_id': s.state_id,
+                'state': {
+                    'id': s.state.id,
+                    'state_name': s.state.state_name,
+                    'bg_color': s.state.bg_color,
+                    'text_color': s.state.text_color,
+                    'icon': s.state.icon
+                } if s.state else None,
                 'start_date': s.start_date.isoformat() if s.start_date else None,
                 'due_date': s.due_date.isoformat() if s.due_date else None,
                 'completed_at': s.completed_at.isoformat() if s.completed_at else None,
@@ -45,7 +52,7 @@ def subtasks():
             id=subtask_id,
             subtask_name=data['subtask_name'],
             description=data.get('description'),
-            state=data.get('state'),
+            state_id=data.get('state_id'),
             start_date=parse_date(data.get('start_date')),
             due_date=parse_date(data.get('due_date')),
             completed_at=parse_date(data.get('completed_at')),
@@ -75,7 +82,14 @@ def subtask_detail(subtask_id):
             'id': subtask.id,
             'subtask_name': subtask.subtask_name,
             'description': subtask.description,
-            'state': subtask.state,
+            'state_id': subtask.state_id,
+            'state': {
+                'id': subtask.state.id,
+                'state_name': subtask.state.state_name,
+                'bg_color': subtask.state.bg_color,
+                'text_color': subtask.state.text_color,
+                'icon': subtask.state.icon
+            } if subtask.state else None,
             'start_date': subtask.start_date.isoformat() if subtask.start_date else None,
             'due_date': subtask.due_date.isoformat() if subtask.due_date else None,
             'completed_at': subtask.completed_at.isoformat() if subtask.completed_at else None,
@@ -87,7 +101,7 @@ def subtask_detail(subtask_id):
     elif request.method == 'PUT':
         data = request.get_json()
         current_user_id = get_jwt_identity()
-        old_data = {field: getattr(subtask, field) for field in ['subtask_name', 'description', 'state', 'start_date', 'due_date',
+        old_data = {field: getattr(subtask, field) for field in ['subtask_name', 'description', 'state_id', 'start_date', 'due_date',
                           'completed_at', 'assignee_id', 'estimated_hour', 'task_id']}
         new_data = {}
         for field in old_data:
@@ -95,7 +109,8 @@ def subtask_detail(subtask_id):
                 val = data.get(field)
                 new_data[field] = parse_date(val) if val is not None else old_data[field]
             elif field == 'completed_at':
-                new_data[field] = datetime.datetime.now() if data.get('state', subtask.state) == 'completed' else old_data[field]
+                completed_state = ProcessStateType.query.filter_by(state_type='subtask', state_name='completed').first()
+                new_data[field] = datetime.datetime.now() if completed_state and data.get('state_id') == completed_state.id else old_data[field]
             elif field == 'estimated_hour':
                 est = data.get('estimated_hour', old_data['estimated_hour'])
                 if est == '' or est is None:

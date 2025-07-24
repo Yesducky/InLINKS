@@ -135,22 +135,11 @@ class ProcessLogger:
             log_entry.project_id = entity_id
         elif entity_type == 'work_order':
             log_entry.work_order_id = entity_id
-            if entity:
-                log_entry.project_id = entity.parent_project_id
         elif entity_type == 'task':
             log_entry.task_id = entity_id
-            if entity:
-                log_entry.work_order_id = entity.work_order_id
-                if entity.work_order:
-                    log_entry.project_id = entity.work_order.parent_project_id
         elif entity_type == 'subtask':
             log_entry.subtask_id = entity_id
-            if entity:
-                log_entry.task_id = entity.task_id
-                if entity.task:
-                    log_entry.work_order_id = entity.task.work_order_id
-                    if entity.task.work_order:
-                        log_entry.project_id = entity.task.work_order.parent_project_id
+
         
         db.session.add(log_entry)
         

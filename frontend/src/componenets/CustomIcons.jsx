@@ -15,6 +15,7 @@ import PendingIcon from "../assets/icons/pending.svg?react";
 import WorkOrderIcon from "../assets/icons/work-order.svg?react";
 import TaskIcon from "../assets/icons/task.svg?react";
 import SubTaskIcon from "../assets/icons/sub-task.svg?react";
+import AssignedWorkerIcon from "../assets/icons/assigned-worker.svg?react";
 
 export {
   LotIcon,
@@ -34,4 +35,26 @@ export {
   WorkOrderIcon,
   TaskIcon,
   SubTaskIcon,
+  AssignedWorkerIcon,
+};
+
+export const iconMap = {
+  LotIcon,
+  CartonIcon,
+  ItemIcon,
+  InventoryIcon,
+  AddMaterialIcon,
+  CreateLabelIcon,
+  ProjectIcon,
+  QrCodeIcon,
+  UserManagementIcon,
+  SettingIcon,
+  UsedIcon,
+  ActiveIcon,
+  CompletedIcon,
+  PendingIcon,
+  WorkOrderIcon,
+  TaskIcon,
+  SubTaskIcon,
+  AssignedWorkerIcon,
 };

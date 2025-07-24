@@ -11,7 +11,7 @@ const EditTaskModal = ({ isOpen, onClose, task, onSave, workOrderId }) => {
       id: "",
       name: "",
     },
-    state: "pending",
+    state_id: "",
     start_date: "",
     due_date: "",
     completed_at: "",
@@ -22,15 +22,17 @@ const EditTaskModal = ({ isOpen, onClose, task, onSave, workOrderId }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [stateOptions, setStateOptions] = useState([]);
 
   useEffect(() => {
     if (isOpen) {
+      fetchStateOptions();
       if (task) {
         setFormData({
           task_name: task.task_name || "",
           description: task.description || "",
           assignee: task.assignee || "",
-          state: task.state || "",
+          state_id: task.state_id || "",
           start_date: task.start_date
             ? new Date(task.start_date)
                 .toLocaleDateString("zh-Hans-CN", {
@@ -65,12 +67,12 @@ const EditTaskModal = ({ isOpen, onClose, task, onSave, workOrderId }) => {
           work_order_id: task.work_order_id || workOrderId,
         });
       } else {
-        // New task defaults
+        // New task defaults - set first available state
         setFormData({
           task_name: "",
           description: "",
           assignee_id: "",
-          state: "pending",
+          state_id: "",
           start_date: "",
           due_date: "",
           completed_at: "",
@@ -87,6 +89,32 @@ const EditTaskModal = ({ isOpen, onClose, task, onSave, workOrderId }) => {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const fetchStateOptions = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/process_state_types/by_type/task", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const states = await response.json();
+        setStateOptions(states);
+
+        // If creating new task and no state_id set, use first available
+        if (!task && states.length > 0 && !formData.state_id) {
+          setFormData((prev) => ({ ...prev, state_id: states[0].id }));
+        }
+      } else {
+        console.error("Failed to fetch state options");
+      }
+    } catch (error) {
+      console.error("Error fetching state options:", error);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -237,21 +265,25 @@ const EditTaskModal = ({ isOpen, onClose, task, onSave, workOrderId }) => {
 
                     <div>
                       <label
-                        htmlFor="state"
+                        htmlFor="state_id"
                         className="block text-sm font-medium text-gray-700"
                       >
                         狀態
                       </label>
                       <select
-                        id="state"
-                        name="state"
-                        value={formData.state}
+                        id="state_id"
+                        name="state_id"
+                        value={formData.state_id}
                         onChange={handleInputChange}
                         className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                        required
                       >
-                        <option value="pending">待開始</option>
-                        <option value="active">進行中</option>
-                        <option value="completed">已完成</option>
+                        <option value="">選擇狀態</option>
+                        {stateOptions.map((state) => (
+                          <option key={state.id} value={state.id}>
+                            {state.state_name}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -292,7 +324,7 @@ const EditTaskModal = ({ isOpen, onClose, task, onSave, workOrderId }) => {
                     </div>
                   </div>
 
-                  {formData.state === "completed" && (
+                  {stateOptions.find(s => s.id === formData.state_id)?.state_name === "completed" && (
                     <div>
                       <label
                         htmlFor="completed_at"

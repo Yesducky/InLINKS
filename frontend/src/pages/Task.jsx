@@ -15,6 +15,7 @@ import {
   ActiveIcon,
   CompletedIcon,
 } from "../componenets/CustomIcons.jsx";
+import { iconMap } from "../componenets/CustomIcons.jsx";
 import AddButton from "../componenets/AddButton.jsx";
 import EditSubTaskModal from "../componenets/EditSubTaskModal.jsx";
 
@@ -85,13 +86,13 @@ const Task = () => {
         // Calculate stats
         const totalSubTasks = subTasks.length;
         const activeSubTasks = subTasks.filter(
-          (subTask) => subTask.state === "active",
+          (subTask) => subTask.state?.state_name === "active",
         ).length;
         const completedSubTasks = subTasks.filter(
-          (subTask) => subTask.state === "completed",
+          (subTask) => subTask.state?.state_name === "completed",
         ).length;
         const pendingSubTasks = subTasks.filter(
-          (subTask) => subTask.state === "pending",
+          (subTask) => subTask.state?.state_name === "pending",
         ).length;
 
         setStats({
@@ -140,59 +141,6 @@ const Task = () => {
     });
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "active":
-        return "bg-green-100 text-green-800";
-      case "completed":
-        return "bg-blue-100 text-blue-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "active":
-        return <ActiveIcon className="h-4 w-4" />;
-      case "completed":
-        return <CompletedIcon className="h-4 w-4" />;
-      case "pending":
-        return <PendingIcon className="h-4 w-4" />;
-      default:
-        return <TaskIcon className="h-4 w-4" />;
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case "active":
-        return "進行中";
-      case "completed":
-        return "已完成";
-      case "pending":
-        return "待開始";
-      default:
-        return "未知";
-    }
-  };
-
-  const getSubTaskStatusText = (status) => {
-    switch (status) {
-      case "design":
-        return "設計階段";
-      case "pulling_cable":
-        return "拉線階段";
-      case "terminated":
-        return "終端階段";
-      case "completed":
-        return "已完成";
-      default:
-        return "未知";
-    }
-  };
 
   // Filter subtasks based on search term and status
   const filteredSubTasks = subTasks.filter((subTask) => {
@@ -206,7 +154,7 @@ const Task = () => {
 
     let matchesStatus = true;
     if (selectedStatus !== "all") {
-      matchesStatus = subTask.state === selectedStatus;
+      matchesStatus = subTask.state?.state_name === selectedStatus;
     }
 
     return matchesSearch && matchesStatus;
@@ -318,17 +266,18 @@ const Task = () => {
                     </div>
                     <div className="text-lg font-semibold text-gray-900">
                       <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          taskInfo.state === "active"
-                            ? "bg-green-100 text-green-800"
-                            : taskInfo.state === "completed"
-                              ? "bg-blue-100 text-blue-800"
-                              : taskInfo.state === "pending"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-gray-100 text-gray-800"
-                        }`}
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium`}
+                        style={{
+                          backgroundColor: taskInfo.state?.bg_color,
+                          color: taskInfo.state?.text_color,
+                        }}
                       >
-                        {getStatusText(taskInfo.state)}
+                        {iconMap[taskInfo.state?.icon] &&
+                          React.createElement(iconMap[taskInfo.state.icon], {
+                            className: "h-4 w-4",
+                          })}
+                        &nbsp;
+                        {taskInfo.state?.state_name}
                       </span>
                     </div>
                   </div>
@@ -591,12 +540,18 @@ const Task = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span
-                              className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(
-                                subTask.state,
-                              )}`}
+                              className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold`}
+                              style={{
+                                backgroundColor: subTask.state?.bg_color,
+                                color: subTask.state?.text_color,
+                              }}
                             >
-                              {getStatusIcon(subTask.state)}
-                              {getSubTaskStatusText(subTask.state)}
+                              {iconMap[subTask.state?.icon] &&
+                                React.createElement(iconMap[subTask.state.icon], {
+                                  className: "h-4 w-4",
+                                })}
+                              &nbsp;
+                              {subTask.state?.state_name}
                             </span>
                           </td>
                           <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
@@ -629,11 +584,16 @@ const Task = () => {
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-2">
                           <span
-                            className={`inline-flex aspect-square h-10 w-10 items-center justify-center rounded-full text-xs font-semibold ${getStatusColor(
-                              subTask.state,
-                            )}`}
+                            className={`inline-flex aspect-square h-10 w-10 items-center justify-center rounded-full text-xs font-semibold`}
+                            style={{
+                              backgroundColor: subTask.state?.bg_color,
+                              color: subTask.state?.text_color,
+                            }}
                           >
-                            {getStatusIcon(subTask.state)}
+                            {iconMap[subTask.state?.icon] &&
+                              React.createElement(iconMap[subTask.state.icon], {
+                                className: "h-5 w-5",
+                              })}
                           </span>
                           <div>
                             <h4 className="font-medium text-gray-900">

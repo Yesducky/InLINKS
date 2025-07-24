@@ -9,7 +9,7 @@ const EditProjectModal = ({ isOpen, onClose, project, onSave }) => {
     description: "",
     person_in_charge: "",
     priority: "medium",
-    state: "pending",
+    state_id: "",
     start_date: "",
     due_date: "",
   });
@@ -17,16 +17,18 @@ const EditProjectModal = ({ isOpen, onClose, project, onSave }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [stateOptions, setStateOptions] = useState([]);
 
   useEffect(() => {
     if (isOpen) {
+      fetchStateOptions();
       if (project) {
         setFormData({
           project_name: project.project_name || "",
           description: project.description || "",
           person_in_charge: project.person_in_charge || "",
           priority: project.priority || "medium",
-          state: project.state || "pending",
+          state_id: project.state_id || "",
           start_date: project.start_date
             ? new Date(project.start_date)
                 .toLocaleDateString("zh-Hans-CN", {
@@ -49,13 +51,13 @@ const EditProjectModal = ({ isOpen, onClose, project, onSave }) => {
             : "",
         });
       } else {
-        // New project defaults
+        // New project defaults - set first available state
         setFormData({
           project_name: "",
           description: "",
           person_in_charge: "",
           priority: "medium",
-          state: "pending",
+          state_id: "",
           start_date: "",
           due_date: "",
         });
@@ -69,6 +71,33 @@ const EditProjectModal = ({ isOpen, onClose, project, onSave }) => {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const fetchStateOptions = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/process_state_types/by_type/project", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const states = await response.json();
+        console.log(states);
+        setStateOptions(states);
+
+        // If creating new project and no state_id set, use first available
+        if (!project && states.length > 0 && !formData.state_id) {
+          setFormData((prev) => ({ ...prev, state_id: states[0].id }));
+        }
+      } else {
+        console.error("Failed to fetch state options");
+      }
+    } catch (error) {
+      console.error("Error fetching state options:", error);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -242,21 +271,25 @@ const EditProjectModal = ({ isOpen, onClose, project, onSave }) => {
 
                     <div>
                       <label
-                        htmlFor="state"
+                        htmlFor="state_id"
                         className="block text-sm font-medium text-gray-700"
                       >
                         狀態
                       </label>
                       <select
-                        id="state"
-                        name="state"
-                        value={formData.state}
+                        id="state_id"
+                        name="state_id"
+                        value={formData.state_id}
                         onChange={handleInputChange}
                         className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                        required
                       >
-                        <option value="pending">待開始</option>
-                        <option value="active">進行中</option>
-                        <option value="completed">已完成</option>
+                        <option value="">選擇狀態</option>
+                        {stateOptions.map((state) => (
+                          <option key={state.id} value={state.id}>
+                            {state.state_name}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   </div>

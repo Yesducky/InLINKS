@@ -527,9 +527,6 @@ const ItemOverview = () => {
                         <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                           物料 ID
                         </th>
-                        <th className="min-w-30 px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                          工廠批次號
-                        </th>
                         <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                           物料名稱
                         </th>
@@ -565,9 +562,6 @@ const ItemOverview = () => {
                                 </div>
                               </div>
                             </div>
-                          </td>
-                          <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
-                            {item.lot_id}
                           </td>
                           <td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900">
                             {getMaterialTypeName(item.material_type_id)}
@@ -612,7 +606,11 @@ const ItemOverview = () => {
                           </div>
                           <div>
                             <h4 className="font-medium text-gray-900">
-                              {item.id}
+                              {item.parent_id &&
+                              item.status === "assigned" &&
+                              item.parent_id.startsWith("ITM")
+                                ? item.parent_id + " 分配"
+                                : item.id}
                             </h4>
                           </div>
                         </div>

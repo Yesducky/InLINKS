@@ -23,6 +23,7 @@ import Project from "./pages/Project.jsx";
 import WorkOrder from "./pages/WorkOrder.jsx";
 import Task from "./pages/Task.jsx";
 import SubTask from "./pages/SubTask.jsx";
+import MyTask from "./pages/MyTask.jsx";
 
 import BackButton from "./componenets/BackButton.jsx";
 
@@ -198,6 +199,24 @@ const AnimatedRoutes = ({ user, handleLogin, handleLogout }) => {
           element={
             <ProtectedRoute user={user}>
               <SubTask />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/my_tasks"
+          element={
+            <ProtectedRoute user={user}>
+              <MyTask />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/my_tasks/:taskId"
+          element={
+            <ProtectedRoute user={user}>
+              <Task />
             </ProtectedRoute>
           }
         />

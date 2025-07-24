@@ -14,6 +14,7 @@ import {
   PendingIcon,
   CompletedIcon,
 } from "../componenets/CustomIcons.jsx";
+import { iconMap } from "../componenets/CustomIcons.jsx";
 
 const ProjectManagement = () => {
   const [projects, setProjects] = useState([]);
@@ -77,13 +78,13 @@ const ProjectManagement = () => {
         // Calculate stats
         const totalProjects = projects.length;
         const activeProjects = projects.filter(
-          (project) => project.state === "active",
+          (project) => project.state?.state_name === "active",
         ).length;
         const completedProjects = projects.filter(
-          (project) => project.state === "completed",
+          (project) => project.state?.state_name === "completed",
         ).length;
         const pendingProjects = projects.filter(
-          (project) => project.state === "pending",
+          (project) => project.state?.state_name === "pending",
         ).length;
 
         setStats({
@@ -114,44 +115,6 @@ const ProjectManagement = () => {
     });
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "active":
-        return "bg-green-100 text-green-800";
-      case "completed":
-        return "bg-red-100 text-red-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "active":
-        return <ActiveIcon className="h-6 w-6" />;
-      case "completed":
-        return <CompletedIcon className="h-6 w-6" />;
-      case "pending":
-        return <PendingIcon className="h-6 w-6" />;
-      default:
-        return <ProjectIcon className="h-6 w-6" />;
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case "active":
-        return "進行中"; // In Progress
-      case "completed":
-        return "已完成"; // Completed
-      case "pending":
-        return "待開始"; // Pending
-      default:
-        return "未知"; // Unknown
-    }
-  };
 
   const getPriorityColor = (priority) => {
     switch (priority) {
@@ -191,7 +154,7 @@ const ProjectManagement = () => {
 
     let matchesStatus = true;
     if (selectedStatus !== "all") {
-      matchesStatus = project.state === selectedStatus;
+      matchesStatus = project.state?.state_name === selectedStatus;
     }
 
     return matchesSearch && matchesStatus;
@@ -460,12 +423,18 @@ const ProjectManagement = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span
-                              className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(
-                                project.state,
-                              )}`}
+                              className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold`}
+                              style={{
+                                backgroundColor: project.state?.bg_color,
+                                color: project.state?.text_color,
+                              }}
                             >
-                              {getStatusIcon(project.state)}
-                              {getStatusText(project.state)}
+                              {iconMap[project.state?.icon] &&
+                                React.createElement(iconMap[project.state.icon], {
+                                  className: "h-4 w-4",
+                                })}
+                              &nbsp;
+                              {project.state?.state_name}
                             </span>
                           </td>
                           <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
@@ -494,11 +463,16 @@ const ProjectManagement = () => {
                         <div className="flex w-full items-center gap-3">
                           <div className="flex h-10 w-10 items-center justify-center rounded-full">
                             <span
-                              className={`inline-flex items-center rounded-full p-2 text-xs font-semibold ${getStatusColor(
-                                project.state,
-                              )}`}
+                              className={`inline-flex items-center rounded-full p-2 text-xs font-semibold`}
+                              style={{
+                                backgroundColor: project.state?.bg_color,
+                                color: project.state?.text_color,
+                              }}
                             >
-                              {getStatusIcon(project.state)}
+                              {iconMap[project.state?.icon] &&
+                                React.createElement(iconMap[project.state.icon], {
+                                  className: "h-5 w-5",
+                                })}
                             </span>
                           </div>
                           <div>

@@ -16,6 +16,7 @@ import {
   ActiveIcon,
   CompletedIcon,
 } from "../componenets/CustomIcons.jsx";
+import { iconMap } from "../componenets/CustomIcons.jsx";
 import AddButton from "../componenets/AddButton.jsx";
 import EditWorkOrderModal from "../componenets/EditWorkOrderModal.jsx";
 
@@ -85,14 +86,15 @@ const Project = () => {
 
         // Calculate stats
         const totalWorkOrders = workOrders.length;
+        console.log(workOrders);
         const activeWorkOrders = workOrders.filter(
-          (wo) => wo.state === "active",
+          (wo) => wo.state?.state_name === "active",
         ).length;
         const completedWorkOrders = workOrders.filter(
-          (wo) => wo.state === "completed",
+          (wo) => wo.state?.state_name === "completed",
         ).length;
         const pendingWorkOrders = workOrders.filter(
-          (wo) => wo.state === "pending",
+          (wo) => wo.state?.state_name === "pending",
         ).length;
 
         setStats({
@@ -143,44 +145,6 @@ const Project = () => {
     });
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "active":
-        return "bg-green-100 text-green-800";
-      case "completed":
-        return "bg-blue-100 text-blue-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "active":
-        return <ActiveIcon className="h-4 w-4" />;
-      case "completed":
-        return <CompletedIcon className="h-4 w-4" />;
-      case "pending":
-        return <PendingIcon className="h-4 w-4" />;
-      default:
-        return <WorkOrderIcon className="h-4 w-4" />;
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case "active":
-        return "進行中";
-      case "completed":
-        return "已完成";
-      case "pending":
-        return "待開始";
-      default:
-        return "未知";
-    }
-  };
 
   // Filter work orders based on search term and status
   const filteredWorkOrders = workOrders.filter((workOrder) => {
@@ -332,23 +296,18 @@ const Project = () => {
                     </div>
                     <div className="text-lg font-semibold text-gray-900">
                       <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          projectInfo.state === "active"
-                            ? "bg-green-100 text-green-800"
-                            : projectInfo.state === "completed"
-                              ? "bg-blue-100 text-blue-800"
-                              : projectInfo.state === "pending"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-gray-100 text-gray-800"
-                        }`}
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium`}
+                        style={{
+                          backgroundColor: projectInfo.state?.bg_color,
+                          color: projectInfo.state?.text_color,
+                        }}
                       >
-                        {projectInfo.state === "active"
-                          ? "進行中"
-                          : projectInfo.state === "completed"
-                            ? "已完成"
-                            : projectInfo.state === "pending"
-                              ? "待開始"
-                              : "未知"}
+                        {iconMap[projectInfo.state?.icon] &&
+                          React.createElement(iconMap[projectInfo.state.icon], {
+                            className: "h-4 w-4",
+                          })}
+                        &nbsp;
+                        {projectInfo.state?.state_name}
                       </span>
                     </div>
                   </div>
@@ -620,12 +579,18 @@ const Project = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span
-                              className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(
-                                workOrder.state,
-                              )}`}
+                              className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold`}
+                              style={{
+                                backgroundColor: workOrder.state?.bg_color,
+                                color: workOrder.state?.text_color,
+                              }}
                             >
-                              {getStatusIcon(workOrder.state)}
-                              {getStatusText(workOrder.state)}
+                              {iconMap[workOrder.state?.icon] &&
+                                React.createElement(iconMap[workOrder.state.icon], {
+                                  className: "h-4 w-4",
+                                })}
+                              &nbsp;
+                              {workOrder.state?.state_name}
                             </span>
                           </td>
                           <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
@@ -661,11 +626,16 @@ const Project = () => {
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-2">
                           <span
-                            className={`inline-flex aspect-square h-10 w-10 items-center justify-center rounded-full text-xs font-semibold ${getStatusColor(
-                              workOrder.state,
-                            )}`}
+                            className={`inline-flex aspect-square h-10 w-10 items-center justify-center rounded-full text-xs font-semibold`}
+                            style={{
+                              backgroundColor: workOrder.state?.bg_color,
+                              color: workOrder.state?.text_color,
+                            }}
                           >
-                            {getStatusIcon(workOrder.state)}
+                            {iconMap[workOrder.state?.icon] &&
+                              React.createElement(iconMap[workOrder.state.icon], {
+                                className: "h-5 w-5",
+                              })}
                           </span>
                           <div>
                             <h4 className="font-medium text-gray-900">

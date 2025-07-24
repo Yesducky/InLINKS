@@ -229,6 +229,48 @@ def init_default_data():
             )
             db.session.add(workflow_type)
 
+    # Create process state types
+    process_state_types_data = [
+        # Project states
+        {'state_name': 'pending', 'state_type': 'project', 'description': 'Project is in pending phase', 'bg_color': '#FFF3E0', 'text_color': '#FFA500', 'icon': 'PendingIcon', 'order_index': 1},
+        {'state_name': 'active', 'state_type': 'project', 'description': 'Project is actively being worked on', 'bg_color': '#E0F7FA', 'text_color': '#008000', 'icon': 'ActiveIcon', 'order_index': 2},
+        {'state_name': 'completed', 'state_type': 'project', 'description': 'Project has been completed', 'bg_color': '#E3F2FD', 'text_color': '#0000FF', 'icon': 'CompletedIcon', 'order_index': 4},
+
+        # Work Order states
+        {'state_name': 'pending', 'state_type': 'work_order', 'description': 'Work order is pending assignment', 'bg_color': '#FFF3E0', 'text_color': '#FFA500', 'icon': 'PendingIcon', 'order_index': 1},
+        {'state_name': 'active', 'state_type': 'work_order', 'description': 'Work order is under review', 'bg_color': '#FFFFF0', 'text_color': '#FFFF00', 'icon': 'ActiveIcon', 'order_index': 3},
+        {'state_name': 'completed', 'state_type': 'work_order', 'description': 'Work order has been completed', 'bg_color': '#E3F2FD', 'text_color': '#0000FF', 'icon': 'CompletedIcon', 'order_index': 4},
+
+        # Task states
+        {'state_name': 'pending', 'state_type': 'task', 'description': 'Task is pending assignment', 'bg_color': '#FFF3E0', 'text_color': '#FFA500', 'icon': 'PendingIcon', 'order_index': 1},
+        {'state_name': 'assigned_worker', 'state_type': 'task', 'description': 'Task has been assigned to a worker', 'bg_color': '#FFFFF0', 'text_color': '#FFFF00', 'icon': 'AssignedWorkerIcon', 'order_index': 2},
+        {'state_name': 'in_progress', 'state_type': 'task', 'description': 'Task is currently being worked on', 'bg_color': '#E0F7FA', 'text_color': '#008000', 'icon': 'ActiveIcon', 'order_index': 3},
+        {'state_name': 'completed', 'state_type': 'task', 'description': 'Task has been completed', 'bg_color': '#E3F2FD', 'text_color': '#0000FF', 'icon': 'CompletedIcon', 'order_index': 4},
+
+        # SubTask states
+        {'state_name': 'pending', 'state_type': 'subtask', 'description': 'Subtask is pending assignment', 'bg_color': '#FFF3E0', 'text_color': '#FFA500', 'icon': 'PendingIcon', 'order_index': 1},
+        {'state_name': 'assigned_worker', 'state_type': 'subtask', 'description': 'Subtask has been assigned to a worker', 'bg_color': '#FFFFF0', 'text_color': '#FFFF00', 'icon': 'AssignedWorkerIcon', 'order_index': 2},
+        {'state_name': 'in_progress', 'state_type': 'subtask', 'description': 'Subtask is currently being worked on', 'bg_color': '#E0F7FA', 'text_color': '#008000', 'icon': 'ActiveIcon', 'order_index': 3},
+        {'state_name': 'completed', 'state_type': 'subtask', 'description': 'Subtask has been completed', 'bg_color': '#E3F2FD', 'text_color': '#0000FF', 'icon': 'CompletedIcon', 'order_index': 4}
+    ]
+    
+    for i, pst_data in enumerate(process_state_types_data, 1):
+        if not ProcessStateType.query.filter_by(
+            state_name=pst_data['state_name'], 
+            state_type=pst_data['state_type']
+        ).first():
+            process_state_type = ProcessStateType(
+                id=f'PST{i:03d}',
+                state_name=pst_data['state_name'],
+                state_type=pst_data['state_type'],
+                description=pst_data['description'],
+                bg_color=pst_data['bg_color'],
+                text_color=pst_data['text_color'],
+                icon=pst_data['icon'],
+                order_index=pst_data['order_index']
+            )
+            db.session.add(process_state_type)
+
     # Create default projects as sample
     # from datetime import datetime, timedelta
     # admin_user = User.query.filter_by(user_type_id='UT001').first()
@@ -351,4 +393,4 @@ def init_default_data():
     #     carton = Carton.query.get(carton_id)
     #     if carton:
     #         StockLogger.log_create(admin_id, 'carton', carton.id, getattr(carton, 'id', carton.id))
-    # db.session.commit()
+    db.session.commit()

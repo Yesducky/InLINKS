@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import Project, WorkOrder, User
+from models import Project, WorkOrder, User, ProcessStateType
 from utils.db_utils import generate_id
 from utils.process_logger import ProcessLogger
 from __init__ import db
@@ -27,7 +27,14 @@ def projects():
             'id': p.id,
             'project_name': p.project_name,
             'description': p.description,
-            'state': p.state,
+            'state_id': p.state_id,
+            'state': {
+                'id': p.state.id,
+                'state_name': p.state.state_name,
+                'bg_color': p.state.bg_color,
+                'text_color': p.state.text_color,
+                'icon': p.state.icon
+            } if p.state else None,
             'start_date': p.start_date.isoformat() if p.start_date else None,
             'due_date': p.due_date.isoformat() if p.due_date else None,
             'completed_at': p.completed_at.isoformat() if p.completed_at else None,
@@ -35,7 +42,6 @@ def projects():
             'work_order_ids': p.work_order_ids,
             'process_log_ids': p.process_log_ids,
             'priority': p.priority,
-            'status': p.status,
             'created_at': p.created_at.isoformat() if p.created_at else None
         } for p in projects])
     elif request.method == 'POST':
@@ -46,7 +52,7 @@ def projects():
             id=project_id,
             project_name=data['project_name'],
             description=data.get('description'),
-            state=data.get('state'),
+            state_id=data.get('state_id'),
             start_date= parse_date(data.get('start_date')),
             due_date= parse_date(data.get('due_date')),
             completed_at=data.get('completed_at'),
@@ -54,7 +60,6 @@ def projects():
             work_order_ids=data.get('work_order_ids', '[]'),
             process_log_ids='[]',
             priority=data.get('priority', 'medium'),
-            status=data.get('status')
         )
         db.session.add(project)
         db.session.flush()  # Flush to get the project ID
@@ -81,7 +86,14 @@ def project_detail(project_id):
             'id': project.id,
             'project_name': project.project_name,
             'description': project.description,
-            'state': project.state,
+            'state_id': project.state_id,
+            'state': {
+                'id': project.state.id,
+                'state_name': project.state.state_name,
+                'bg_color': project.state.bg_color,
+                'text_color': project.state.text_color,
+                'icon': project.state.icon
+            } if project.state else None,
             'start_date': project.start_date.isoformat() if project.start_date else None,
             'due_date': project.due_date.isoformat() if project.due_date else None,
             'completed_at': project.completed_at.isoformat() if project.completed_at else None,
@@ -89,7 +101,6 @@ def project_detail(project_id):
             'work_order_ids': project.work_order_ids,
             'process_log_ids': project.process_log_ids,
             'priority': project.priority,
-            'status': project.status,
             'created_at': project.created_at.isoformat() if project.created_at else None
         })
     elif request.method == 'PUT':
@@ -98,8 +109,8 @@ def project_detail(project_id):
 
         # Prepare old and new data for logging
         old_data = {field: getattr(project, field) for field in [
-            'project_name', 'description', 'state', 'start_date', 'due_date',
-            'completed_at', 'person_in_charge_id', 'work_order_ids', 'priority', 'status']}
+            'project_name', 'description', 'state_id', 'start_date', 'due_date',
+            'completed_at', 'person_in_charge_id', 'work_order_ids', 'priority']}
 
         # Use data.get with fallback to old value, and parse dates only if present
         new_data = {}
@@ -108,7 +119,8 @@ def project_detail(project_id):
                 val = data.get(field)
                 new_data[field] = parse_date(val) if val is not None else old_data[field]
             elif field == 'completed_at':
-                new_data[field] = datetime.datetime.now() if data.get('state', project.state) == 'completed' else old_data[field]
+                completed_state = ProcessStateType.query.filter_by(state_type='project', state_name='completed').first()
+                new_data[field] = datetime.datetime.now() if completed_state and data.get('state_id') == completed_state.id else old_data[field]
             else:
                 new_data[field] = data.get(field, old_data[field])
 
@@ -153,7 +165,13 @@ def get_project_work_orders(project_id):
             'id': wo.id,
             'work_order_name': wo.work_order_name,
             'description': wo.description,
-            'state': wo.state,
+            'state': {
+                'id': wo.state.id,
+                'state_name': wo.state.state_name,
+                'bg_color': wo.state.bg_color,
+                'text_color': wo.state.text_color,
+                'icon': wo.state.icon
+            } if wo.state else None,
             'start_date': wo.start_date.isoformat() if wo.start_date else None,
             'due_date': wo.due_date.isoformat() if wo.due_date else None,
             'completed_at': wo.completed_at.isoformat() if wo.completed_at else None,

@@ -15,6 +15,7 @@ import {
   ActiveIcon,
   CompletedIcon,
 } from "../componenets/CustomIcons.jsx";
+import { iconMap } from "../componenets/CustomIcons.jsx";
 
 const SubTask = () => {
   const { subTaskId } = useParams();
@@ -84,56 +85,6 @@ const SubTask = () => {
     });
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "active":
-        return "bg-green-100 text-green-800";
-      case "completed":
-        return "bg-blue-100 text-blue-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "design":
-        return "bg-purple-100 text-purple-800";
-      case "pulling_cable":
-        return "bg-orange-100 text-orange-800";
-      case "terminated":
-        return "bg-pink-100 text-pink-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "active":
-        return <ActiveIcon className="h-4 w-4" />;
-      case "completed":
-        return <CompletedIcon className="h-4 w-4" />;
-      case "pending":
-        return <PendingIcon className="h-4 w-4" />;
-      default:
-        return <SubTaskIcon className="h-4 w-4" />;
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case "active":
-        return "進行中";
-      case "completed":
-        return "已完成";
-      case "pending":
-        return "待開始";
-      case "design":
-        return "設計階段";
-      case "pulling_cable":
-        return "拉線階段";
-      case "terminated":
-        return "終端階段";
-      default:
-        return "未知";
-    }
-  };
 
   if (isLoading) {
     return (
@@ -255,23 +206,18 @@ const SubTask = () => {
                     </div>
                     <div className="text-lg font-semibold text-gray-900">
                       <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          subTaskInfo.state === "active"
-                            ? "bg-green-100 text-green-800"
-                            : subTaskInfo.state === "completed"
-                              ? "bg-blue-100 text-blue-800"
-                              : subTaskInfo.state === "pending"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : subTaskInfo.state === "design"
-                                  ? "bg-purple-100 text-purple-800"
-                                  : subTaskInfo.state === "pulling_cable"
-                                    ? "bg-orange-100 text-orange-800"
-                                    : subTaskInfo.state === "terminated"
-                                      ? "bg-pink-100 text-pink-800"
-                                      : "bg-gray-100 text-gray-800"
-                        }`}
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium`}
+                        style={{
+                          backgroundColor: subTaskInfo.state?.bg_color,
+                          color: subTaskInfo.state?.text_color,
+                        }}
                       >
-                        {getStatusText(subTaskInfo.state)}
+                        {iconMap[subTaskInfo.state?.icon] &&
+                          React.createElement(iconMap[subTaskInfo.state.icon], {
+                            className: "h-4 w-4",
+                          })}
+                        &nbsp;
+                        {subTaskInfo.state?.state_name}
                       </span>
                     </div>
                   </div>

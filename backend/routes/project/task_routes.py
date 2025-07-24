@@ -1,7 +1,7 @@
 import datetime
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import Task, SubTask
+from models import Task, SubTask, ProcessStateType
 from utils.db_utils import generate_id
 from utils.process_logger import ProcessLogger
 from __init__ import db
@@ -26,7 +26,14 @@ def tasks():
                 'id': t.id,
                 'task_name': t.task_name,
                 'description': t.description,
-                'state': t.state,
+                'state_id': t.state_id,
+                'state': {
+                    'id': t.state.id,
+                    'state_name': t.state.state_name,
+                    'bg_color': t.state.bg_color,
+                    'text_color': t.state.text_color,
+                    'icon': t.state.icon
+                } if t.state else None,
                 'start_date': t.start_date.isoformat() if t.start_date else None,
                 'due_date': t.due_date.isoformat() if t.due_date else None,
                 'completed_at': t.completed_at.isoformat() if t.completed_at else None,
@@ -46,7 +53,7 @@ def tasks():
             id=task_id,
             task_name=data['task_name'],
             description=data.get('description'),
-            state=data.get('state'),
+            state_id=data.get('state_id'),
             start_date=parse_date(data.get('start_date')),
             due_date=parse_date(data.get('due_date')),
             completed_at=parse_date(data.get('completed_at')),
@@ -77,7 +84,14 @@ def task_detail(task_id):
             'id': task.id,
             'task_name': task.task_name,
             'description': task.description,
-            'state': task.state,
+            'state_id': task.state_id,
+            'state': {
+                'id': task.state.id,
+                'state_name': task.state.state_name,
+                'bg_color': task.state.bg_color,
+                'text_color': task.state.text_color,
+                'icon': task.state.icon
+            } if task.state else None,
             'start_date': task.start_date.isoformat() if task.start_date else None,
             'due_date': task.due_date.isoformat() if task.due_date else None,
             'completed_at': task.completed_at.isoformat() if task.completed_at else None,
@@ -90,7 +104,7 @@ def task_detail(task_id):
     elif request.method == 'PUT':
         data = request.get_json()
         current_user_id = get_jwt_identity()
-        old_data = {field: getattr(task, field) for field in ['task_name', 'description', 'state', 'start_date', 'due_date',
+        old_data = {field: getattr(task, field) for field in ['task_name', 'description', 'state_id', 'start_date', 'due_date',
                           'completed_at', 'assignee_id', 'estimated_hour', 'work_order_id']}
         new_data = {}
         for field in old_data:
@@ -98,7 +112,8 @@ def task_detail(task_id):
                 val = data.get(field)
                 new_data[field] = parse_date(val) if val is not None else old_data[field]
             elif field == 'completed_at':
-                new_data[field] = datetime.datetime.now() if data.get('state', task.state) == 'completed' else old_data[field]
+                completed_state = ProcessStateType.query.filter_by(state_type='task', state_name='completed').first()
+                new_data[field] = datetime.datetime.now() if completed_state and data.get('state_id') == completed_state.id else old_data[field]
             elif field == 'estimated_hour':
                 est = data.get('estimated_hour', old_data['estimated_hour'])
                 if est == '' or est is None:
@@ -153,3 +168,55 @@ def get_task_subtasks(task_id):
         for s in subtasks
     ])
 
+@task_bp.route('/tasks/by_user/<user_id>', methods=['GET'])
+@jwt_required()
+def get_tasks_by_user(user_id):
+    task = Task.query.filter_by(assignee_id=user_id).all()
+
+    return jsonify([
+        {
+            'id': t.id,
+            'task_name': t.task_name,
+            'description': t.description,
+            'state_id': t.state_id,
+            'state': {
+                'id': t.state.id,
+                'state_name': t.state.state_name,
+                'bg_color': t.state.bg_color,
+                'text_color': t.state.text_color,
+                'icon': t.state.icon
+            } if t.state else None,
+            'start_date': t.start_date.isoformat() if t.start_date else None,
+            'due_date': t.due_date.isoformat() if t.due_date else None,
+            'completed_at': t.completed_at.isoformat() if t.completed_at else None,
+            'estimated_hour': t.estimated_hour,
+        }
+        for t in task
+    ])
+
+@task_bp.route('/tasks/assign_items', methods=['POST'])
+@jwt_required()
+def assign_items_to_task():
+    data = request.get_json()
+    task_id = data.get('task_id')
+    material_type_id = data.get('material_type_id')
+    total_quantity = data.get('total_quantity')
+    lot_id = data.get('lot_id')
+    if not (task_id and material_type_id and total_quantity and lot_id):
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    from models import Item
+    available_items = Item.query.filter_by(material_type_id=material_type_id, lot_id=lot_id).filter(Item.available_quantity > 0).order_by(Item.id).all()
+    assigned = []
+    remaining = total_quantity
+    for item in available_items:
+        if remaining <= 0:
+            break
+        assign_qty = min(item.available_quantity, remaining)
+        item.available_quantity -= assign_qty
+        assigned.append({'item_id': item.id, 'assigned_quantity': assign_qty})
+        remaining -= assign_qty
+    if remaining > 0:
+        return jsonify({'error': 'Not enough available items in the specified lot'}), 400
+    db.session.commit()
+    return jsonify({'task_id': task_id, 'assigned_items': assigned, 'lot_id': lot_id}), 200

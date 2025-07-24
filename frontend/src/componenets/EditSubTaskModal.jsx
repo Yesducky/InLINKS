@@ -17,7 +17,7 @@ const EditSubTaskModal = ({
       id: "",
       name: "",
     },
-    state: "pending",
+    state_id: "",
     start_date: "",
     due_date: "",
     completed_at: "",
@@ -28,15 +28,17 @@ const EditSubTaskModal = ({
   const [isLoading, setIsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [stateOptions, setStateOptions] = useState([]);
 
   useEffect(() => {
     if (isOpen) {
+      fetchStateOptions();
       if (subTask) {
         setFormData({
           subtask_name: subTask.subtask_name || "",
           description: subTask.description || "",
           assignee: subTask.assignee || "",
-          state: subTask.state || "pending",
+          state_id: subTask.state_id || "",
           start_date: subTask.start_date
             ? new Date(subTask.start_date)
                 .toLocaleDateString("zh-Hans-CN", {
@@ -71,12 +73,12 @@ const EditSubTaskModal = ({
           task_id: subTask.task_id || taskId,
         });
       } else {
-        // New subtask defaults
+        // New subtask defaults - set first available state
         setFormData({
           subtask_name: "",
           description: "",
           assignee_id: "",
-          state: "pending",
+          state_id: "",
           start_date: "",
           due_date: "",
           completed_at: "",
@@ -93,6 +95,32 @@ const EditSubTaskModal = ({
       ...prev,
       [name]: value,
     }));
+  };
+
+  const fetchStateOptions = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/process_state_types/by_type/subtask", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const states = await response.json();
+        setStateOptions(states);
+
+        // If creating new subtask and no state_id set, use first available
+        if (!subTask && states.length > 0 && !formData.state_id) {
+          setFormData((prev) => ({ ...prev, state_id: states[0].id }));
+        }
+      } else {
+        console.error("Failed to fetch state options");
+      }
+    } catch (error) {
+      console.error("Error fetching state options:", error);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -244,23 +272,24 @@ const EditSubTaskModal = ({
 
                     <div>
                       <label
-                        htmlFor="state"
+                        htmlFor="state_id"
                         className="block text-sm font-medium text-gray-700"
                       >
                         狀態
                       </label>
                       <select
-                        id="state"
-                        name="state"
-                        value={formData.state}
+                        id="state_id"
+                        name="state_id"
+                        value={formData.state_id}
                         onChange={handleInputChange}
                         className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                       >
-                        <option value="pending">待開始</option>
-                        <option value="design">設計階段</option>
-                        <option value="pulling_cable">拉線階段</option>
-                        <option value="terminated">終端階段</option>
-                        <option value="completed">已完成</option>
+                        <option value="">選擇狀態</option>
+                        {stateOptions.map((state) => (
+                          <option key={state.id} value={state.id}>
+                            {state.state_name}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -301,7 +330,7 @@ const EditSubTaskModal = ({
                     </div>
                   </div>
 
-                  {formData.state === "completed" && (
+                  {stateOptions.find(s => s.id === formData.state_id)?.state_name === "completed" && (
                     <div>
                       <label
                         htmlFor="completed_at"

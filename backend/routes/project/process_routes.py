@@ -4,7 +4,7 @@ Process collection routes - Work Orders, Tasks, Sub Tasks
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import ProcessLog
+from models import ProcessLog, ProcessStateType
 from utils.db_utils import generate_id
 from utils.process_logger import ProcessLogger
 from __init__ import db
@@ -20,6 +20,7 @@ def get_process_logs():
     work_order_id = request.args.get('work_order_id')
     task_id = request.args.get('task_id')
     subtask_id = request.args.get('subtask_id')
+    print(f"Filtering logs with project_id={project_id}, work_order_id={work_order_id}, task_id={task_id}, subtask_id={subtask_id}")
 
     query = ProcessLog.query
     if project_id:
@@ -48,4 +49,22 @@ def get_process_logs():
         for log in logs
     ])
 
-
+@process_bp.route('/process_state_types/by_type/<state_type>', methods=['GET'])
+@jwt_required()
+def get_process_state_types_by_type(state_type):
+    states = ProcessStateType.query.filter_by(state_type=state_type).all()
+    return jsonify([
+        {
+            'id': s.id,
+            'state_name': s.state_name,
+            'state_type': s.state_type,
+            'description': s.description,
+            'bg_color': s.bg_color,
+            'text_color': s.text_color,
+            'icon': s.icon,
+            'order_index': s.order_index,
+            'is_active': s.is_active,
+            'created_at': s.created_at.isoformat() if s.created_at else None
+        }
+        for s in states
+    ])

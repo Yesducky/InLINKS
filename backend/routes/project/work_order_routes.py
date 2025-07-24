@@ -2,7 +2,7 @@ import datetime
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import WorkOrder, Task
+from models import WorkOrder, Task, ProcessStateType
 from utils.db_utils import generate_id
 from utils.process_logger import ProcessLogger
 from __init__ import db
@@ -29,7 +29,14 @@ def work_orders():
             'id': wo.id,
             'work_order_name': wo.work_order_name,
             'description': wo.description,
-            'state': wo.state,
+            'state_id': wo.state_id,
+            'state': {
+                'id': wo.state.id,
+                'state_name': wo.state.state_name,
+                'bg_color': wo.state.bg_color,
+                'text_color': wo.state.text_color,
+                'icon': wo.state.icon
+            } if wo.state else None,
             'start_date': wo.start_date.isoformat() if wo.start_date else None,
             'due_date': wo.due_date.isoformat() if wo.due_date else None,
             'completed_at': wo.completed_at.isoformat() if wo.completed_at else None,
@@ -52,7 +59,7 @@ def work_orders():
             id=work_order_id,
             work_order_name=data['work_order_name'],
             description=data.get('description'),
-            state=data.get('state'),
+            state_id=data.get('state_id'),
             start_date=parse_date(data.get('start_date')),
             due_date=parse_date(data.get('due_date')),
             completed_at=parse_date(data.get('completed_at')),
@@ -87,7 +94,13 @@ def work_order_detail(work_order_id):
             'id': work_order.id,
             'work_order_name': work_order.work_order_name,
             'description': work_order.description,
-            'state': work_order.state,
+            'state': {
+                'id': work_order.state.id,
+                'state_name': work_order.state.state_name,
+                'bg_color': work_order.state.bg_color,
+                'text_color': work_order.state.text_color,
+                'icon': work_order.state.icon
+            } if work_order.state else None,
             'start_date': work_order.start_date.isoformat() if work_order.start_date else None,
             'due_date': work_order.due_date.isoformat() if work_order.due_date else None,
             'completed_at': work_order.completed_at.isoformat() if work_order.completed_at else None,
@@ -106,7 +119,7 @@ def work_order_detail(work_order_id):
         current_user_id = get_jwt_identity()
 
         # Prepare old and new data for logging
-        old_data = {field: getattr(work_order, field) for field in ['work_order_name', 'description', 'state', 'start_date', 'due_date',
+        old_data = {field: getattr(work_order, field) for field in ['work_order_name', 'description', 'state_id', 'start_date', 'due_date',
                           'completed_at', 'assignee_id', 'estimated_hour', 'workflow_type_id',
                           'parent_project_id', 'lot_id']}
 
@@ -117,7 +130,9 @@ def work_order_detail(work_order_id):
                 val = data.get(field)
                 new_data[field] = parse_date(val) if val is not None else old_data[field]
             elif field == 'completed_at':
-                new_data[field] = datetime.datetime.now() if data.get('state', work_order.state) == 'completed' else old_data[field]
+                completed_state = ProcessStateType.query.filter_by(state_type='project', state_name='completed').first()
+                new_data[field] = datetime.datetime.now() if completed_state and data.get(
+                    'state_id') == completed_state.id else old_data[field]
             elif field == 'estimated_hour':
                 est = data.get('estimated_hour', old_data['estimated_hour'])
                 if est == '' or est is None:
@@ -159,16 +174,23 @@ def work_order_detail(work_order_id):
 @jwt_required()
 def get_work_order_tasks(work_order_id):
     tasks = Task.query.filter_by(work_order_id=work_order_id).all()
+
     return jsonify([
         {
             'id': t.id,
             'task_name': t.task_name,
             'description': t.description,
-            'state': t.state,
+            'state': {
+                'id': t.state.id,
+                'state_name': t.state.state_name,
+                'bg_color': t.state.bg_color,
+                'text_color': t.state.text_color,
+                'icon': t.state.icon
+            } if t.state else None,
             'start_date': t.start_date.isoformat() if t.start_date else None,
             'due_date': t.due_date.isoformat() if t.due_date else None,
             'completed_at': t.completed_at.isoformat() if t.completed_at else None,
-            'assignee_id': t.assignee_id,
+            'assignee': {'id': t.assignee.id, 'name': t.assignee.username} if t.assignee else None,
             'estimated_hour': t.estimated_hour,
             'work_order_id': t.work_order_id,
             'subtask_ids': t.subtask_ids,
