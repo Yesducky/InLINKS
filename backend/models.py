@@ -76,6 +76,7 @@ class Lot(db.Model):
     log_ids = db.Column(db.Text)  # JSON string of log IDs
     created_at = db.Column(db.DateTime, default=get_hk_time)
     created_user_id = db.Column(db.String(20), db.ForeignKey('users.id'), nullable=False)
+    project_id = db.Column(db.String(20), db.ForeignKey('projects.id'), nullable=True)
 
     material_type = db.relationship('MaterialType', backref='lots')
 
@@ -133,11 +134,12 @@ class Project(db.Model):
     due_date = db.Column(db.DateTime, nullable=True)
     completed_at = db.Column(db.DateTime, nullable=True)
     priority = db.Column(db.String(20), nullable=True)  # e.g. low, medium, high, urgent
-    person_in_charge_id = db.Column(db.String(20), db.ForeignKey('users.id'), nullable=False)
+    person_in_charge_id = db.Column(db.String(20), db.ForeignKey('users.id'))
     work_order_ids = db.Column(db.Text)  # JSON string of work order IDs
     process_log_ids = db.Column(db.Text)  # JSON string of process log IDs
     created_at = db.Column(db.DateTime, default=get_hk_time)
 
+    lots = db.relationship('Lot', backref='project')
     person_in_charge = db.relationship('User', backref='managed_projects')
     state = db.relationship('ProcessStateType', backref='projects')
 

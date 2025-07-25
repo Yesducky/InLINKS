@@ -96,12 +96,15 @@ const EditWorkOrderModal = ({
   const fetchStateOptions = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("/api/process_state_types/by_type/work_order", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const response = await fetch(
+        "/api/process_state_types/by_type/work_order",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         },
-      });
+      );
 
       if (response.ok) {
         const states = await response.json();
@@ -365,23 +368,23 @@ const EditWorkOrderModal = ({
                     </div>
                   </div>
 
-                  <div>
-                    <label
-                      htmlFor="lot_id"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      批次號
-                    </label>
-                    <input
-                      type="text"
-                      id="lot_id"
-                      name="lot_id"
-                      value={formData.lot_id}
-                      onChange={handleInputChange}
-                      className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                      placeholder="輸入批次號ID"
-                    />
-                  </div>
+                  {/*<div>*/}
+                  {/*  <label*/}
+                  {/*    htmlFor="lot_id"*/}
+                  {/*    className="block text-sm font-medium text-gray-700"*/}
+                  {/*  >*/}
+                  {/*    批次號*/}
+                  {/*  </label>*/}
+                  {/*  <input*/}
+                  {/*    type="text"*/}
+                  {/*    id="lot_id"*/}
+                  {/*    name="lot_id"*/}
+                  {/*    value={formData.lot_id}*/}
+                  {/*    onChange={handleInputChange}*/}
+                  {/*    className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"*/}
+                  {/*    placeholder="輸入批次號ID"*/}
+                  {/*  />*/}
+                  {/*</div>*/}
 
                   {error && (
                     <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600">

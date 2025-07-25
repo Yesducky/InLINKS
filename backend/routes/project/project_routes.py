@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import Project, WorkOrder, User, ProcessStateType
+from models import Project, WorkOrder, User, ProcessStateType, Lot
 from utils.db_utils import generate_id
 from utils.process_logger import ProcessLogger
 from __init__ import db
@@ -42,6 +42,10 @@ def projects():
             'work_order_ids': p.work_order_ids,
             'process_log_ids': p.process_log_ids,
             'priority': p.priority,
+            'lot': {
+                'id': p.lots.id,
+                'lot_name': p.lots.lot_name
+            } if p.lots else None,
             'created_at': p.created_at.isoformat() if p.created_at else None
         } for p in projects])
     elif request.method == 'POST':
@@ -101,6 +105,12 @@ def project_detail(project_id):
             'work_order_ids': project.work_order_ids,
             'process_log_ids': project.process_log_ids,
             'priority': project.priority,
+            'lots': [
+                {
+                    'id': lot.id,
+                    'factory_lot_number': lot.factory_lot_number
+                } for lot in project.lots
+            ],
             'created_at': project.created_at.isoformat() if project.created_at else None
         })
     elif request.method == 'PUT':
@@ -186,3 +196,97 @@ def get_project_work_orders(project_id):
         }
         for wo in work_orders
     ])
+
+
+@project_bp.route('/projects/<string:project_id>/assign_lots', methods=['POST'])
+@jwt_required()
+def assign_lots_to_project(project_id):
+    data = request.get_json()
+    lot_ids = data.get('lot_ids', [])
+    if not isinstance(lot_ids, list):
+        return jsonify({'error': 'lot_ids must be a list'}), 400
+    updated = 0
+    for lot_id in lot_ids:
+        lot = Lot.query.get(lot_id)
+        if lot:
+            lot.project_id = project_id
+            updated += 1
+    db.session.commit()
+    return jsonify({'message': f'{updated} lots assigned to project {project_id}.'})
+
+
+@project_bp.route('/projects/<string:project_id>/lots', methods=['GET'])
+@jwt_required()
+def get_project_lots(project_id):
+    """
+    Get all lots assigned to a specific project with detailed information
+    """
+    try:
+        # Verify project exists
+        project = Project.query.get_or_404(project_id)
+        
+        # Get all lots for this project
+        lots = Lot.query.filter_by(project_id=project_id).all()
+        result = []
+
+        import json
+        from utils.item_utils import get_item_with_children_recursive
+        from models import Item
+
+        for l in lots:
+            # Get carton count
+            carton_ids = json.loads(l.carton_ids) if l.carton_ids else []
+            carton_count = len(carton_ids)
+
+            # Get all items in this lot (including children) using recursive function
+            all_items_with_children = []
+            for carton_id in carton_ids:
+                # Get items directly in this carton
+                carton_items = Item.query.filter_by(parent_id=carton_id).all()
+                for item in carton_items:
+                    # Get the item and all its children recursively
+                    item_tree = get_item_with_children_recursive(item.id)
+                    all_items_with_children.extend(item_tree)
+
+            # Calculate totals including all child items
+            total_items = len(all_items_with_children)
+            available_items = len([item for item in all_items_with_children if item['status'] == 'available'])
+            used_items = len([item for item in all_items_with_children if item['status'] == 'used'])
+            assigned_items = len([item for item in all_items_with_children if item['status'] == 'assigned'])
+
+            # Calculate quantities including all child items
+            total_quantity = sum(item['quantity'] for item in all_items_with_children)
+            available_quantity = sum(item['quantity'] for item in all_items_with_children if item['status'] == 'available')
+            used_quantity = sum(item['quantity'] for item in all_items_with_children if item['status'] == 'used')
+            assigned_quantity = sum(item['quantity'] for item in all_items_with_children if item['status'] == 'assigned')
+
+            result.append({
+                'id': l.id,
+                'material_type_id': l.material_type_id,
+                'material_name': l.material_type.material_name,
+                'material_unit': l.material_type.material_unit,
+                'factory_lot_number': l.factory_lot_number,
+                'carton_count': carton_count,
+                'total_items': total_items,
+                'available_items': available_items,
+                'used_items': used_items,
+                'assigned_items': assigned_items,
+                'total_quantity': float(total_quantity),
+                'available_quantity': float(available_quantity),
+                'used_quantity': float(used_quantity),
+                'assigned_quantity': float(assigned_quantity),
+                'carton_ids': carton_ids,
+                'log_ids': l.log_ids,
+                'created_at': l.created_at.isoformat(),
+                'created_user_id': l.created_user_id,
+                'material_type': {
+                    'id': l.material_type.id,
+                    'material_name': l.material_type.material_name,
+                    'material_unit': l.material_type.material_unit
+                }
+            })
+
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({'error': f'Failed to get project lots: {str(e)}'}), 500

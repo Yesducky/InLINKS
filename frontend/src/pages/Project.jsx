@@ -2,19 +2,28 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "../componenets/Header.jsx";
-import { Search, ViewList, ViewModule, Edit } from "@mui/icons-material";
+import {
+  Search,
+  ViewList,
+  ViewModule,
+  Edit,
+  Inventory,
+} from "@mui/icons-material";
 import EditProjectModal from "../componenets/EditProjectModal.jsx";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
 import PermissionGate from "../componenets/PermissionGate";
 import ProcessLog from "../componenets/ProcessLog";
 import LogButton from "../componenets/LogButton";
+import ProjectLotsModal from "../componenets/ProjectLotsModal.jsx";
 import {
   ProjectIcon,
   WorkOrderIcon,
   PendingIcon,
   ActiveIcon,
   CompletedIcon,
+  InventoryIcon,
+  LotIcon,
 } from "../componenets/CustomIcons.jsx";
 import { iconMap } from "../componenets/CustomIcons.jsx";
 import AddButton from "../componenets/AddButton.jsx";
@@ -33,6 +42,7 @@ const Project = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showLogModal, setShowLogModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showLotsModal, setShowLotsModal] = useState(false);
 
   const [stats, setStats] = useState({
     totalWorkOrders: 0,
@@ -144,7 +154,6 @@ const Project = () => {
       // minute: "2-digit",
     });
   };
-
 
   // Filter work orders based on search term and status
   const filteredWorkOrders = workOrders.filter((workOrder) => {
@@ -337,6 +346,21 @@ const Project = () => {
                   </div>
                   <div className={`flex justify-between`}>
                     <LogButton setShowLogModal={setShowLogModal} />
+
+                    <PermissionGate
+                      resource="project"
+                      action="write"
+                      show={false}
+                    >
+                      <button
+                        onClick={() => setShowLotsModal(true)}
+                        className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
+                      >
+                        <LotIcon className="h-4 w-4" />
+                        批次管理
+                      </button>
+                    </PermissionGate>
+
                     <PermissionGate
                       resource="project"
                       action="write"
@@ -586,9 +610,12 @@ const Project = () => {
                               }}
                             >
                               {iconMap[workOrder.state?.icon] &&
-                                React.createElement(iconMap[workOrder.state.icon], {
-                                  className: "h-4 w-4",
-                                })}
+                                React.createElement(
+                                  iconMap[workOrder.state.icon],
+                                  {
+                                    className: "h-4 w-4",
+                                  },
+                                )}
                               &nbsp;
                               {workOrder.state?.state_name}
                             </span>
@@ -633,9 +660,12 @@ const Project = () => {
                             }}
                           >
                             {iconMap[workOrder.state?.icon] &&
-                              React.createElement(iconMap[workOrder.state.icon], {
-                                className: "h-5 w-5",
-                              })}
+                              React.createElement(
+                                iconMap[workOrder.state.icon],
+                                {
+                                  className: "h-5 w-5",
+                                },
+                              )}
                           </span>
                           <div>
                             <h4 className="font-medium text-gray-900">
@@ -709,6 +739,15 @@ const Project = () => {
         projectId={projectId}
         onSave={(new_id) => {
           navigate(`/work_order/${new_id}`);
+        }}
+      />
+      <ProjectLotsModal
+        isOpen={showLotsModal}
+        onClose={() => setShowLotsModal(false)}
+        project={projectInfo}
+        onLotsUpdated={() => {
+          fetchProjectWorkOrders();
+          fetchProjectInfo();
         }}
       />
       <PermissionGate resource="work_order" action="create" show={false}>

@@ -353,3 +353,136 @@ def add_lot():
         db.session.rollback()
         print(f"Error creating lot: {str(e)}")
         return jsonify({'error': f'Failed to add lot: {str(e)}'}), 500
+
+# Project-lot management endpoints
+@lot_bp.route('/lots/unassigned', methods=['GET'])
+@jwt_required()
+def get_unassigned_lots():
+    """
+    Get all lots that are not assigned to any project
+    """
+    try:
+        lots = Lot.query.filter(Lot.project_id.is_(None)).all()
+        result = []
+
+        for l in lots:
+            # Get carton count
+            carton_ids = json.loads(l.carton_ids) if l.carton_ids else []
+            carton_count = len(carton_ids)
+
+            # Get all items in this lot (including children) using recursive function
+            all_items_with_children = []
+            for carton_id in carton_ids:
+                # Get items directly in this carton
+                carton_items = Item.query.filter_by(parent_id=carton_id).all()
+                for item in carton_items:
+                    # Get the item and all its children recursively
+                    item_tree = get_item_with_children_recursive(item.id)
+                    all_items_with_children.extend(item_tree)
+
+            # Calculate totals including all child items
+            total_items = len(all_items_with_children)
+            available_items = len([item for item in all_items_with_children if item['status'] == 'available'])
+            used_items = len([item for item in all_items_with_children if item['status'] == 'used'])
+            assigned_items = len([item for item in all_items_with_children if item['status'] == 'assigned'])
+
+            # Calculate quantities including all child items
+            total_quantity = sum(item['quantity'] for item in all_items_with_children)
+            available_quantity = sum(item['quantity'] for item in all_items_with_children if item['status'] == 'available')
+            used_quantity = sum(item['quantity'] for item in all_items_with_children if item['status'] == 'used')
+            assigned_quantity = sum(item['quantity'] for item in all_items_with_children if item['status'] == 'assigned')
+
+            result.append({
+                'id': l.id,
+                'material_type_id': l.material_type_id,
+                'material_name': l.material_type.material_name,
+                'material_unit': l.material_type.material_unit,
+                'factory_lot_number': l.factory_lot_number,
+                'carton_count': carton_count,
+                'total_items': total_items,
+                'available_items': available_items,
+                'used_items': used_items,
+                'assigned_items': assigned_items,
+                'total_quantity': float(total_quantity),
+                'available_quantity': float(available_quantity),
+                'used_quantity': float(used_quantity),
+                'assigned_quantity': float(assigned_quantity),
+                'carton_ids': carton_ids,
+                'log_ids': l.log_ids,
+                'created_at': l.created_at.isoformat(),
+                'created_user_id': l.created_user_id,
+                'material_type': {
+                    'id': l.material_type.id,
+                    'material_name': l.material_type.material_name,
+                    'material_unit': l.material_type.material_unit
+                }
+            })
+
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({'error': f'Failed to get unassigned lots: {str(e)}'}), 500
+
+@lot_bp.route('/lots/<string:lot_id>/assign-to-project', methods=['PUT'])
+@jwt_required()
+def assign_lot_to_project(lot_id):
+    """
+    Assign a lot to a project
+    """
+    try:
+        lot = Lot.query.get_or_404(lot_id)
+        data = request.get_json()
+        project_id = data.get('project_id')
+        
+        if not project_id:
+            return jsonify({'error': 'Project ID is required'}), 400
+
+        # Verify project exists
+        from models import Project
+        project = Project.query.get(project_id)
+        if not project:
+            return jsonify({'error': 'Project not found'}), 404
+
+        user_id = get_jwt_identity()
+        
+        # Log the assignment
+        old_project_id = lot.project_id
+        lot.project_id = project_id
+        
+        StockLogger.log_update(user_id, 'lot', lot_id, lot, {
+            'project_id': project_id,
+            'old_project_id': old_project_id
+        })
+        
+        db.session.commit()
+        return jsonify({'message': 'Lot assigned to project successfully'})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to assign lot to project: {str(e)}'}), 500
+
+@lot_bp.route('/lots/<string:lot_id>/remove-from-project', methods=['PUT'])
+@jwt_required()
+def remove_lot_from_project(lot_id):
+    """
+    Remove a lot from any project (set project_id to None)
+    """
+    try:
+        lot = Lot.query.get_or_404(lot_id)
+        user_id = get_jwt_identity()
+        
+        # Log the removal
+        old_project_id = lot.project_id
+        lot.project_id = None
+        
+        StockLogger.log_update(user_id, 'lot', lot_id, lot, {
+            'project_id': None,
+            'old_project_id': old_project_id
+        })
+        
+        db.session.commit()
+        return jsonify({'message': 'Lot removed from project successfully'})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to remove lot from project: {str(e)}'}), 500

@@ -297,16 +297,16 @@ const WorkOrder = () => {
                       {workOrderInfo.workflow_type?.name || "未設定"}
                     </div>
                   </div>
-                  <div>
-                    <div className="text-sm font-medium text-gray-500">
-                      批次號
-                    </div>
-                    <div className="text-lg font-semibold text-gray-900">
-                      {workOrderInfo.lot?.lot_name ||
-                        workOrderInfo.lot_id ||
-                        "未設定"}
-                    </div>
-                  </div>
+                  {/*<div>*/}
+                  {/*  <div className="text-sm font-medium text-gray-500">*/}
+                  {/*    批次號*/}
+                  {/*  </div>*/}
+                  {/*  <div className="text-lg font-semibold text-gray-900">*/}
+                  {/*    {workOrderInfo.lot?.lot_name ||*/}
+                  {/*      workOrderInfo.lot_id ||*/}
+                  {/*      "未設定"}*/}
+                  {/*  </div>*/}
+                  {/*</div>*/}
 
                   <div>
                     <div className="text-sm font-medium text-gray-500">

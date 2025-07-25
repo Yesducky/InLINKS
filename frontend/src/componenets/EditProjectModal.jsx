@@ -12,6 +12,7 @@ const EditProjectModal = ({ isOpen, onClose, project, onSave }) => {
     state_id: "",
     start_date: "",
     due_date: "",
+    lot_id: "",
   });
 
   const [isLoading, setIsLoading] = useState(false);
