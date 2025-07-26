@@ -8,6 +8,7 @@ from models import Lot, Item, MaterialType, Carton, StockLog
 from utils.db_utils import generate_id
 from utils.item_utils import get_item_with_children_recursive
 from utils.stock_logger import StockLogger
+from utils.process_logger import ProcessLogger
 from __init__ import db
 import json
 
@@ -454,6 +455,19 @@ def assign_lot_to_project(lot_id):
             'old_project_id': old_project_id
         })
         
+        # Log process assignment
+        old_project_name = Project.query.get(old_project_id).project_name if old_project_id else 'Unassigned'
+        new_project_name = project.project_name
+        
+        ProcessLogger.create_log(
+            user_id=user_id,
+            action_type='ASSIGNMENT',
+            entity_type='project',
+            entity_id=project_id,
+            entity_name=new_project_name,
+            details=f"Lot {lot.id} assigned from '{old_project_name}' to '{new_project_name}'"
+        )
+
         db.session.commit()
         return jsonify({'message': 'Lot assigned to project successfully'})
 
@@ -480,6 +494,21 @@ def remove_lot_from_project(lot_id):
             'old_project_id': old_project_id
         })
         
+        # Log process removal
+        if old_project_id:
+            from models import Project
+            old_project = Project.query.get(old_project_id)
+            old_project_name = old_project.project_name if old_project else 'Unknown'
+            
+            ProcessLogger.create_log(
+                user_id=user_id,
+                action_type='REMOVAL',
+                entity_type='project',
+                entity_id=old_project_id,
+                entity_name=old_project_name,
+                details=f"Lot {lot.id} removed from project '{old_project_id}'"
+            )
+
         db.session.commit()
         return jsonify({'message': 'Lot removed from project successfully'})
 

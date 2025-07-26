@@ -260,6 +260,44 @@ class StockLogger:
         )
 
     @staticmethod
+    def log_assign_item_to_task(user_id, item_id, task_id, quantity):
+        """Log assignment of an item to a specific task"""
+        from models import Item, Task
+        item = Item.query.get(item_id)
+        task = Task.query.get(task_id)
+        
+        item_name = f"Item {item_id}" if not item else StockLogger._get_entity_name(item, 'item')
+        task_name = f"Task {task_id}" if not task else f"Task {task.task_name} ({task_id})"
+        
+        return StockLogger.create_log(
+            user_id=user_id,
+            action_type='ASSIGNMENT',
+            entity_type='item',
+            entity_id=item_id,
+            entity_name=item_name,
+            details=f"Assigned {quantity} units to {task_name}"
+        )
+
+    @staticmethod
+    def log_remove_item_from_task(user_id, item_id, task_id, quantity):
+        """Log removal of an item from a task"""
+        from models import Item, Task
+        item = Item.query.get(item_id)
+        task = Task.query.get(task_id)
+        
+        item_name = f"Item {item_id}" if not item else StockLogger._get_entity_name(item, 'item')
+        task_name = f"Task {task_id}" if not task else f"Task {task.task_name} ({task_id})"
+        
+        return StockLogger.create_log(
+            user_id=user_id,
+            action_type='REMOVAL',
+            entity_type='item',
+            entity_id=item_id,
+            entity_name=item_name,
+            details=f"Removed {quantity} units from {task_name}"
+        )
+
+    @staticmethod
     def log_usage(user_id, entity_type, entity_id, quantity_used, remaining_quantity, entity_name=None):
         """Log usage of inventory items"""
         return StockLogger.create_log(

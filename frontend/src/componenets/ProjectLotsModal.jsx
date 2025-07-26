@@ -294,7 +294,7 @@ const ProjectLotsModal = ({ isOpen, onClose, project, onLotsUpdated }) => {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-xs"
+          className="fixed inset-0 z-50 flex items-center justify-center px-6 py-20 backdrop-blur-xs"
           variants={backdropVariants}
           initial="hidden"
           animate="visible"
@@ -302,14 +302,14 @@ const ProjectLotsModal = ({ isOpen, onClose, project, onLotsUpdated }) => {
           onClick={onClose}
         >
           <motion.div
-            className="h-[80%] w-full max-w-7xl rounded-2xl bg-white shadow-xl"
+            className="h-full w-full rounded-2xl bg-white shadow-xl"
             variants={modalVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-gray-200 px-6 py-2">
+            <div className="flex h-[7%] items-center justify-between border-b border-gray-200 px-6 py-2">
               <div>
                 <p className="text-sm text-gray-600">
                   {mode === "view"
@@ -317,47 +317,17 @@ const ProjectLotsModal = ({ isOpen, onClose, project, onLotsUpdated }) => {
                     : `可添加 ${allLots.length} 個批次`}
                 </p>
               </div>
-              <div className="flex items-center gap-3">
-                {mode === "view" ? (
-                  <button
-                    onClick={() => setMode("add")}
-                    className="bg-blue flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
-                  >
-                    <Add className="h-4 w-4" />
-                    添加批次
-                  </button>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={handleAddLots}
-                      disabled={selectedLots.length === 0}
-                      className="rounded-xl bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 disabled:opacity-50"
-                    >
-                      確認添加 ({selectedLots.length})
-                    </button>
-                    <button
-                      onClick={() => {
-                        setMode("view");
-                        setSelectedLots([]);
-                      }}
-                      className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
-                    >
-                      取消
-                    </button>
-                  </div>
-                )}
-                <button
-                  onClick={onClose}
-                  className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                >
-                  <Close className="h-5 w-5" />
-                </button>
-              </div>
+              <button
+                onClick={onClose}
+                className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              >
+                <Close className="h-5 w-5" />
+              </button>
             </div>
 
-            <div className="max-h-[70vh] overflow-y-auto p-6">
+            <div className="h-[85%] p-3">
               {/* Filters and Search */}
-              <div className="mb-6 space-y-4">
+              <div className="h-[20%] space-y-4 p-3">
                 <div className="flex flex-wrap gap-4">
                   <div className="min-w-[200px] flex-1">
                     <div className="relative">
@@ -426,245 +396,283 @@ const ProjectLotsModal = ({ isOpen, onClose, project, onLotsUpdated }) => {
               </div>
 
               {/* Content */}
-              {isLoading || (mode === "add" && isLoadingAllLots) ? (
-                <div className="flex h-64 items-center justify-center">
-                  <LoadingSpinner
-                    variant="circular"
-                    size={30}
-                    message="載入中"
-                  />
-                </div>
-              ) : error ? (
-                <div className="flex h-64 items-center justify-center text-red-500">
-                  {error}
-                </div>
-              ) : processedLots.length === 0 ? (
-                <div className="flex h-64 flex-col items-center justify-center text-gray-500">
-                  <Category className="h-12 w-12 text-gray-400" />
-                  <p className="mt-2">
-                    {searchTerm ? "沒有符合條件的批次" : "暫無批次資料"}
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  {viewMode === "list" ? (
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            {mode === "add" && (
-                              <th className="w-12 px-4 py-3 text-left">
-                                <input
-                                  type="checkbox"
-                                  checked={
-                                    selectedLots.length === allLots.length &&
-                                    allLots.length > 0
-                                  }
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      setSelectedLots(allLots.map((l) => l.id));
-                                    } else {
-                                      setSelectedLots([]);
-                                    }
-                                  }}
-                                />
-                              </th>
-                            )}
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                              批次 ID
-                            </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                              工廠批次號
-                            </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                              物料類型
-                            </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                              可用/總數量
-                            </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                              狀態
-                            </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                              創建時間
-                            </th>
-                            {mode === "view" && (
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                操作
-                              </th>
-                            )}
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                          {processedLots.map((lot) => (
-                            <tr key={lot.id} className="hover:bg-gray-50">
+              <div className={`h-[80%] overflow-y-auto p-3`}>
+                {isLoading || (mode === "add" && isLoadingAllLots) ? (
+                  <div className="flex h-64 items-center justify-center">
+                    <LoadingSpinner
+                      variant="circular"
+                      size={30}
+                      message="載入中"
+                    />
+                  </div>
+                ) : error ? (
+                  <div className="flex h-64 items-center justify-center text-red-500">
+                    {error}
+                  </div>
+                ) : processedLots.length === 0 ? (
+                  <div className="flex h-64 flex-col items-center justify-center text-gray-500">
+                    <Category className="h-12 w-12 text-gray-400" />
+                    <p className="mt-2">
+                      {searchTerm ? "沒有符合條件的批次" : "暫無批次資料"}
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    {viewMode === "list" ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead className="bg-gray-50">
+                            <tr>
                               {mode === "add" && (
-                                <td className="px-4 py-3">
+                                <th className="w-12 px-4 py-3 text-left">
                                   <input
                                     type="checkbox"
-                                    checked={selectedLots.includes(lot.id)}
-                                    onChange={() => toggleLotSelection(lot.id)}
+                                    checked={
+                                      selectedLots.length === allLots.length &&
+                                      allLots.length > 0
+                                    }
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedLots(
+                                          allLots.map((l) => l.id),
+                                        );
+                                      } else {
+                                        setSelectedLots([]);
+                                      }
+                                    }}
                                   />
-                                </td>
+                                </th>
                               )}
-                              <td className="px-4 py-3">
-                                <div className="flex items-center gap-2">
-                                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-fuchsia-100">
-                                    <LotIcon className="h-4 w-4 text-fuchsia-600" />
-                                  </div>
-                                  <span className="font-medium">{lot.id}</span>
-                                </div>
-                              </td>
-                              <td className="px-4 py-3 text-sm text-gray-600">
-                                {lot.factory_lot_number}
-                              </td>
-                              <td className="px-4 py-3 text-sm">
-                                {lot.material_type.material_name}
-                              </td>
-                              <td className="px-4 py-3">
-                                <div className="text-sm">
-                                  <span className="font-medium">
-                                    {lot.available_quantity}
-                                  </span>
-                                  <span className="text-gray-500">
-                                    /{lot.total_quantity} {lot.material_unit}
-                                  </span>
-                                </div>
-                              </td>
-                              <td className="px-4 py-3">
-                                <span
-                                  className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(
-                                    lot.available_items,
-                                    lot.total_items,
-                                  )}`}
-                                >
-                                  {getStatusIcon(
-                                    lot.available_items,
-                                    lot.total_items,
-                                  )}
-                                  {getStatusText(
-                                    lot.available_items,
-                                    lot.total_items,
-                                  )}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 text-sm text-gray-500">
-                                {formatDate(lot.created_at)}
-                              </td>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                批次 ID
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                工廠批次號
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                物料類型
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                可用/總數量
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                狀態
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                創建時間
+                              </th>
                               {mode === "view" && (
-                                <td className="px-4 py-3">
-                                  <button
-                                    onClick={() => handleRemoveLot(lot.id)}
-                                    className="text-red-600 hover:text-red-800"
-                                  >
-                                    <Delete className="h-4 w-4" />
-                                  </button>
-                                </td>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                  操作
+                                </th>
                               )}
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                      {processedLots.map((lot) => (
-                        <div
-                          key={lot.id}
-                          className={`relative rounded-xl border border-gray-200 bg-gray-50 p-4 ${
-                            mode === "add" && selectedLots.includes(lot.id)
-                              ? "ring-2 ring-blue-500"
-                              : ""
-                          } cursor-pointer`}
-                          onClick={() => {
-                            if (mode === "add") toggleLotSelection(lot.id);
-                          }}
-                        >
-                          {/* Checkbox is hidden, but selection is toggled by clicking the card */}
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-fuchsia-100">
-                                <LotIcon className="h-5 w-5 text-fuchsia-600" />
-                              </div>
-                              <div>
-                                <h4 className="font-medium">{lot.id}</h4>
-                                <p className="text-xs text-gray-500">
+                          </thead>
+                          <tbody className="divide-y divide-gray-200">
+                            {processedLots.map((lot) => (
+                              <tr key={lot.id} className="hover:bg-gray-50">
+                                {mode === "add" && (
+                                  <td className="px-4 py-3">
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedLots.includes(lot.id)}
+                                      onChange={() =>
+                                        toggleLotSelection(lot.id)
+                                      }
+                                    />
+                                  </td>
+                                )}
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-fuchsia-100">
+                                      <LotIcon className="h-4 w-4 text-fuchsia-600" />
+                                    </div>
+                                    <span className="font-medium">
+                                      {lot.id}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-600">
                                   {lot.factory_lot_number}
-                                </p>
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  {lot.material_type.material_name}
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="text-sm">
+                                    <span className="font-medium">
+                                      {lot.available_quantity}
+                                    </span>
+                                    <span className="text-gray-500">
+                                      /{lot.total_quantity} {lot.material_unit}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <span
+                                    className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(
+                                      lot.available_items,
+                                      lot.total_items,
+                                    )}`}
+                                  >
+                                    {getStatusIcon(
+                                      lot.available_items,
+                                      lot.total_items,
+                                    )}
+                                    {getStatusText(
+                                      lot.available_items,
+                                      lot.total_items,
+                                    )}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-500">
+                                  {formatDate(lot.created_at)}
+                                </td>
+                                {mode === "view" && (
+                                  <td className="px-4 py-3">
+                                    <button
+                                      onClick={() => handleRemoveLot(lot.id)}
+                                      className="text-red-600 hover:text-red-800"
+                                    >
+                                      <Delete className="h-4 w-4" />
+                                    </button>
+                                  </td>
+                                )}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {processedLots.map((lot) => (
+                          <div
+                            key={lot.id}
+                            className={`relative rounded-xl border border-gray-200 bg-gray-50 p-4 ${
+                              mode === "add" && selectedLots.includes(lot.id)
+                                ? "ring-2 ring-blue-500"
+                                : ""
+                            } cursor-pointer`}
+                            onClick={() => {
+                              if (mode === "add") toggleLotSelection(lot.id);
+                            }}
+                          >
+                            {/* Checkbox is hidden, but selection is toggled by clicking the card */}
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-fuchsia-100">
+                                  <LotIcon className="h-5 w-5 text-fuchsia-600" />
+                                </div>
+                                <div>
+                                  <h4 className="font-medium">{lot.id}</h4>
+                                  <p className="text-xs text-gray-500">
+                                    {lot.factory_lot_number}
+                                  </p>
+                                </div>
                               </div>
-                            </div>
-                            <span
-                              className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(
-                                lot.available_items,
-                                lot.total_items,
-                              )}`}
-                            >
-                              {getStatusIcon(
-                                lot.available_items,
-                                lot.total_items,
-                              )}
-                            </span>
-                          </div>
-
-                          <div className="mt-3">
-                            <p className="text-sm font-medium text-gray-700">
-                              {lot.material_type.material_name}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {lot.available_quantity}/{lot.total_quantity}{" "}
-                              {lot.material_unit}
-                            </p>
-                          </div>
-
-                          <div className="mt-3 flex items-center justify-between">
-                            <span className="text-xs text-gray-500">
-                              {formatDate(lot.created_at)}
-                            </span>
-                            {mode === "view" && (
-                              <button
-                                onClick={() => handleRemoveLot(lot.id)}
-                                className="text-red-600 hover:text-red-800"
+                              <span
+                                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(
+                                  lot.available_items,
+                                  lot.total_items,
+                                )}`}
                               >
-                                <Delete className="h-4 w-4" />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                                {getStatusIcon(
+                                  lot.available_items,
+                                  lot.total_items,
+                                )}
+                              </span>
+                            </div>
 
-                  {/* Pagination */}
-                  {totalPages > 1 && (
-                    <div className="mt-6 flex items-center justify-between">
-                      <div className="text-sm text-gray-700">
-                        顯示 {(page - 1) * itemsPerPage + 1} -{" "}
-                        {Math.min(page * itemsPerPage, displayLots.length)} /{" "}
-                        {displayLots.length} 個批次
+                            <div className="mt-3">
+                              <p className="text-sm font-medium text-gray-700">
+                                {lot.material_type.material_name}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {lot.available_quantity}/{lot.total_quantity}{" "}
+                                {lot.material_unit}
+                              </p>
+                            </div>
+
+                            <div className="mt-3 flex items-center justify-between">
+                              <span className="text-xs text-gray-500">
+                                {formatDate(lot.created_at)}
+                              </span>
+                              {mode === "view" && (
+                                <button
+                                  onClick={() => handleRemoveLot(lot.id)}
+                                  className="text-red-600 hover:text-red-800"
+                                >
+                                  <Delete className="h-4 w-4" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setPage(Math.max(1, page - 1))}
-                          disabled={page === 1}
-                          className="rounded-xl border border-gray-300 bg-white px-3 py-1 text-sm disabled:opacity-50"
-                        >
-                          上一頁
-                        </button>
-                        <span className="flex items-center px-3 text-sm">
-                          {page} / {totalPages}
-                        </span>
-                        <button
-                          onClick={() =>
-                            setPage(Math.min(totalPages, page + 1))
-                          }
-                          disabled={page === totalPages}
-                          className="rounded-xl border border-gray-300 bg-white px-3 py-1 text-sm disabled:opacity-50"
-                        >
-                          下一頁
-                        </button>
+                    )}
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="mt-6 flex items-center justify-between">
+                        <div className="text-sm text-gray-700">
+                          顯示 {(page - 1) * itemsPerPage + 1} -{" "}
+                          {Math.min(page * itemsPerPage, displayLots.length)} /{" "}
+                          {displayLots.length} 個批次
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setPage(Math.max(1, page - 1))}
+                            disabled={page === 1}
+                            className="rounded-xl border border-gray-300 bg-white px-3 py-1 text-sm disabled:opacity-50"
+                          >
+                            上一頁
+                          </button>
+                          <span className="flex items-center px-3 text-sm">
+                            {page} / {totalPages}
+                          </span>
+                          <button
+                            onClick={() =>
+                              setPage(Math.min(totalPages, page + 1))
+                            }
+                            disabled={page === totalPages}
+                            className="rounded-xl border border-gray-300 bg-white px-3 py-1 text-sm disabled:opacity-50"
+                          >
+                            下一頁
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="flex h-[8%] items-center justify-end border-t border-gray-200 px-6 py-4">
+              {mode === "view" ? (
+                <button
+                  onClick={() => setMode("add")}
+                  className="bg-blue flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
+                >
+                  <Add className="h-4 w-4" />
+                  添加批次
+                </button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleAddLots}
+                    disabled={selectedLots.length === 0}
+                    className="rounded-xl bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 disabled:opacity-50"
+                  >
+                    確認添加 ({selectedLots.length})
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMode("view");
+                      setSelectedLots([]);
+                    }}
+                    className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+                  >
+                    取消
+                  </button>
                 </div>
               )}
             </div>

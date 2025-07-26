@@ -267,3 +267,20 @@ class ProcessLogger:
             entity_name=entity_name,
             details=f"Estimated hours changed from {old_hours} to {new_hours}"
         )
+
+    @staticmethod
+    def log_add_item_to_task(user_id, task_id, item_id, quantity, material_type_name=""):
+        """Log adding an item to a task in process logs"""
+        from models import Item, Task
+        task = Task.query.get(task_id)
+        
+        task_name = f"Task {task_id}" if not task else f"Task {task.task_name}"
+        
+        return ProcessLogger.create_log(
+            user_id=user_id,
+            action_type='UPDATE',
+            entity_type='task',
+            entity_id=task_id,
+            entity_name=task_name,
+            details=f"add item #{item_id} ({quantity} {material_type_name})"
+        )

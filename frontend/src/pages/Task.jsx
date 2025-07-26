@@ -14,10 +14,12 @@ import {
   PendingIcon,
   ActiveIcon,
   CompletedIcon,
+  ItemIcon,
 } from "../componenets/CustomIcons.jsx";
 import { iconMap } from "../componenets/CustomIcons.jsx";
 import AddButton from "../componenets/AddButton.jsx";
 import EditSubTaskModal from "../componenets/EditSubTaskModal.jsx";
+import TaskItemsModal from "../componenets/TaskItemsModal.jsx";
 
 const Task = () => {
   const { taskId } = useParams();
@@ -32,6 +34,7 @@ const Task = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showLogModal, setShowLogModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showItemsModal, setShowItemsModal] = useState(false);
 
   const [stats, setStats] = useState({
     totalSubTasks: 0,
@@ -140,7 +143,6 @@ const Task = () => {
       day: "2-digit",
     });
   };
-
 
   // Filter subtasks based on search term and status
   const filteredSubTasks = subTasks.filter((subTask) => {
@@ -318,6 +320,13 @@ const Task = () => {
                   <div className={`flex justify-between`}>
                     <LogButton setShowLogModal={setShowLogModal} />
                     <PermissionGate resource="task" action="write" show={false}>
+                      <button
+                        onClick={() => setShowItemsModal(true)}
+                        className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
+                      >
+                        <ItemIcon className="h-4 w-4" />
+                        物件管理
+                      </button>
                       <button
                         onClick={() => setShowEditModal(true)}
                         className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
@@ -547,9 +556,12 @@ const Task = () => {
                               }}
                             >
                               {iconMap[subTask.state?.icon] &&
-                                React.createElement(iconMap[subTask.state.icon], {
-                                  className: "h-4 w-4",
-                                })}
+                                React.createElement(
+                                  iconMap[subTask.state.icon],
+                                  {
+                                    className: "h-4 w-4",
+                                  },
+                                )}
                               &nbsp;
                               {subTask.state?.state_name}
                             </span>
@@ -674,6 +686,16 @@ const Task = () => {
         onClose={() => setShowAddModal(false)}
         taskId={taskId}
         onSave={() => {
+          fetchTaskSubTasks();
+          fetchTaskInfo();
+        }}
+      />
+
+      <TaskItemsModal
+        isOpen={showItemsModal}
+        onClose={() => setShowItemsModal(false)}
+        task={taskInfo}
+        onItemsUpdated={() => {
           fetchTaskSubTasks();
           fetchTaskInfo();
         }}

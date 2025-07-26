@@ -42,10 +42,12 @@ def projects():
             'work_order_ids': p.work_order_ids,
             'process_log_ids': p.process_log_ids,
             'priority': p.priority,
-            'lot': {
-                'id': p.lots.id,
-                'lot_name': p.lots.lot_name
-            } if p.lots else None,
+            'lots': [
+                {
+                    'id': lot.id,
+                    'factory_lot_number': lot.factory_lot_number
+                } for lot in p.lots
+            ],
             'created_at': p.created_at.isoformat() if p.created_at else None
         } for p in projects])
     elif request.method == 'POST':

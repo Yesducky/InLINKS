@@ -359,13 +359,6 @@ const Project = () => {
                         <LotIcon className="h-4 w-4" />
                         批次管理
                       </button>
-                    </PermissionGate>
-
-                    <PermissionGate
-                      resource="project"
-                      action="write"
-                      show={false}
-                    >
                       <button
                         onClick={() => setShowEditModal(true)}
                         className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
