@@ -324,7 +324,8 @@ const EditTaskModal = ({ isOpen, onClose, task, onSave, workOrderId }) => {
                     </div>
                   </div>
 
-                  {stateOptions.find(s => s.id === formData.state_id)?.state_name === "completed" && (
+                  {stateOptions.find((s) => s.id === formData.state_id)
+                    ?.state_name === "completed" && (
                     <div>
                       <label
                         htmlFor="completed_at"
@@ -373,7 +374,7 @@ const EditTaskModal = ({ isOpen, onClose, task, onSave, workOrderId }) => {
                         type="text"
                         id="work_order_id"
                         name="work_order_id"
-                        value={formData.work_order_id}
+                        value={formData.work_order_id || ""}
                         onChange={handleInputChange}
                         className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                         placeholder="輸入工單ID"
