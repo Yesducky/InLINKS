@@ -425,3 +425,69 @@ def remove_item_from_task(task_id, item_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': 'Failed to remove item from task', 'details': str(e)}), 500
+
+@task_item_bp.route('/tasks/<string:task_id>/items/summary', methods=['GET'])
+@jwt_required()
+@require_permission('items.read')
+def get_task_items_summary(task_id):
+    """
+    GET: Retrieve aggregated task items summary
+    Returns: [{"number_of_item": int, "item_quantity": float, "item_material_type": str, "item_material_unit": str}, ...]
+    """
+    try:
+        task = Task.query.get_or_404(task_id)
+        
+        # Get all items assigned to this task
+        items = Item.query.filter(
+            Item.task_ids.contains(task_id)
+        ).all()
+        
+        # Group items by material type first, then by quantity
+        grouped_by_type = {}
+        
+        for item in items:
+            material_type = MaterialType.query.get(item.material_type_id)
+            if not material_type:
+                continue
+                
+            material_name = material_type.material_name
+            material_unit = material_type.material_unit
+            item_qty = float(item.quantity)
+            
+            if material_name not in grouped_by_type:
+                grouped_by_type[material_name] = {
+                    'material_name': material_name,
+                    'material_unit': material_unit,
+                    'quantities': {}
+                }
+            
+            if item_qty not in grouped_by_type[material_name]['quantities']:
+                grouped_by_type[material_name]['quantities'][item_qty] = {
+                    'number_of_item': 0,
+                    'item_quantity': item_qty,
+                    'item_material_type': material_name,
+                    'item_material_unit': material_unit
+                }
+            
+            grouped_by_type[material_name]['quantities'][item_qty]['number_of_item'] += 1
+        
+        # Flatten the grouped data and sort by material type name and quantity
+        result = []
+        for material_name, material_data in sorted(grouped_by_type.items()):
+            # Sort quantities within each material type
+            sorted_quantities = sorted(
+                material_data['quantities'].values(),
+                key=lambda x: x['item_quantity']
+            )
+            result.extend(sorted_quantities)
+        
+        return jsonify({
+            'task_id': task_id,
+            'task_name': task.task_name,
+            'items': result,
+            'total_material_types': len(result),
+            'total_items': sum(item['number_of_item'] for item in result),
+            'total_quantity': sum(item['item_quantity'] * item['number_of_item'] for item in result)
+        })
+    except Exception as e:
+        return jsonify({'error': 'Failed to get task items summary', 'details': str(e)}), 500

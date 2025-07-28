@@ -189,7 +189,12 @@ def get_tasks_by_user(user_id):
             'start_date': t.start_date.isoformat() if t.start_date else None,
             'due_date': t.due_date.isoformat() if t.due_date else None,
             'completed_at': t.completed_at.isoformat() if t.completed_at else None,
+            'assignee_id': t.assignee_id,
             'estimated_hour': t.estimated_hour,
+            'work_order': {
+                'id': t.work_order.id,
+                'work_order_name': t.work_order.work_order_name
+            } if t.work_order else None,
         }
         for t in task
     ])
@@ -220,3 +225,68 @@ def assign_items_to_task():
         return jsonify({'error': 'Not enough available items in the specified lot'}), 400
     db.session.commit()
     return jsonify({'task_id': task_id, 'assigned_items': assigned, 'lot_id': lot_id}), 200
+
+@task_bp.route('/tasks/<string:task_id>/start', methods=['POST'])
+@jwt_required()
+def start_task(task_id):
+    """
+    POST: Start a task - set state to 'pulling_cable' and set start_date
+    Only allowed if current state is 'assigned_worker'
+    """
+    try:
+        task = Task.query.get_or_404(task_id)
+        current_user_id = get_jwt_identity()
+        
+        # Check if task is assigned to the current user
+        if task.assignee_id != current_user_id:
+            return jsonify({'error': 'You can only start tasks assigned to you'}), 403
+        
+        # Check current state
+        if not task.state or task.state.state_name != 'assigned_worker':
+            return jsonify({'error': 'Only tasks in assigned_worker state can be started'}), 400
+
+
+        pulling_cable_state = ProcessStateType.query.filter_by(
+            state_type='task', 
+            state_name='in_progress'
+        ).first()
+        
+        if not pulling_cable_state:
+            return jsonify({'error': 'pulling_cable state not found'}), 500
+        
+        # Update task state and start_date
+        old_state = task.state.state_name if task.state else None
+        task.state_id = pulling_cable_state.id
+        task.start_date = datetime.datetime.now()
+        
+        # Log the state change
+        ProcessLogger.log_update(
+            user_id=current_user_id,
+            entity_type='task',
+            entity_id=task_id,
+            old_obj={'state_name': old_state, 'start_date': None},
+            new_data={'state_name': 'in_progress', 'start_date': task.start_date.isoformat()},
+            entity_name=task.task_name
+        )
+        
+        # Log task start action
+        ProcessLogger.log_create(
+            user_id=current_user_id,
+            entity_type='task_start',
+            entity_id=task_id,
+            entity_name=task.task_name,
+        )
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Task started successfully',
+            'task_id': task_id,
+            'new_state': 'pulling_cable',
+            'start_date': task.start_date.isoformat()
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return jsonify({'error': 'Failed to start task', 'details': str(e)}), 500

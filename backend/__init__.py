@@ -37,6 +37,7 @@ def create_app():
     from routes.project.task_routes import task_bp
     from routes.project.subtask_routes import subtask_bp
     from routes.inventory.task_item_routes import task_item_bp
+    from routes.inventory.print_label_routes import print_label_bp
 
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(common_bp, url_prefix='/api')
@@ -54,6 +55,7 @@ def create_app():
     app.register_blueprint(task_bp, url_prefix='/api')
     app.register_blueprint(subtask_bp, url_prefix='/api')
     app.register_blueprint(task_item_bp, url_prefix='/api')
+    app.register_blueprint(print_label_bp, url_prefix='/api')
 
     # Create tables and initialize data
     with app.app_context():

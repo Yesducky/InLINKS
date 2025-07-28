@@ -25,7 +25,7 @@ const TaskItemsModal = ({ isOpen, onClose, task, onItemsUpdated }) => {
   const [materialTypeFilter, setMaterialTypeFilter] = useState("");
   const [viewMode, setViewMode] = useState("grid");
   const [mode, setMode] = useState("view"); // "view", "add"
-  const [itemsViewMode, setItemsViewMode] = useState("lots"); // "items" or "lots"
+  const [itemsViewMode, setItemsViewMode] = useState("items"); // "items" or "lots"
   const [selectedMaterialType, setSelectedMaterialType] = useState(null);
   const [quantityMode, setQuantityMode] = useState("total"); // "items" or "total"
   const [requestedQuantity, setRequestedQuantity] = useState("");

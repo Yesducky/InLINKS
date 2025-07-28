@@ -102,6 +102,8 @@ class Item(db.Model):
     child_item_ids = db.Column(db.Text)  # JSON string of child item IDs
     log_ids = db.Column(db.Text)  # JSON string of stock log IDs
     task_ids = db.Column(db.Text)  # JSON string of task IDs
+    label = db.Column(db.String(100), nullable=True)  # e.g. "ITM001-001"
+    label_count = db.Column(db.Integer, nullable=True, default=0)  # Number of labels for this item
     created_at = db.Column(db.DateTime, default=get_hk_time)
 
     material_type = db.relationship('MaterialType', backref='items')
@@ -181,7 +183,7 @@ class Task(db.Model):
     work_order_id = db.Column(db.String(20), db.ForeignKey('work_orders.id'))
     subtask_ids = db.Column(db.Text)  # JSON string of subtask IDs
     created_at = db.Column(db.DateTime, default=get_hk_time)
-    label = db.Column(db.String(50), nullable=True)
+
     label_count = db.Column(db.Integer, nullable=True, default=0)
 
     work_order = db.relationship('WorkOrder', backref='tasks')
