@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Close, PlayCircleOutlined } from "@mui/icons-material";
 import { iconMap } from "../componenets/CustomIcons.jsx";
+import PrintLabel from "./PrintLabel.jsx";
 
 const MyTaskDetail = ({ task, onClose }) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
+  const [showPrintLabel, setShowPrintLabel] = useState(false);
 
   const user = JSON.parse(localStorage.getItem("user")) || {};
 
@@ -312,32 +314,51 @@ const MyTaskDetail = ({ task, onClose }) => {
               )}
             </div>
 
-            {/* Start Task Button */}
-            {task?.state?.state_name === "assigned_worker" &&
-              task?.assignee_id === user.id && (
-                <div className="border-t pt-4">
-                  <button
-                    onClick={handleStartTask}
-                    disabled={starting}
-                    className="w-full rounded-lg bg-green-600 px-4 py-3 font-medium text-white shadow-md transition-all duration-300 hover:bg-green-700 hover:shadow-lg disabled:cursor-not-allowed disabled:bg-gray-400"
-                  >
-                    {starting ? (
-                      <div className="flex items-center justify-center">
-                        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                        開始中...
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center">
-                        <PlayCircleOutlined className="mr-2 h-5 w-5" />
-                        開始任務
-                      </div>
-                    )}
-                  </button>
+            {/* Action Buttons */}
+            <div className="space-y-3 border-t pt-4">
+              {/* Print Label Button */}
+              <button
+                onClick={() => setShowPrintLabel(true)}
+                className="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white shadow-md transition-all duration-300 hover:bg-blue-700 hover:shadow-lg"
+              >
+                <div className="flex items-center justify-center">
+                  打印標籤
                 </div>
+              </button>
+
+              {/* Start Task Button */}
+              {task?.state?.state_name === "assigned_worker" &&
+                task?.assignee_id === user.id && (
+                <button
+                  onClick={handleStartTask}
+                  disabled={starting}
+                  className="w-full rounded-lg bg-green-600 px-4 py-3 font-medium text-white shadow-md transition-all duration-300 hover:bg-green-700 hover:shadow-lg disabled:cursor-not-allowed disabled:bg-gray-400"
+                >
+                  {starting ? (
+                    <div className="flex items-center justify-center">
+                      <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                      開始中...
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center">
+                      <PlayCircleOutlined className="mr-2 h-5 w-5" />
+                      開始任務
+                    </div>
+                  )}
+                </button>
               )}
+            </div>
           </div>
         </div>
       </motion.div>
+
+      {/* Print Label Modal */}
+      {showPrintLabel && task && (
+        <PrintLabel
+          task={task}
+          onClose={() => setShowPrintLabel(false)}
+        />
+      )}
     </motion.div>
   );
 };
