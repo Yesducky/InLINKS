@@ -77,8 +77,6 @@ const Scan = () => {
         throw new Error("No camera found");
       }
 
-      const selectedDeviceId = videoInputDevices[0].deviceId;
-
       streamRef.current = await navigator.mediaDevices.getUserMedia({
         video: { deviceId: selectedDeviceId },
       });
@@ -89,7 +87,7 @@ const Scan = () => {
       }
 
       codeReaderRef.current.decodeFromVideoDevice(
-        selectedDeviceId,
+        undefined,
         videoRef.current,
         (result, error) => {
           if (result) {
