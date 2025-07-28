@@ -6,7 +6,7 @@ import { Search } from "@mui/icons-material";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
 import TaskSettingsModal from "../componenets/TaskSettingsModal.jsx";
-import { iconMap } from "../componenets/CustomIcons.jsx";
+import { iconMap, SettingIcon } from "../componenets/CustomIcons.jsx";
 
 const MyTask = () => {
   const navigate = useNavigate();
@@ -18,6 +18,8 @@ const MyTask = () => {
   const [sortBy, setSortBy] = useState("start_date");
   const [sortOrder, setSortOrder] = useState("asc");
   const [statusFilter, setStatusFilter] = useState([]);
+  const [processStates, setProcessStates] = useState([]);
+  const [selectedStatus, setSelectedStatus] = useState("全部任务");
 
   const user = JSON.parse(localStorage.getItem("user")) || {};
 
@@ -34,14 +36,26 @@ const MyTask = () => {
     duration: 0.3,
   };
 
-  const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-  };
-
   useEffect(() => {
     fetchTasks();
     fetchStatusTypes();
+
+    // Add CSS for hiding scrollbar
+    const style = document.createElement("style");
+    style.textContent = `
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      document.head.removeChild(style);
+    };
   }, []);
 
   const fetchTasks = async () => {
@@ -83,11 +97,10 @@ const MyTask = () => {
       });
       if (response.ok) {
         const states = await response.json();
-        console.log(states);
+        setProcessStates(states);
         setStatusFilter(states.map((s) => s.state_name));
       }
     } catch (err) {
-      // Optionally handle error
       console.error("Error fetching status types:", err);
     }
   };
@@ -110,13 +123,11 @@ const MyTask = () => {
         task.description?.toLowerCase().includes(searchTerm.toLowerCase());
 
       let matchesStatus = true;
-      if (statusFilter.length > 0) {
-        matchesStatus = statusFilter.includes(task.state?.state_name);
+      if (selectedStatus !== "全部任务") {
+        matchesStatus = task.state?.state_name === selectedStatus;
       }
 
-      let matchesCompletedFilter = true;
-
-      return matchesSearch && matchesStatus && matchesCompletedFilter;
+      return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
       const dateA = new Date(a[sortBy] || 0);
@@ -132,7 +143,7 @@ const MyTask = () => {
   if (isLoading) {
     return (
       <motion.div
-        className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
+        className="min-h-screen w-full bg-gray-100"
         initial="initial"
         animate="in"
         exit="out"
@@ -150,7 +161,7 @@ const MyTask = () => {
   if (error) {
     return (
       <motion.div
-        className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
+        className="min-h-screen w-full bg-gray-100"
         initial="initial"
         animate="in"
         exit="out"
@@ -165,7 +176,7 @@ const MyTask = () => {
 
   return (
     <motion.div
-      className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
+      className="min-h-screen w-full"
       initial="initial"
       animate="in"
       exit="out"
@@ -174,157 +185,122 @@ const MyTask = () => {
     >
       <Header title="我的任務" />
 
-      <div className="px-6 py-8">
-        <div className="mx-auto max-w-6xl">
-          {/* Statistics Cards */}
+      {/* Search Bar - Taobao Style */}
+      <div className="sticky top-0 z-10 bg-white px-4 py-3">
+        <div className="relative">
+          <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="搜索任務 ID、名稱或描述..."
+            className="w-full rounded-lg border border-gray-300 py-2 pr-4 pl-10 text-sm focus:border-blue-500 focus:outline-none"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
 
-          {/* Search and Filter */}
-          <motion.div
-            className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.3 }}
-          >
-            <div className="flex w-full max-w-md items-center gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="搜索任務 ID、名稱或描述..."
-                  className="w-full rounded-xl border border-gray-300 py-3 pr-4 pl-10 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <motion.button
-                onClick={() => setShowSettings(true)}
-                className="flex h-12 w-12 items-center justify-center rounded-xl border border-gray-100 bg-white shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl"
-                whileHover={{ scale: 1.1, rotate: 180 }}
-                whileTap={{ scale: 0.95 }}
+      <div className="">
+        {/* Status Tabs - Horizontal Scroll */}
+        <div className="flex w-full items-center px-4">
+          <div className="w-[85%] overflow-hidden">
+            <div className="scrollbar-hide flex space-x-2 overflow-x-auto py-1">
+              <button
+                onClick={() => setSelectedStatus("全部任务")}
+                className={`flex-shrink-0 rounded px-4 py-2 text-sm font-medium transition-colors ${
+                  selectedStatus === "全部任务"
+                    ? "bg-blue text-white"
+                    : "bg-gray-200 text-black"
+                }`}
+              >
+                全部任务
+              </button>
+              {processStates.map((state) => (
+                <button
+                  key={state.id}
+                  onClick={() => setSelectedStatus(state.state_name)}
+                  className={`flex-shrink-0 rounded px-4 py-2 text-sm font-medium transition-colors ${
+                    selectedStatus === state.state_name
+                      ? "bg-blue text-white"
+                      : "bg-gray-200 text-black"
+                  }`}
+                >
+                  {state.state_name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Filter Button */}
+          <div className="w-[15%] pl-2">
+            <button
+              onClick={() => setShowSettings(true)}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg"
+            >
+              <SettingIcon className="h-5 w-5 text-gray-600" />
+            </button>
+          </div>
+        </div>
+
+        {/* Task Cards - Taobao Style */}
+        <div className="mt-2 space-y-3 pb-4">
+          {filteredTasks.length === 0 ? (
+            <div className="rounded-lg bg-white p-8 text-center shadow-sm">
+              <p className="text-gray-500">暫無任務資料</p>
+            </div>
+          ) : (
+            filteredTasks.map((task) => (
+              <motion.div
+                key={task.id}
+                className="cursor-pointer rounded-lg bg-white p-4 shadow-lg"
+                onClick={() => navigate(`/my_tasks/${task.id}`)}
+                whileHover={{ scale: 1.01 }}
                 transition={{ type: "spring", stiffness: 400, damping: 17 }}
               >
-                {React.createElement(iconMap["SettingIcon"], {
-                  className: "h-5 w-5",
-                })}
-              </motion.button>
-            </div>
-          </motion.div>
-
-          {/* Tasks List/Grid */}
-          <motion.div
-            className="border-blue bg-lightblue overflow-hidden rounded-2xl border shadow-lg"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.3 }}
-          >
-            <div className="bg-blue border-blue flex items-center justify-between border-b px-6 py-4">
-              <h3 className="text-xl font-semibold text-white">
-                任務清單 ({filteredTasks.length})
-              </h3>
-            </div>
-
-            {filteredTasks.length === 0 ? (
-              <div className="p-8 text-center">
-                <TaskIcon className="mx-auto h-12 w-12 text-gray-400" />
-                <p
-                  className="mt-2 text-gray-500"
-                  onClick={() => {
-                    console.log(filteredTasks);
-                  }}
-                >
-                  {searchTerm || statusFilter.length < 3
-                    ? "沒有符合條件的任務"
-                    : "暫無任務資料"}
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-4 p-3 md:grid-cols-2 lg:grid-cols-3">
-                {filteredTasks.map((task, index) => (
-                  <motion.div
-                    key={task.id}
-                    className="cursor-pointer rounded-xl border border-gray-200 bg-blue-50 p-4 transition-shadow duration-200 hover:shadow-md"
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: index * 0.05, duration: 0.2 }}
-                    onClick={() => navigate(`/my_tasks/${task.id}`)}
+                <div className="mb-3 flex items-start justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {task.task_name}
+                    </h3>
+                    <p className="text-sm text-gray-600">{task.id}</p>
+                  </div>
+                  <span
+                    className="rounded-full px-3 py-1 text-xs font-medium"
+                    style={{
+                      backgroundColor: task.state?.bg_color,
+                      color: task.state?.text_color,
+                    }}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-2">
-                        <div>
-                          <h4 className="bold text-2xl text-gray-900">
-                            {task.task_name}
-                          </h4>
-                        </div>
-                      </div>
-                    </div>
+                    {task.state?.state_name}
+                  </span>
+                </div>
 
-                    <div className="mt-4 grid grid-cols-2 gap-4">
-                      <div>
-                        <div className="text-lg font-medium text-gray-900">
-                          {formatDate(task.start_date)}
-                        </div>
-                        <div className="text-md text-gray-500">開始日期</div>
-                      </div>
-                      <div>
-                        <div className="text-lg font-medium text-gray-900">
-                          {formatDate(task.due_date)}
-                        </div>
-                        <div className="text-md text-gray-500">截止日期</div>
-                      </div>
-                    </div>
+                {task.description && (
+                  <p className="mb-3 line-clamp-2 text-sm text-gray-600">
+                    {task.description}
+                  </p>
+                )}
 
-                    {task.state?.state_name === "completed" ? (
-                      <div className="mt-4 grid grid-cols-2 gap-4">
-                        <div>
-                          <div className="text-lg font-medium text-gray-900">
-                            {task.state === "completed" && task.completed_at
-                              ? formatDate(task.completed_at)
-                              : "未完成"}
-                          </div>
-                          <div className="text-md text-gray-500">完成日期</div>
-                        </div>
-                        <div>
-                          <span
-                            className={`inline-flex h-10 w-fit items-center justify-center rounded-full px-5 text-lg font-semibold`}
-                            style={{
-                              backgroundColor: task.state?.bg_color,
-                              color: task.state?.text_color,
-                            }}
-                          >
-                            {iconMap[task.state?.icon] &
-                              React.createElement(iconMap[task.state.icon], {
-                                className: "h-5 w-5",
-                              })}
-                            &nbsp;
-                            {task.state?.state_name}
-                          </span>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="mt-4">
-                        <div>
-                          <span
-                            className="inline-flex h-10 w-full items-center justify-center rounded-full px-5 text-lg font-semibold"
-                            style={{
-                              backgroundColor: task.state?.bg_color,
-                              color: task.state?.text_color,
-                            }}
-                          >
-                            {iconMap[task.state?.icon] &&
-                              React.createElement(iconMap[task.state.icon], {
-                                className: "h-5 w-5",
-                              })}
-                            &nbsp;
-                            {task.state?.state_name}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </motion.div>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-500">開始日期</span>
+                    <p className="font-medium">{formatDate(task.start_date)}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">截止日期</span>
+                    <p className="font-medium">{formatDate(task.due_date)}</p>
+                  </div>
+                </div>
+
+                {task.work_order && (
+                  <div className="mt-3 border-t pt-3">
+                    <p className="text-xs text-gray-500">
+                      所屬工作單: {task.work_order.work_order_name}
+                    </p>
+                  </div>
+                )}
+              </motion.div>
+            ))
+          )}
         </div>
       </div>
 
