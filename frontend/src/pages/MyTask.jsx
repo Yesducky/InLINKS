@@ -213,6 +213,58 @@ const MyTask = () => {
     }
   };
 
+  const handlePrintAll = async (task, e) => {
+    if (e) e.stopPropagation(); // Prevent triggering task detail modal
+
+    try {
+      const token = localStorage.getItem("token");
+
+      // Use the bulk API to generate single PDF with all items
+      const response = await fetch(`/api/tasks/${task.id}/print-all`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          show_printed: true,
+        }),
+      });
+
+      if (response.ok) {
+        // Get the combined PDF blob
+        const blob = await response.blob();
+
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${task.id}-all-labels.pdf`;
+        document.body.appendChild(a);
+        a.click();
+
+        // Clean up
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        }, 100);
+
+        alert(`已生成任務 ${task.id} 的所有標籤 PDF`);
+      } else {
+        // Try to parse JSON error, but handle non-JSON responses gracefully
+        try {
+          const error = await response.json();
+          alert(error.error || "生成PDF失敗");
+        } catch (jsonError) {
+          alert(`生成PDF失敗: ${response.statusText}`);
+        }
+      }
+    } catch (error) {
+      console.error("Error printing all items:", error);
+      alert("生成PDF時發生錯誤");
+    }
+  };
+
   // Filter and sort tasks
   const filteredTasks = tasks
     .filter((task) => {
@@ -439,20 +491,31 @@ const MyTask = () => {
                   </div>
                 )}
 
-                {/* Start Task Button - only for assigned_worker state and assigned to current user */}
+                {/* Action Buttons - Start Task and Print All */}
                 {task.state?.state_name === "assigned_worker" &&
                   task.assignee_id === user.id && (
-                    <div className="mt-4 flex justify-end">
+                    <div className="mt-4 flex justify-end space-x-2">
                       <motion.button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleStartTask(task.id);
                         }}
-                        className="rounded-md bg-green-500 px-4 py-2 text-sm font-medium text-white hover:bg-green-600 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:outline-none"
+                        className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-600 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:outline-none"
                         whileTap={{ scale: 0.95 }}
                         whileHover={{ scale: 1.02 }}
                       >
                         開始任務
+                      </motion.button>
+                      <motion.button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePrintAll(task, e);
+                        }}
+                        className="bg-blue rounded-md px-4 py-2 text-sm font-medium text-white hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+                        whileTap={{ scale: 0.95 }}
+                        whileHover={{ scale: 1.02 }}
+                      >
+                        打印全部
                       </motion.button>
                     </div>
                   )}

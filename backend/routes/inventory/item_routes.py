@@ -150,6 +150,9 @@ def item_detail(item_id):
 
         response = dict(main_item)
         response['factory_lot_number'] = factory_lot_number
+        response['label_count'] = item.label_count
+        response['material_type_name'] = item.material_type.material_name if item.material_type else None
+        response['material_type_unit'] = item.material_type.material_unit if item.material_type else None
         return jsonify(response)
 
     elif request.method == 'PUT':

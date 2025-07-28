@@ -24,6 +24,7 @@ import WorkOrder from "./pages/WorkOrder.jsx";
 import Task from "./pages/Task.jsx";
 import SubTask from "./pages/SubTask.jsx";
 import MyTask from "./pages/MyTask.jsx";
+import Scan from "./pages/Scan.jsx";
 
 import BackButton from "./componenets/BackButton.jsx";
 
@@ -217,6 +218,15 @@ const AnimatedRoutes = ({ user, handleLogin, handleLogout }) => {
           element={
             <ProtectedRoute user={user}>
               <Task />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/scan_verify"
+          element={
+            <ProtectedRoute user={user}>
+              <Scan />
             </ProtectedRoute>
           }
         />

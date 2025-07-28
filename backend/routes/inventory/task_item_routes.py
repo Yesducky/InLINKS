@@ -62,6 +62,7 @@ def get_task_items(task_id):
                 'status': item.status,
                 'parent_id': item.parent_id,
                 'lot_info': lot_info,
+                'label_count': item.label_count,
                 'created_at': item.created_at.isoformat()
             })
         

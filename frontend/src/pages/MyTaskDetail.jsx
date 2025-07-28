@@ -139,7 +139,7 @@ const MyTaskDetail = ({ task, onClose }) => {
 
       {/* Bottom Sheet */}
       <motion.div
-        className="absolute right-0 bottom-0 left-0 h-[60%] rounded-t-3xl bg-white"
+        className="absolute right-0 bottom-0 left-0 h-[80%] rounded-t-3xl bg-white"
         variants={sheetVariants}
         initial="hidden"
         animate="visible"
@@ -319,34 +319,32 @@ const MyTaskDetail = ({ task, onClose }) => {
               {/* Print Label Button */}
               <button
                 onClick={() => setShowPrintLabel(true)}
-                className="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white shadow-md transition-all duration-300 hover:bg-blue-700 hover:shadow-lg"
+                className="bg-blue w-full rounded-lg px-4 py-3 font-medium text-white shadow-md transition-all duration-300 hover:bg-blue-700 hover:shadow-lg"
               >
-                <div className="flex items-center justify-center">
-                  打印標籤
-                </div>
+                <div className="flex items-center justify-center">打印標籤</div>
               </button>
 
               {/* Start Task Button */}
               {task?.state?.state_name === "assigned_worker" &&
                 task?.assignee_id === user.id && (
-                <button
-                  onClick={handleStartTask}
-                  disabled={starting}
-                  className="w-full rounded-lg bg-green-600 px-4 py-3 font-medium text-white shadow-md transition-all duration-300 hover:bg-green-700 hover:shadow-lg disabled:cursor-not-allowed disabled:bg-gray-400"
-                >
-                  {starting ? (
-                    <div className="flex items-center justify-center">
-                      <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                      開始中...
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center">
-                      <PlayCircleOutlined className="mr-2 h-5 w-5" />
-                      開始任務
-                    </div>
-                  )}
-                </button>
-              )}
+                  <button
+                    onClick={handleStartTask}
+                    disabled={starting}
+                    className="w-full rounded-lg bg-green-600 px-4 py-3 font-medium text-white shadow-md transition-all duration-300 hover:bg-green-700 hover:shadow-lg disabled:cursor-not-allowed disabled:bg-gray-400"
+                  >
+                    {starting ? (
+                      <div className="flex items-center justify-center">
+                        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                        開始中...
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center">
+                        <PlayCircleOutlined className="mr-2 h-5 w-5" />
+                        開始任務
+                      </div>
+                    )}
+                  </button>
+                )}
             </div>
           </div>
         </div>
@@ -354,10 +352,7 @@ const MyTaskDetail = ({ task, onClose }) => {
 
       {/* Print Label Modal */}
       {showPrintLabel && task && (
-        <PrintLabel
-          task={task}
-          onClose={() => setShowPrintLabel(false)}
-        />
+        <PrintLabel task={task} onClose={() => setShowPrintLabel(false)} />
       )}
     </motion.div>
   );

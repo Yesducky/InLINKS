@@ -58,6 +58,63 @@ const PrintLabel = ({ task, onClose }) => {
     setShowPrintDetail(true);
   };
 
+  const handlePrintAll = async () => {
+    if (filteredItems.length === 0) return;
+
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+
+      // Use new bulk API to generate single PDF with filtered items
+      const response = await fetch(`/api/tasks/${task.id}/print-all`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          show_printed: showPrinted,
+        }),
+      });
+
+      if (response.ok) {
+        // Get the combined PDF blob
+        const blob = await response.blob();
+
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${task.id}-all-labels.pdf`;
+        document.body.appendChild(a);
+        a.click();
+
+        // Clean up
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        }, 100);
+
+        fetchTaskItems(); // Refresh to show updated counts
+        alert(`已生成包含 ${filteredItems.length} 個物品的合併標籤 PDF`);
+      } else {
+        // Try to parse JSON error, but handle non-JSON responses gracefully
+        try {
+          const error = await response.json();
+          alert(error.error || "生成PDF失敗");
+        } catch (jsonError) {
+          // If response is not JSON, use status text
+          alert(`生成PDF失敗: ${response.statusText}`);
+        }
+      }
+    } catch (error) {
+      console.error("Error printing all items:", error);
+      alert("生成合併PDF時發生錯誤");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handlePrintSuccess = () => {
     // Refresh items after printing
     fetchTaskItems();
@@ -140,21 +197,30 @@ const PrintLabel = ({ task, onClose }) => {
               </p>
             </div>
 
-            {/* Toggle Printed Items */}
+            {/* Toggle Printed Items and Print All */}
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-medium text-gray-500">
                 物品列表 ({filteredItems.length})
               </h3>
-              <button
-                onClick={toggleShowPrinted}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                  showPrinted
-                    ? "bg-blue-100 text-blue-700"
-                    : "bg-gray-100 text-gray-700"
-                }`}
-              >
-                {showPrinted ? "顯示全部" : "隱藏已打印"}
-              </button>
+              <div className="flex space-x-2">
+                <button
+                  onClick={handlePrintAll}
+                  disabled={loading || filteredItems.length === 0}
+                  className="rounded-full bg-green-100 px-4 py-2 text-sm font-medium text-green-700 transition-colors hover:bg-green-200 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+                >
+                  打印全部
+                </button>
+                <button
+                  onClick={toggleShowPrinted}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                    showPrinted
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-gray-100 text-gray-700"
+                  }`}
+                >
+                  {showPrinted ? "顯示全部" : "隱藏已打印"}
+                </button>
+              </div>
             </div>
 
             {/* Items List */}

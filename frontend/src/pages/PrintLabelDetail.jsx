@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Close, Print } from "@mui/icons-material";
+import { Close, Download } from "@mui/icons-material";
 import { QRCodeSVG } from "qrcode.react";
 import Barcode from "react-barcode";
 
@@ -11,37 +11,59 @@ const PrintLabelDetail = ({ item, taskId, onClose, onPrintSuccess }) => {
   useEffect(() => {
     // Generate barcode data
     const s = `${taskId.replace(/\D/g, "")}-${item.id.replace(/\D/g, "")}`;
-    setBarcodeData(item.label || s);
+    const validBarcode = item.label || s;
+    // Ensure barcode data is valid for CODE128 - must be non-empty and contain valid characters
+    setBarcodeData(validBarcode || "000000");
   }, [item, taskId]);
 
-  const handlePrint = async () => {
+  const generatePDF = async () => {
     setPrinting(true);
     try {
       const token = localStorage.getItem("token");
+
+      // Send POST request to backend with task_id
       const response = await fetch(`/api/items/${item.id}/print`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          task_id: taskId,
+        }),
       });
 
       if (response.ok) {
-        const data = await response.json();
-        alert("打印成功！");
+        // Get the PDF blob from response
+        const blob = await response.blob();
+
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${item.id}-label.pdf`;
+        document.body.appendChild(a);
+        a.click();
+
+        // Clean up
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        }, 100);
+
         onPrintSuccess();
+        onClose();
       } else {
         const error = await response.json();
         alert(error.error || "打印失敗");
       }
     } catch (error) {
-      console.error("Error printing label:", error);
-      alert("打印時發生錯誤");
+      console.error("Error generating PDF:", error);
+      alert("PDF生成時發生錯誤");
     } finally {
       setPrinting(false);
     }
   };
-
 
   const backdropVariants = {
     hidden: { opacity: 0 },
@@ -70,7 +92,7 @@ const PrintLabelDetail = ({ item, taskId, onClose, onPrintSuccess }) => {
 
   if (!item) return null;
 
-  const qrValue = barcodeData;
+  const qrValue = barcodeData || `${taskId}-${item.id}`;
 
   return (
     <motion.div
@@ -142,29 +164,34 @@ const PrintLabelDetail = ({ item, taskId, onClose, onPrintSuccess }) => {
                     條形碼
                   </p>
                   <div className="flex justify-center">
-                    <Barcode value={barcodeData} width={1.5} height={60} fontSize={12} />
+                    <Barcode
+                      value={barcodeData}
+                      width={1.5}
+                      height={60}
+                      fontSize={12}
+                    />
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Print Button */}
+          {/* Download Button */}
           <div className="border-t pt-4">
             <button
-              onClick={handlePrint}
+              onClick={generatePDF}
               disabled={printing}
-              className="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white shadow-md transition-all duration-300 hover:bg-blue-700 hover:shadow-lg disabled:cursor-not-allowed disabled:bg-gray-400"
+              className="bg-blue w-full rounded-lg px-4 py-3 font-medium text-white shadow-md transition-all duration-300 hover:bg-blue-700 hover:shadow-lg disabled:cursor-not-allowed disabled:bg-gray-400"
             >
               {printing ? (
                 <div className="flex items-center justify-center">
                   <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                  打印中...
+                  生成PDF中...
                 </div>
               ) : (
                 <div className="flex items-center justify-center">
-                  <Print className="mr-2 h-5 w-5" />
-                  打印標籤
+                  <Download className="mr-2 h-5 w-5" />
+                  下載PDF標籤
                 </div>
               )}
             </button>
