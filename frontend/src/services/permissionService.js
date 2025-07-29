@@ -13,7 +13,7 @@ class PermissionService {
         return false;
       }
 
-      const response = await fetch("/api/auth/permissions", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://103.30.41.250:5000'}/api/auth/permissions`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

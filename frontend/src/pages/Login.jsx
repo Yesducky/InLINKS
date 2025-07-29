@@ -25,7 +25,7 @@ const Login = ({ onLogin }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/auth/login", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://103.30.41.250:5000'}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

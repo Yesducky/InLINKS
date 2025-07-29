@@ -4,7 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import basicSsl from "@vitejs/plugin-basic-ssl";
 import svgr from "vite-plugin-svgr";
 
-const api_url = process.env.API_URL || "http://inlinkapi.yesducky.com";
+const api_url = process.env.API_URL || "http://103.30.41.250:5000/";
 
 // https://vite.dev/config/
 export default defineConfig({

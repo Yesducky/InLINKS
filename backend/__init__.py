@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
+from flask_cors import CORS
 
 # Initialize extensions
 db = SQLAlchemy()
@@ -16,6 +17,9 @@ def create_app():
     app.config['JWT_SECRET_KEY'] = 'jwt-secret-string-change-in-production'
     app.config['JWT_ACCESS_TOKEN_EXPIRES'] = False
 
+    # Enable CORS for mobile app and web domain
+    CORS(app, origins=['https://inlinkapi.yesducky.com', 'http://localhost:3000', 'capacitor://localhost', 'http://localhost'], supports_credentials=True)
+    
     # Initialize extensions with app
     db.init_app(app)
     jwt.init_app(app)
