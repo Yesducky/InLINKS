@@ -1,25 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import Header from "../componenets/Header.jsx";
-import { Search, ViewList, ViewModule, Edit } from "@mui/icons-material";
+import { Edit } from "@mui/icons-material";
 import EditSubTaskModal from "../componenets/EditSubTaskModal.jsx";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
 import PermissionGate from "../componenets/PermissionGate";
 import ProcessLog from "../componenets/ProcessLog";
 import LogButton from "../componenets/LogButton.jsx";
-import {
-  SubTaskIcon,
-  PendingIcon,
-  ActiveIcon,
-  CompletedIcon,
-} from "../componenets/CustomIcons.jsx";
+import { SubTaskIcon } from "../componenets/CustomIcons.jsx";
 import { iconMap } from "../componenets/CustomIcons.jsx";
+import api from "../services/api.js";
 
 const SubTask = () => {
   const { subTaskId } = useParams();
-  const navigate = useNavigate();
   const [subTaskInfo, setSubTaskInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -39,27 +34,16 @@ const SubTask = () => {
     duration: 0.3,
   };
 
-  const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-  };
-
   useEffect(() => {
-    fetchSubTaskInfo();
+    fetchSubTaskInfo().then((r) => console.log(r));
   }, [subTaskId]);
 
   const fetchSubTaskInfo = async () => {
     try {
       setIsLoading(true);
       setError("");
-      const token = localStorage.getItem("token");
 
-      const response = await fetch(`/api/subtasks/${subTaskId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await api.getSubtask(subTaskId);
 
       if (response.ok) {
         const subTaskData = await response.json();
@@ -84,7 +68,6 @@ const SubTask = () => {
       day: "2-digit",
     });
   };
-
 
   if (isLoading) {
     return (

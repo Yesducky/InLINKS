@@ -18,6 +18,7 @@ import {
 import { iconMap } from "../componenets/CustomIcons.jsx";
 import AddButton from "../componenets/AddButton.jsx";
 import EditTaskModal from "../componenets/EditTaskModal.jsx";
+import api from "../services/api.js";
 
 const WorkOrder = () => {
   const { workOrderId } = useParams();
@@ -67,14 +68,8 @@ const WorkOrder = () => {
     try {
       setIsLoading(true);
       setError("");
-      const token = localStorage.getItem("token");
 
-      const response = await fetch(`/api/work_orders/${workOrderId}/tasks`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await api.getTasksByWorkOrderId(workOrderId);
 
       if (response.ok) {
         const tasksData = await response.json();
@@ -107,7 +102,7 @@ const WorkOrder = () => {
         setError(response.status);
       }
     } catch (err) {
-      setError("Network error loading tasks");
+      setError(err.message);
       console.error("Error fetching tasks:", err);
     } finally {
       setIsLoading(false);
@@ -116,13 +111,7 @@ const WorkOrder = () => {
 
   const fetchWorkOrderInfo = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`/api/work_orders/${workOrderId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await api.getWorkOrder(workOrderId);
 
       if (response.ok) {
         const workOrderData = await response.json();
@@ -289,14 +278,14 @@ const WorkOrder = () => {
                       {workOrderInfo.assignee?.name || "未指派"}
                     </div>
                   </div>
-                  <div>
-                    <div className="text-sm font-medium text-gray-500">
-                      工作流程
-                    </div>
-                    <div className="text-lg font-semibold text-gray-900">
-                      {workOrderInfo.workflow_type?.name || "未設定"}
-                    </div>
-                  </div>
+                  {/*<div>*/}
+                  {/*  <div className="text-sm font-medium text-gray-500">*/}
+                  {/*    工作流程*/}
+                  {/*  </div>*/}
+                  {/*  <div className="text-lg font-semibold text-gray-900">*/}
+                  {/*    {workOrderInfo.workflow_type?.name || "未設定"}*/}
+                  {/*  </div>*/}
+                  {/*</div>*/}
                   {/*<div>*/}
                   {/*  <div className="text-sm font-medium text-gray-500">*/}
                   {/*    批次號*/}
@@ -683,7 +672,7 @@ const WorkOrder = () => {
       <ProcessLog
         isOpen={showLogModal}
         onClose={() => setShowLogModal(false)}
-        entityType="workorder"
+        entityType="work_order"
         entityId={workOrderId}
       />
       <EditWorkOrderModal

@@ -2,13 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "../componenets/Header.jsx";
-import {
-  Search,
-  ViewList,
-  ViewModule,
-  Edit,
-  Inventory,
-} from "@mui/icons-material";
+import { Search, ViewList, ViewModule, Edit } from "@mui/icons-material";
 import EditProjectModal from "../componenets/EditProjectModal.jsx";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
@@ -22,12 +16,12 @@ import {
   PendingIcon,
   ActiveIcon,
   CompletedIcon,
-  InventoryIcon,
   LotIcon,
 } from "../componenets/CustomIcons.jsx";
 import { iconMap } from "../componenets/CustomIcons.jsx";
 import AddButton from "../componenets/AddButton.jsx";
 import EditWorkOrderModal from "../componenets/EditWorkOrderModal.jsx";
+import api from "../services/api.js";
 
 const Project = () => {
   const { projectId } = useParams();
@@ -78,14 +72,8 @@ const Project = () => {
     try {
       setIsLoading(true);
       setError("");
-      const token = localStorage.getItem("token");
 
-      const response = await fetch(`/api/projects/${projectId}/work_orders`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await api.getWorkOrderByProjectId(projectId);
 
       if (response.ok) {
         const workOrdersData = await response.json();
@@ -117,7 +105,7 @@ const Project = () => {
         setError(response.status);
       }
     } catch (err) {
-      setError("Network error loading work orders");
+      setError(err.message);
       console.error("Error fetching work orders:", err);
     } finally {
       setIsLoading(false);
@@ -126,13 +114,7 @@ const Project = () => {
 
   const fetchProjectInfo = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`/api/projects/${projectId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await api.getProject(projectId);
 
       if (response.ok) {
         const projectData = await response.json();
@@ -680,11 +662,9 @@ const Project = () => {
                         </div>
                         <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {workOrder.lot?.lot_name ||
-                              workOrder.lot_id ||
-                              "N/A"}
+                            {workOrder.estimated_hour}h
                           </div>
-                          <div className="text-xs text-gray-500">批次號</div>
+                          <div className="text-xs text-gray-500">預估工時</div>
                         </div>
                       </div>
 

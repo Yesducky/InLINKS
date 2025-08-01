@@ -16,6 +16,7 @@ import {
 import { LotIcon } from "../componenets/CustomIcons.jsx";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
+import api from "../services/api.js";
 
 const LotOverview = () => {
   const { materialTypeId } = useParams();
@@ -47,16 +48,9 @@ const LotOverview = () => {
 
   const fetchLots = async () => {
     try {
-      const token = localStorage.getItem("token");
-      let url = "/api/lots";
-
-      if (materialTypeId) {
-        url = `/api/lots/material_type/${materialTypeId}`;
-      }
-
-      const response = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = materialTypeId
+        ? await api.getLotsByMaterialTypeId(materialTypeId)
+        : await api.getLots();
 
       if (response.ok) {
         const data = await response.json();
@@ -76,8 +70,8 @@ const LotOverview = () => {
         setError(response.status);
       }
     } catch (err) {
-      setError("Network error loading lots");
-      console.error("Error fetching lots:", err);
+      setError(err.message);
+      console.log(err.name);
     } finally {
       setIsLoading(false);
     }

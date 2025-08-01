@@ -2,7 +2,7 @@
 Database utility functions for ID generation and data initialization
 """
 
-from models import *
+from models import db, User, UserType, Permission, UserTypePermission, MaterialType, WorkflowType, ProcessStateType
 
 def generate_id(prefix, model_class):
     """Generate sequential IDs with prefix and appropriate digit formatting"""
@@ -88,7 +88,8 @@ def init_default_data():
         )
         db.session.add(pm_user_type)
 
-    db.session.commit()
+
+
 
     # Insert default permissions if not exist
     default_permissions = [
@@ -394,3 +395,16 @@ def init_default_data():
     #     if carton:
     #         StockLogger.log_create(admin_id, 'carton', carton.id, getattr(carton, 'id', carton.id))
     db.session.commit()
+
+    if not User.query.filter_by(username='admin').first():
+        from werkzeug.security import generate_password_hash
+        admin_user = User(
+            id='USR001',
+            user_type_id='UT001',
+            username='admin',
+            password_hash=generate_password_hash('admin'),
+            email='admin@example.com',
+            is_active=True
+        )
+        db.session.add(admin_user)
+        db.session.commit()

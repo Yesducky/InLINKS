@@ -11,6 +11,7 @@ import {
   QrCodeScanner,
   Close,
 } from "@mui/icons-material";
+import api from "../services/api.js";
 
 const AddMaterial = () => {
   const [materialTypes, setMaterialTypes] = useState([]);
@@ -50,13 +51,7 @@ const AddMaterial = () => {
   useEffect(() => {
     const fetchMaterialTypes = async () => {
       try {
-        const token = localStorage.getItem("token");
-        const response = await fetch("/api/material_types", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
+        const response = await api.getMaterialTypes();
 
         if (response.ok) {
           const data = await response.json();
@@ -189,22 +184,15 @@ const AddMaterial = () => {
     }
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/add_lot", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          material_type_id: material.material_type_id,
-          factory_lot_number: material.factory_lot_number,
-          total_quantity: finalQuantity,
-          carton_count: parseInt(material.carton_count) || null,
-          items_per_carton: parseInt(material.items_per_carton) || null,
-          item_quantity: parseFloat(material.item_quantity) || null, // Individual item quantity
-        }),
-      });
+      const body = {
+        material_type_id: material.material_type_id,
+        factory_lot_number: material.factory_lot_number,
+        total_quantity: finalQuantity,
+        carton_count: parseInt(material.carton_count) || null,
+        items_per_carton: parseInt(material.items_per_carton) || null,
+        item_quantity: parseFloat(material.item_quantity) || null, // Individual item quantity
+      };
+      const response = await api.postAddLot(body);
 
       const data = await response.json();
 

@@ -151,13 +151,13 @@ def task_detail(task_id):
 @jwt_required()
 def get_task_subtasks(task_id):
     subtasks = SubTask.query.filter_by(task_id=task_id).all()
-    return jsonify([
+    result = [
         {
             'id': s.id,
             'subtask_name': s.subtask_name,
             'description': s.description,
-            'state': s.state,
             'start_date': s.start_date.isoformat() if s.start_date else None,
+            'state': s.state.to_dict() if s.state else None,
             'due_date': s.due_date.isoformat() if s.due_date else None,
             'completed_at': s.completed_at.isoformat() if s.completed_at else None,
             'assignee_id': s.assignee_id,
@@ -166,7 +166,8 @@ def get_task_subtasks(task_id):
             'created_at': s.created_at.isoformat() if s.created_at else None
         }
         for s in subtasks
-    ])
+    ]
+    return jsonify(result), 200
 
 @task_bp.route('/tasks/by_user/<user_id>', methods=['GET'])
 @jwt_required()

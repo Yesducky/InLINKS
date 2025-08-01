@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
   Clock,
-  User,
   Activity,
   AlertCircle,
   Package,
@@ -11,6 +10,7 @@ import {
 } from "lucide-react";
 import LoadingSpinner from "./LoadingSpinner";
 import FetchDataFail from "./FetchDataFail";
+import api from "../services/api.js";
 
 const StockLog = ({ isOpen, onClose, entityType, entityId }) => {
   const [logs, setLogs] = useState([]);
@@ -43,12 +43,7 @@ const StockLog = ({ isOpen, onClose, entityType, entityId }) => {
           break;
       }
 
-      const response = await fetch(`/api/get_stock_logs?${params.toString()}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await api.getStockLog(params.toString());
 
       if (response.ok) {
         const logsData = await response.json();

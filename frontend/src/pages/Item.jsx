@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import Header from "../componenets/Header.jsx";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
@@ -7,6 +7,7 @@ import { Inventory2, CheckCircle, Warning, History } from "@mui/icons-material";
 import PermissionGate from "../componenets/PermissionGate.jsx";
 import StockLog from "../componenets/StockLog.jsx";
 import { motion } from "framer-motion";
+import api from "../services/api.js"; // Import the api module
 
 const statusOptions = [
   {
@@ -63,16 +64,11 @@ const Item = () => {
     setIsLoading(true);
     setError("");
     try {
-      const token = localStorage.getItem("token");
       const [itemRes, materialTypesRes] = await Promise.all([
-        fetch(`/api/items/${itemId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch("/api/material_types", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
+        api.getItem(itemId),
+        api.getMaterialTypes(),
       ]);
-      if (!itemRes.ok) throw new Error(itemRes.status);
+
       const itemData = await itemRes.json();
       const materialTypesData = await materialTypesRes.json();
       setItem(itemData);
@@ -91,7 +87,7 @@ const Item = () => {
           : itemData.log_ids || "",
       });
     } catch (err) {
-      setError(err);
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
@@ -106,30 +102,25 @@ const Item = () => {
     setSaving(true);
     setError("");
     try {
-      const token = localStorage.getItem("token");
       // Prepare update body
       const updateBody = {
         quantity: form.quantity,
         status: form.status,
+        child_item_ids: form.child_item_ids,
+        task_ids: form.task_ids,
+        log_ids: form.log_ids,
       };
-      if (userType === "UT001") {
-        updateBody.child_item_ids = form.child_item_ids;
-        updateBody.task_ids = form.task_ids;
-        updateBody.log_ids = form.log_ids;
+
+      const res = await api.putItem(itemId, updateBody);
+      if (!res.ok) {
+        const errorData = await res.json();
+        setError(errorData.message);
       }
-      const res = await fetch(`/api/items/${itemId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(updateBody),
-      });
-      if (!res.ok) throw new Error("更新失敗");
+
       setEditMode(false);
       fetchItem();
     } catch (err) {
-      setError(err.message || "更新失敗");
+      setError(err.message);
     } finally {
       setSaving(false);
     }

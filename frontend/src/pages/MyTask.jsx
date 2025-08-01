@@ -7,6 +7,7 @@ import FetchDataFail from "../componenets/FetchDataFail.jsx";
 import TaskSettingsModal from "../componenets/TaskSettingsModal.jsx";
 import MyTaskDetail from "./MyTaskDetail.jsx";
 import { iconMap, SettingIcon } from "../componenets/CustomIcons.jsx";
+import api from "../services/api.js";
 
 const MyTask = () => {
   const [tasks, setTasks] = useState([]);
@@ -21,7 +22,6 @@ const MyTask = () => {
   const [selectedStatus, setSelectedStatus] = useState("全部任务");
   const [selectedTask, setSelectedTask] = useState(null);
   const [showTaskDetail, setShowTaskDetail] = useState(false);
-  const [startingTask, setStartingTask] = useState(null);
 
   const user = JSON.parse(localStorage.getItem("user")) || {};
 
@@ -122,14 +122,8 @@ const MyTask = () => {
     try {
       setIsLoading(true);
       setError("");
-      const token = localStorage.getItem("token");
 
-      const response = await fetch(`/api/tasks/by_user/${user.id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await api.getTasksByUserId(user.id);
 
       if (response.ok) {
         const tasksData = await response.json();
@@ -148,13 +142,8 @@ const MyTask = () => {
 
   const fetchStatusTypes = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/process_state_types/by_type/task", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await api.getProcessStateTypesByProcessType("task");
+
       if (response.ok) {
         const states = await response.json();
         setProcessStates(states);
@@ -181,25 +170,13 @@ const MyTask = () => {
 
   const handleStartTask = async (taskId, e) => {
     if (e) e.stopPropagation(); // Prevent triggering task detail modal
-    setStartingTask(taskId);
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`/api/tasks/${taskId}/start`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await api.startTask(taskId);
 
       if (response.ok) {
-        const data = await response.json();
-
-        // Refresh tasks list
         await fetchTasks();
 
-        // Show success message
         alert("任務已開始！");
       } else {
         const error = await response.json();
@@ -208,8 +185,6 @@ const MyTask = () => {
     } catch (error) {
       console.error("Error starting task:", error);
       alert("開始任務時發生錯誤");
-    } finally {
-      setStartingTask(null);
     }
   };
 
@@ -217,19 +192,8 @@ const MyTask = () => {
     if (e) e.stopPropagation(); // Prevent triggering task detail modal
 
     try {
-      const token = localStorage.getItem("token");
-
       // Use the bulk API to generate single PDF with all items
-      const response = await fetch(`/api/tasks/${task.id}/print-all`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          show_printed: true,
-        }),
-      });
+      const response = await api.printAllLabelsByTaskId(task.id, true);
 
       if (response.ok) {
         // Get the combined PDF blob
@@ -435,7 +399,7 @@ const MyTask = () => {
               <p className="text-gray-500">暫無任務資料</p>
             </motion.div>
           ) : (
-            filteredTasks.map((task, index) => (
+            filteredTasks.map((task, _) => (
               <motion.div
                 key={task.id}
                 className="cursor-pointer rounded-lg bg-white p-4 shadow-lg transition-all duration-300 hover:shadow-xl"

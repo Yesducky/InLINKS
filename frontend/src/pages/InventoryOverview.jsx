@@ -15,6 +15,7 @@ import {
   AssignmentTurnedIn,
 } from "@mui/icons-material";
 import { ItemIcon, LotIcon } from "../componenets/CustomIcons.jsx";
+import api from "../services/api.js";
 
 const InventoryOverview = () => {
   const navigate = useNavigate();
@@ -22,7 +23,6 @@ const InventoryOverview = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("all");
   const [viewMode, setViewMode] = useState("grid"); // "list" or "grid"
   const [stats, setStats] = useState({
     totalItems: 0,
@@ -57,16 +57,10 @@ const InventoryOverview = () => {
 
   const fetchInventoryData = async () => {
     try {
-      const token = localStorage.getItem("token");
-
       // Fetch material type quantities and lots data
       const [materialTypeQuantitiesRes, lotsRes] = await Promise.all([
-        fetch("/api/material_type_quantities", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch("/api/lots", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
+        api.getMaterialTypeQuantity(),
+        api.getLots(),
       ]);
 
       if (materialTypeQuantitiesRes.ok && lotsRes.ok) {
@@ -112,8 +106,8 @@ const InventoryOverview = () => {
         setError(materialTypeQuantitiesRes.status);
       }
     } catch (err) {
-      setError("網絡錯誤，無法載入庫存資料");
-      console.error("Error fetching inventory data:", err);
+      setError(err);
+      console.error(err.message);
     } finally {
       setIsLoading(false);
     }
@@ -130,13 +124,6 @@ const InventoryOverview = () => {
           .includes(searchTerm.toLowerCase());
 
       let matchesStatus = true;
-      if (selectedStatus === "available") {
-        matchesStatus = materialType.available_quantity > 0;
-      } else if (selectedStatus === "assigned") {
-        matchesStatus = materialType.assigned_quantity > 0;
-      } else if (selectedStatus === "used") {
-        matchesStatus = materialType.used_quantity > 0;
-      }
 
       return matchesSearch && matchesStatus;
     },
@@ -374,7 +361,7 @@ const InventoryOverview = () => {
               <div className="p-8 text-center">
                 <Inventory className="mx-auto h-12 w-12 text-gray-400" />
                 <p className="mt-2 text-gray-500">
-                  {searchTerm || selectedStatus !== "all"
+                  {searchTerm !== "all"
                     ? "沒有符合條件的物料類型"
                     : "暫無物料類型資料"}
                 </p>

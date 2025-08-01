@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Close, PlayCircleOutlined } from "@mui/icons-material";
 import { iconMap } from "../componenets/CustomIcons.jsx";
 import PrintLabel from "./PrintLabel.jsx";
+import api from "../services/api.js";
 
 const MyTaskDetail = ({ task, onClose }) => {
   const [items, setItems] = useState([]);
@@ -17,18 +18,9 @@ const MyTaskDetail = ({ task, onClose }) => {
 
     setStarting(true);
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`/api/tasks/${task.id}/start`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await api.startTask(task.id);
 
       if (response.ok) {
-        const data = await response.json();
-
         // Update task in parent component or refresh
         onClose();
 
@@ -77,13 +69,7 @@ const MyTaskDetail = ({ task, onClose }) => {
   const fetchTaskItems = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
-      const response = await fetch(`/api/tasks/${task.id}/items/summary`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await api.getItemsSummaryByTaskId(task.id);
 
       if (response.ok) {
         const data = await response.json();

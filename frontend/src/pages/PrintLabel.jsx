@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Close } from "@mui/icons-material";
 import PrintLabelDetail from "./PrintLabelDetail.jsx";
+import api from "../services/api.js";
 
 const PrintLabel = ({ task, onClose }) => {
   const [items, setItems] = useState([]);
@@ -19,13 +20,7 @@ const PrintLabel = ({ task, onClose }) => {
   const fetchTaskItems = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
-      const response = await fetch(`/api/tasks/${task.id}/items`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await api.getItemsByTaskId(task.id);
 
       if (response.ok) {
         const data = await response.json();
@@ -38,15 +33,6 @@ const PrintLabel = ({ task, onClose }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("zh-hk", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
   };
 
   const toggleShowPrinted = () => {
@@ -63,19 +49,9 @@ const PrintLabel = ({ task, onClose }) => {
 
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
 
       // Use new bulk API to generate single PDF with filtered items
-      const response = await fetch(`/api/tasks/${task.id}/print-all`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          show_printed: showPrinted,
-        }),
-      });
+      const response = await api.printAllLabelsByTaskId(task.id, showPrinted);
 
       if (response.ok) {
         // Get the combined PDF blob

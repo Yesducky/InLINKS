@@ -432,11 +432,12 @@ def assign_lot_to_project(lot_id):
     """
     try:
         lot = Lot.query.get_or_404(lot_id)
-        data = request.get_json()
-        project_id = data.get('project_id')
+        project_id = request.get_json()
+
         
         if not project_id:
             return jsonify({'error': 'Project ID is required'}), 400
+
 
         # Verify project exists
         from models import Project
@@ -473,44 +474,95 @@ def assign_lot_to_project(lot_id):
 
     except Exception as e:
         db.session.rollback()
+        print(e)
         return jsonify({'error': f'Failed to assign lot to project: {str(e)}'}), 500
 
 @lot_bp.route('/lots/<string:lot_id>/remove-from-project', methods=['PUT'])
 @jwt_required()
 def remove_lot_from_project(lot_id):
     """
-    Remove a lot from any project (set project_id to None)
+    Remove a lot from any project (set project_id to None).
+    Also removes all items in the lot from any tasks in that project.
     """
     try:
         lot = Lot.query.get_or_404(lot_id)
         user_id = get_jwt_identity()
-        
-        # Log the removal
         old_project_id = lot.project_id
+
+        if not old_project_id:
+            return jsonify({'message': 'Lot is not assigned to any project'})
+
+        # Get all items in this lot that are assigned to tasks
+        carton_ids = json.loads(lot.carton_ids) if lot.carton_ids else []
+        items_removed_from_tasks = []
+
+        for carton_id in carton_ids:
+            # Get items directly in this carton
+            carton_items = Item.query.filter_by(parent_id=carton_id).all()
+            for item in carton_items:
+                # Check if item is assigned to any tasks
+                task_ids = json.loads(item.task_ids) if item.task_ids else []
+                if task_ids:
+                    # Get all tasks for this item and check if they belong to the same project
+                    from models import Task, WorkOrder
+                    tasks_to_remove = []
+
+                    for task_id in task_ids:
+                        task = Task.query.get(task_id)
+                        if task and task.work_order:
+                            if task.work_order.parent_project_id == old_project_id:
+                                tasks_to_remove.append(task_id)
+
+                    # Remove the item from tasks in this project
+                    if tasks_to_remove:
+                        remaining_task_ids = [tid for tid in task_ids if tid not in tasks_to_remove]
+                        item.task_ids = json.dumps(remaining_task_ids)
+
+                        # Update item status if no more tasks assigned
+                        if not remaining_task_ids:
+                            item.status = 'available'
+
+                        items_removed_from_tasks.append({
+                            'item_id': item.id,
+                            'removed_from_tasks': tasks_to_remove
+                        })
+
+                        # Log the item update
+                        StockLogger.log_update(user_id, 'item', item.id, item, {
+                            'task_ids': item.task_ids,
+                            'status': item.status,
+                            'reason': f'Removed from project {old_project_id}'
+                        })
+
+        # Remove lot from project
         lot.project_id = None
-        
+
         StockLogger.log_update(user_id, 'lot', lot_id, lot, {
             'project_id': None,
             'old_project_id': old_project_id
         })
-        
+
         # Log process removal
-        if old_project_id:
-            from models import Project
-            old_project = Project.query.get(old_project_id)
-            old_project_name = old_project.project_name if old_project else 'Unknown'
-            
-            ProcessLogger.create_log(
-                user_id=user_id,
-                action_type='REMOVAL',
-                entity_type='project',
-                entity_id=old_project_id,
-                entity_name=old_project_name,
-                details=f"Lot {lot.id} removed from project '{old_project_id}'"
-            )
+        from models import Project
+        old_project = Project.query.get(old_project_id)
+        old_project_name = old_project.project_name if old_project else 'Unknown'
+
+        ProcessLogger.create_log(
+            user_id=user_id,
+            action_type='REMOVAL',
+            entity_type='project',
+            entity_id=old_project_id,
+            entity_name=old_project_name,
+            details=f"Lot {lot.id} removed from project '{old_project_id}'. {len(items_removed_from_tasks)} items removed from tasks."
+        )
 
         db.session.commit()
-        return jsonify({'message': 'Lot removed from project successfully'})
+
+        return jsonify({
+            'message': 'Lot removed from project successfully',
+            'items_removed_from_tasks': len(items_removed_from_tasks),
+            'details': items_removed_from_tasks
+        })
 
     except Exception as e:
         db.session.rollback()

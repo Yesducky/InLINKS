@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Save, Close } from "@mui/icons-material";
 import LoadingSpinner from "./LoadingSpinner";
+import api from "../services/api.js";
 
 const EditWorkOrderModal = ({
   isOpen,
@@ -45,7 +46,7 @@ const EditWorkOrderModal = ({
           workflow_type: workOrder.workflow_type || "",
           lot_id: workOrder.lot_id || "",
           estimated_hour: workOrder.estimated_hour || "",
-          state_id: workOrder.state_id || "",
+          state_id: workOrder.state.id || "",
           start_date: workOrder.start_date
             ? new Date(workOrder.start_date)
                 .toLocaleDateString("zh-Hans-CN", {
@@ -95,17 +96,8 @@ const EditWorkOrderModal = ({
 
   const fetchStateOptions = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(
-        "/api/process_state_types/by_type/work_order",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
-
+      const response =
+        await api.getProcessStateTypesByProcessType("work_order");
       if (response.ok) {
         const states = await response.json();
         setStateOptions(states);
@@ -128,20 +120,9 @@ const EditWorkOrderModal = ({
     setError("");
 
     try {
-      const token = localStorage.getItem("token");
-      const url = workOrder
-        ? `/api/work_orders/${workOrder.id}`
-        : "/api/work_orders";
-      const method = workOrder ? "PUT" : "POST";
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      const response = workOrder
+        ? await api.putWorkOrder(workOrder.id, formData)
+        : await api.postWorkOrder(formData);
 
       if (response.ok) {
         const result = await response.json();
@@ -349,23 +330,23 @@ const EditWorkOrderModal = ({
                       />
                     </div>
 
-                    <div>
-                      <label
-                        htmlFor="workflow_type_id"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        工作流程類型
-                      </label>
-                      <input
-                        type="text"
-                        id="workflow_type_id"
-                        name="workflow_type_id"
-                        value={formData.workflow_type?.id}
-                        onChange={handleInputChange}
-                        className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                        placeholder="輸入工作流程類型ID"
-                      />
-                    </div>
+                    {/*<div>*/}
+                    {/*  <label*/}
+                    {/*    htmlFor="workflow_type_id"*/}
+                    {/*    className="block text-sm font-medium text-gray-700"*/}
+                    {/*  >*/}
+                    {/*    工作流程類型*/}
+                    {/*  </label>*/}
+                    {/*  <input*/}
+                    {/*    type="text"*/}
+                    {/*    id="workflow_type_id"*/}
+                    {/*    name="workflow_type_id"*/}
+                    {/*    value={formData.workflow_type?.id}*/}
+                    {/*    onChange={handleInputChange}*/}
+                    {/*    className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"*/}
+                    {/*    placeholder="輸入工作流程類型ID"*/}
+                    {/*  />*/}
+                    {/*</div>*/}
                   </div>
 
                   {/*<div>*/}

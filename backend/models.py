@@ -66,6 +66,20 @@ class ProcessStateType(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=get_hk_time)
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'state_name': self.state_name,
+            'state_type': self.state_type,
+            'description': self.description,
+            'bg_color': self.bg_color,
+            'text_color': self.text_color,
+            'icon': self.icon,
+            'order_index': self.order_index,
+            'is_active': self.is_active,
+            'created_at': self.created_at.isoformat()
+        }
+
 # Database Models - Stock Collection
 class Lot(db.Model):
     __tablename__ = 'lots'

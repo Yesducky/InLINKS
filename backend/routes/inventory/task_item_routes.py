@@ -90,6 +90,7 @@ def get_available_items_for_task(task_id):
         
         # Query parameters
         material_type_id = request.args.get('material_type_id')
+        print(f"Fetching available items for task {task_id} in project {project.id} with material type {material_type_id}")
         
         # Get all lots assigned to the project
         project_lots = Lot.query.filter_by(project_id=project.id).all()
@@ -184,6 +185,7 @@ def assign_items_to_task(task_id):
         data = request.get_json()
         
         if not data or 'assignments' not in data:
+            print("Invalid request data:", data)
             return jsonify({'error': 'assignments data is required'}), 400
         
         assignments = data['assignments']

@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Close, Download } from "@mui/icons-material";
 import { QRCodeSVG } from "qrcode.react";
 import Barcode from "react-barcode";
+import api from "../services/api.js";
 
 const PrintLabelDetail = ({ item, taskId, onClose, onPrintSuccess }) => {
   const [printing, setPrinting] = useState(false);
@@ -19,19 +20,8 @@ const PrintLabelDetail = ({ item, taskId, onClose, onPrintSuccess }) => {
   const generatePDF = async () => {
     setPrinting(true);
     try {
-      const token = localStorage.getItem("token");
-
       // Send POST request to backend with task_id
-      const response = await fetch(`/api/items/${item.id}/print`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          task_id: taskId,
-        }),
-      });
+      const response = await api.printLabelByItemId(item.id, taskId);
 
       if (response.ok) {
         // Get the PDF blob from response

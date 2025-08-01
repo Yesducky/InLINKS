@@ -15,6 +15,7 @@ import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
 import StockLog from "../componenets/StockLog.jsx";
 import LogButton from "../componenets/LogButton.jsx";
+import api from "../services/api.js";
 
 const Lot = () => {
   const { lotId } = useParams();
@@ -22,7 +23,7 @@ const Lot = () => {
   const [lot, setLot] = useState(null);
   const [cartons, setCartons] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState("grid");
   const [showLogModal, setShowLogModal] = useState(false);
@@ -46,12 +47,8 @@ const Lot = () => {
 
   const fetchLotDetails = async () => {
     try {
-      const token = localStorage.getItem("token");
-
       // Fetch lot details
-      const lotResponse = await fetch(`/api/lots/${lotId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const lotResponse = await api.getLotsById(lotId);
 
       if (!lotResponse.ok) {
         setError(lotResponse.status);
@@ -65,7 +62,7 @@ const Lot = () => {
       // Fetch cartons for this lot using the new API endpoint
       await fetchCartons();
     } catch (err) {
-      setError("網絡錯誤，無法載入批次詳情");
+      setError(err.message);
       console.error("Error fetching lot details:", err);
     } finally {
       setIsLoading(false);
@@ -74,10 +71,7 @@ const Lot = () => {
 
   const fetchCartons = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`/api/cartons/lot/${lotId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.getCartonByLotId(lotId);
 
       if (response.ok) {
         const data = await response.json();

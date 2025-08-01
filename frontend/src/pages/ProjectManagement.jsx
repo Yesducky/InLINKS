@@ -15,6 +15,7 @@ import {
   CompletedIcon,
 } from "../componenets/CustomIcons.jsx";
 import { iconMap } from "../componenets/CustomIcons.jsx";
+import api from "../services/api.js";
 
 const ProjectManagement = () => {
   const [projects, setProjects] = useState([]);
@@ -52,21 +53,15 @@ const ProjectManagement = () => {
   };
 
   useEffect(() => {
-    fetchProjects();
+    fetchProjects().then((r) => console.log(r));
   }, []);
 
   const fetchProjects = async () => {
     try {
       setIsLoading(true);
       setError("");
-      const token = localStorage.getItem("token");
 
-      const response = await fetch("/api/projects", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await api.getAllProjects();
 
       if (response.ok) {
         const projectsData = await response.json();
@@ -97,7 +92,7 @@ const ProjectManagement = () => {
         setError(response.status);
       }
     } catch (err) {
-      setError("Network error loading projects");
+      setError(err.message);
       console.error("Error fetching projects:", err);
     } finally {
       setIsLoading(false);
@@ -114,7 +109,6 @@ const ProjectManagement = () => {
       // minute: "2-digit",
     });
   };
-
 
   const getPriorityColor = (priority) => {
     switch (priority) {
@@ -430,9 +424,12 @@ const ProjectManagement = () => {
                               }}
                             >
                               {iconMap[project.state?.icon] &&
-                                React.createElement(iconMap[project.state.icon], {
-                                  className: "h-4 w-4",
-                                })}
+                                React.createElement(
+                                  iconMap[project.state.icon],
+                                  {
+                                    className: "h-4 w-4",
+                                  },
+                                )}
                               &nbsp;
                               {project.state?.state_name}
                             </span>
@@ -470,9 +467,12 @@ const ProjectManagement = () => {
                               }}
                             >
                               {iconMap[project.state?.icon] &&
-                                React.createElement(iconMap[project.state.icon], {
-                                  className: "h-5 w-5",
-                                })}
+                                React.createElement(
+                                  iconMap[project.state.icon],
+                                  {
+                                    className: "h-5 w-5",
+                                  },
+                                )}
                             </span>
                           </div>
                           <div>

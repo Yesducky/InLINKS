@@ -3,8 +3,12 @@ import { motion } from "framer-motion";
 import { ErrorOutline, Refresh } from "@mui/icons-material";
 
 const FetchDataFail = ({
-  error = "載入資料失敗",
-  onRetry = null,
+  error = 500,
+  onRetry = () => {
+    console.log("Retry function not provided");
+
+    window.location.reload();
+  },
   showRetryButton = true,
   className = "",
 }) => {
@@ -21,7 +25,12 @@ const FetchDataFail = ({
   };
 
   //if error is 422, jump to login page
-  if (error === 422 || error === 401) {
+  if (
+    error === 422 ||
+    error.includes("402") ||
+    error === 401 ||
+    error.includes("401")
+  ) {
     window.location.href = "/login";
     localStorage.removeItem("token");
     localStorage.removeItem("user");

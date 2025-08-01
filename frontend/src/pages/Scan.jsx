@@ -10,6 +10,7 @@ import {
   Error as CameraOff,
   QrCodeScanner,
 } from "@mui/icons-material";
+import api from "../services/api.js";
 
 const Scan = () => {
   const [scannedData, setScannedData] = useState("");
@@ -73,10 +74,7 @@ const Scan = () => {
         (device) => device.kind === "videoinput",
       );
 
-      if (videoInputDevices.length === 0) {
-        throw new Error("No camera found");
-      }
-
+      let selectedDeviceId;
       streamRef.current = await navigator.mediaDevices.getUserMedia({
         video: { deviceId: selectedDeviceId },
       });
@@ -144,15 +142,8 @@ const Scan = () => {
       const taskId = "TSK" + parts[0];
       const itemId = "ITM" + parts[1];
 
-      const token = localStorage.getItem("token");
-
       // Fetch task data
-      const taskResponse = await fetch(`/api/tasks/${taskId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const taskResponse = await api.getTask(taskId);
 
       if (taskResponse.ok) {
         const taskResult = await taskResponse.json();
@@ -162,12 +153,7 @@ const Scan = () => {
       }
 
       // Fetch item data
-      const itemResponse = await fetch(`/api/items/${itemId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const itemResponse = await api.getItem(itemId);
 
       if (itemResponse.ok) {
         const itemResult = await itemResponse.json();

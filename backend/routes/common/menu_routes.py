@@ -21,12 +21,12 @@ def get_card_menus():
         current_user = User.query.get(current_user_id)
 
         if not current_user:
-            return jsonify({'error': 'User not found'}), 404
+            return jsonify({'error': 'User not found'}), 401
 
         # Get user type
         user_type = UserType.query.get(current_user.user_type_id)
         if not user_type:
-            return jsonify({'error': 'User type not found'}), 404
+            return jsonify({'error': 'User type not found'}), 401
 
         # Get allowed card menu IDs for this user type
         allowed_card_ids = []

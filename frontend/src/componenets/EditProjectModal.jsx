@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Save, Close } from "@mui/icons-material";
 import LoadingSpinner from "./LoadingSpinner";
+import api from "../services/api.js";
 
 const EditProjectModal = ({ isOpen, onClose, project, onSave }) => {
   const [formData, setFormData] = useState({
@@ -29,7 +30,7 @@ const EditProjectModal = ({ isOpen, onClose, project, onSave }) => {
           description: project.description || "",
           person_in_charge: project.person_in_charge || "",
           priority: project.priority || "medium",
-          state_id: project.state_id || "",
+          state_id: project.state.id || "",
           start_date: project.start_date
             ? new Date(project.start_date)
                 .toLocaleDateString("zh-Hans-CN", {
@@ -76,13 +77,7 @@ const EditProjectModal = ({ isOpen, onClose, project, onSave }) => {
 
   const fetchStateOptions = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/process_state_types/by_type/project", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await api.getProcessStateTypesByProcessType("project");
 
       if (response.ok) {
         const states = await response.json();
@@ -107,18 +102,9 @@ const EditProjectModal = ({ isOpen, onClose, project, onSave }) => {
     setError("");
 
     try {
-      const token = localStorage.getItem("token");
-      const url = project ? `/api/projects/${project.id}` : "/api/projects";
-      const method = project ? "PUT" : "POST";
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      const response = project
+        ? await api.putProject(project.id, formData)
+        : await api.postProject(formData);
 
       if (response.ok) {
         const result = await response.json();

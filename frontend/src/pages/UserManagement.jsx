@@ -15,6 +15,7 @@ import {
   VisibilityOff,
 } from "@mui/icons-material";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
+import api from "../services/api.js"; // Adjust the import path as needed
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -61,19 +62,13 @@ const UserManagement = () => {
 
   // Fetch users and user types on component mount
   useEffect(() => {
-    fetchUsers();
-    fetchUserTypes();
+    fetchUsers().then((r) => console.log(r));
+    fetchUserTypes().then((r) => console.log(r));
   }, []);
 
   const fetchUsers = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/users", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await api.getUsers();
 
       if (response.ok) {
         const data = await response.json();
@@ -92,13 +87,7 @@ const UserManagement = () => {
 
   const fetchUserTypes = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/user_types", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await api.getUserTypes();
 
       if (response.ok) {
         const data = await response.json();
@@ -133,15 +122,7 @@ const UserManagement = () => {
     e.preventDefault();
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/auth/register", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newUser),
-      });
+      const response = await api.register(newUser);
 
       const data = await response.json();
 
@@ -149,7 +130,7 @@ const UserManagement = () => {
         setMessage({ type: "success", text: "用戶創建成功！" });
         // Use animated close function on success
         closeFormWithAnimation();
-        fetchUsers(); // Refresh user list
+        await fetchUsers(); // Refresh user list
         setTimeout(() => {
           setMessage({ type: "", text: "" });
         }, 5000);
@@ -164,15 +145,7 @@ const UserManagement = () => {
 
   const handleUpdateUserStatus = async (userId, isActive) => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`/api/users/${userId}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ is_active: isActive }),
-      });
+      const response = await api.putUsers(userId, { is_active: isActive });
 
       const data = await response.json();
 
@@ -181,7 +154,7 @@ const UserManagement = () => {
           type: "success",
           text: `用戶狀態已${isActive ? "啟用" : "停用"}`,
         });
-        fetchUsers(); // Refresh user list
+        await fetchUsers(); // Refresh user list
         setTimeout(() => {
           setMessage({ type: "", text: "" });
         }, 5000);
@@ -234,30 +207,25 @@ const UserManagement = () => {
     e.preventDefault();
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`/api/users/${editUser.id}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: editUser.username,
-          email: editUser.email,
-          user_type_id: editUser.user_type_id,
-          is_active: editUser.is_active,
-          project_ids: editUser.project_ids,
-          work_order_ids: editUser.work_order_ids,
-          task_ids: editUser.task_ids,
-        }),
-      });
+      //TODO: check username unique and can update username
+      const body = {
+        username: editUser.username,
+        email: editUser.email,
+        user_type_id: editUser.user_type_id,
+        is_active: editUser.is_active,
+        project_ids: editUser.project_ids,
+        work_order_ids: editUser.work_order_ids,
+        task_ids: editUser.task_ids,
+      };
+      console.log(body);
+      const response = await api.putUsers(editUser.id, body);
 
       const data = await response.json();
 
       if (response.ok) {
         setMessage({ type: "success", text: "用戶更新成功！" });
         setEditingUser(null);
-        fetchUsers(); // Refresh user list
+        await fetchUsers(); // Refresh user list
         //only show for 5s
         setTimeout(() => {
           setMessage({ type: "", text: "" });
@@ -595,7 +563,7 @@ const UserManagement = () => {
                             </span>
                           </td>
                           <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
-                            {new Date(user.created_at).toLocaleDateString(
+                            {new Date(user?.created_at).toLocaleDateString(
                               "zh-TW",
                             )}
                           </td>

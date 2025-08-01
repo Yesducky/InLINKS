@@ -3,20 +3,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Close,
   Search,
-  FilterList,
-  Sort,
   Add,
   Delete,
   CheckCircle,
   Warning,
   Inventory2,
-  AssignmentTurnedIn,
   ViewList,
   ViewModule,
   Category,
 } from "@mui/icons-material";
 import { LotIcon } from "./CustomIcons.jsx";
 import LoadingSpinner from "./LoadingSpinner";
+import api from "../services/api.js";
 
 const ProjectLotsModal = ({ isOpen, onClose, project, onLotsUpdated }) => {
   const [lots, setLots] = useState([]);
@@ -63,11 +61,7 @@ const ProjectLotsModal = ({ isOpen, onClose, project, onLotsUpdated }) => {
   const fetchProjectLots = async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`/api/projects/${project.id}/lots`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
+      const response = await api.getLotsByProjectId(project.id);
       if (response.ok) {
         const data = await response.json();
         setLots(data);
@@ -85,10 +79,7 @@ const ProjectLotsModal = ({ isOpen, onClose, project, onLotsUpdated }) => {
   const fetchUnassignedLots = async () => {
     setIsLoadingAllLots(true);
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`/api/lots/unassigned`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.getUnassignedLots();
 
       if (response.ok) {
         const data = await response.json();
@@ -106,11 +97,7 @@ const ProjectLotsModal = ({ isOpen, onClose, project, onLotsUpdated }) => {
 
   const fetchMaterialTypes = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/material_types", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
+      const response = await api.getMaterialTypes();
       if (response.ok) {
         const data = await response.json();
         setMaterialTypes(data);
@@ -157,15 +144,7 @@ const ProjectLotsModal = ({ isOpen, onClose, project, onLotsUpdated }) => {
     if (!window.confirm("確定要將此批次從項目中移除嗎？")) return;
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`/api/lots/${lotId}/remove-from-project`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ project_id: null }),
-      });
+      const response = await api.removeLotFromProject(lotId, project.id);
 
       if (response.ok) {
         setLots(lots.filter((lot) => lot.id !== lotId));
@@ -186,16 +165,8 @@ const ProjectLotsModal = ({ isOpen, onClose, project, onLotsUpdated }) => {
     }
 
     try {
-      const token = localStorage.getItem("token");
       const promises = selectedLots.map((lotId) =>
-        fetch(`/api/lots/${lotId}/assign-to-project`, {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ project_id: project.id }),
-        }),
+        api.assignLotToProject(lotId, project.id),
       );
 
       const results = await Promise.all(promises);

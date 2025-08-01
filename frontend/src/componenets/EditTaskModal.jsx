@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Save, Close } from "@mui/icons-material";
 import LoadingSpinner from "./LoadingSpinner";
+import api from "../services/api.js";
 
 const EditTaskModal = ({ isOpen, onClose, task, onSave, workOrderId }) => {
   const [formData, setFormData] = useState({
@@ -93,13 +94,7 @@ const EditTaskModal = ({ isOpen, onClose, task, onSave, workOrderId }) => {
 
   const fetchStateOptions = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/process_state_types/by_type/task", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await api.getProcessStateTypesByProcessType("task");
 
       if (response.ok) {
         const states = await response.json();
@@ -123,19 +118,9 @@ const EditTaskModal = ({ isOpen, onClose, task, onSave, workOrderId }) => {
     setError("");
 
     try {
-      const token = localStorage.getItem("token");
-      const url = task ? `/api/tasks/${task.id}` : "/api/tasks";
-      const method = task ? "PUT" : "POST";
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-      console.log(response);
+      const response = task
+        ? await api.putTask(task.id, formData)
+        : await api.postTask(formData);
 
       if (response.ok) {
         const result = await response.json();
@@ -146,7 +131,7 @@ const EditTaskModal = ({ isOpen, onClose, task, onSave, workOrderId }) => {
         setError(errorData.message || "Failed to save task");
       }
     } catch (err) {
-      setError("Network error saving task");
+      setError(err.message);
       console.error("Error saving task:", err);
     } finally {
       setSaving(false);

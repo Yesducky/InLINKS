@@ -2,14 +2,9 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Save, Close } from "@mui/icons-material";
 import LoadingSpinner from "./LoadingSpinner";
+import api from "../services/api.js";
 
-const EditSubTaskModal = ({
-  isOpen,
-  onClose,
-  subTask,
-  onSave,
-  taskId,
-}) => {
+const EditSubTaskModal = ({ isOpen, onClose, subTask, onSave, taskId }) => {
   const [formData, setFormData] = useState({
     subtask_name: "",
     description: "",
@@ -99,13 +94,7 @@ const EditSubTaskModal = ({
 
   const fetchStateOptions = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/process_state_types/by_type/subtask", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await api.getProcessStateTypesByProcessType("subtask");
 
       if (response.ok) {
         const states = await response.json();
@@ -129,20 +118,12 @@ const EditSubTaskModal = ({
     setError("");
 
     try {
-      const token = localStorage.getItem("token");
-      const url = subTask
-        ? `/api/subtasks/${subTask.id}`
-        : "/api/subtasks";
-      const method = subTask ? "PUT" : "POST";
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      let response;
+      if (subTask) {
+        response = await api.putSubtask(subTask.id, formData);
+      } else {
+        response = await api.postSubtask(formData);
+      }
 
       if (response.ok) {
         const result = await response.json();
@@ -330,7 +311,8 @@ const EditSubTaskModal = ({
                     </div>
                   </div>
 
-                  {stateOptions.find(s => s.id === formData.state_id)?.state_name === "completed" && (
+                  {stateOptions.find((s) => s.id === formData.state_id)
+                    ?.state_name === "completed" && (
                     <div>
                       <label
                         htmlFor="completed_at"

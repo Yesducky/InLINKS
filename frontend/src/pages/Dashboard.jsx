@@ -13,11 +13,12 @@ import {
   UserManagementIcon,
   SettingIcon,
 } from "../componenets/CustomIcons.jsx";
+import api from "../services/api.js";
 
 const Dashboard = () => {
   const [cardMenus, setCardMenus] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(0);
   const navigate = useNavigate();
 
   // Icon mapping object
@@ -50,14 +51,8 @@ const Dashboard = () => {
   const fetchCardMenus = async () => {
     try {
       setIsLoading(true);
-      setError("");
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/card-menus", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      setError(0); // Reset error state
+      const response = await api.getCardMenus();
 
       if (response.ok) {
         const data = await response.json();
@@ -68,8 +63,8 @@ const Dashboard = () => {
         setError(response.status);
       }
     } catch (err) {
-      setError("Network error loading menus");
-      console.error("Error fetching card menus:", err);
+      setError(err.message);
+      console.error(err.message);
     } finally {
       setIsLoading(false);
     }

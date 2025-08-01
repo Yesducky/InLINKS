@@ -13,24 +13,23 @@ process_bp = Blueprint('process', __name__)
 
 # Tasks endpoints
 
-@process_bp.route('/get_process_logs', methods=['GET'])
+@process_bp.route('/get_process_logs/<string:type>/<string:id>', methods=['GET'])
 @jwt_required()
-def get_process_logs():
-    project_id = request.args.get('project_id')
-    work_order_id = request.args.get('work_order_id')
-    task_id = request.args.get('task_id')
-    subtask_id = request.args.get('subtask_id')
-    print(f"Filtering logs with project_id={project_id}, work_order_id={work_order_id}, task_id={task_id}, subtask_id={subtask_id}")
+def get_process_logs(type, id):
 
     query = ProcessLog.query
-    if project_id:
-        query = query.filter_by(project_id=project_id)
-    if work_order_id:
-        query = query.filter_by(work_order_id=work_order_id)
-    if task_id:
-        query = query.filter_by(task_id=task_id)
-    if subtask_id:
-        query = query.filter_by(subtask_id=subtask_id)
+    print(type, id)
+
+    if type == 'project':
+        query = query.filter_by(project_id=id)
+    elif type == 'work_order':
+        query = query.filter_by(work_order_id=id)
+    elif type == 'task':
+        query = query.filter_by(task_id=id)
+    elif type == 'subtask':
+        query = query.filter_by(subtask_id=id)
+    else:
+        return jsonify({'error': 'Invalid type'}), 400
 
     logs = query.all()
     return jsonify([

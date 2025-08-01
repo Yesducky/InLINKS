@@ -1,6 +1,6 @@
 import { useState } from "react";
-import Header from "../componenets/Header.jsx";
 import { Person, Lock } from "@mui/icons-material";
+import api from "../services/api.js";
 
 const Login = ({ onLogin }) => {
   const [credentials, setCredentials] = useState({
@@ -25,18 +25,11 @@ const Login = ({ onLogin }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://103.30.41.250:5000'}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(credentials),
-      });
-
-      const data = await response.json();
+      const response = await api.login(credentials);
 
       if (response.ok) {
         // Store token
+        const data = await response.json();
         localStorage.setItem("token", data.access_token);
 
         // Store complete user data including user_type_id for interface differentiation

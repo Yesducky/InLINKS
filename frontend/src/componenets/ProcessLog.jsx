@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Clock, User, Activity, AlertCircle } from "lucide-react";
+import { X, Clock, Activity, AlertCircle } from "lucide-react";
 import LoadingSpinner from "./LoadingSpinner";
 import FetchDataFail from "./FetchDataFail";
+import api from "../services/api.js";
 
 const ProcessLog = ({ isOpen, onClose, entityType, entityId }) => {
   const [logs, setLogs] = useState([]);
@@ -11,7 +12,7 @@ const ProcessLog = ({ isOpen, onClose, entityType, entityId }) => {
 
   useEffect(() => {
     if (isOpen && entityId) {
-      fetchLogs();
+      fetchLogs().then((r) => console.log(r));
     }
   }, [isOpen, entityId]);
 
@@ -19,34 +20,8 @@ const ProcessLog = ({ isOpen, onClose, entityType, entityId }) => {
     try {
       setIsLoading(true);
       setError("");
-      const token = localStorage.getItem("token");
 
-      // Build query parameters based on entity type
-      const params = new URLSearchParams();
-      switch (entityType) {
-        case "project":
-          params.append("project_id", entityId);
-          break;
-        case "work_order":
-          params.append("work_order_id", entityId);
-          break;
-        case "task":
-          params.append("task_id", entityId);
-          break;
-        case "subtask":
-          params.append("subtask_id", entityId);
-          break;
-      }
-
-      const response = await fetch(
-        `/api/get_process_logs?${params.toString()}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
+      const response = await api.getProcessLogs(entityType, entityId);
 
       if (response.ok) {
         const logsData = await response.json();
@@ -55,7 +30,7 @@ const ProcessLog = ({ isOpen, onClose, entityType, entityId }) => {
         setError(response.status);
       }
     } catch (err) {
-      setError("Network error loading logs");
+      setError(err.message);
       console.error("Error fetching logs:", err);
     } finally {
       setIsLoading(false);

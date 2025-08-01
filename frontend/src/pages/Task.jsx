@@ -15,11 +15,13 @@ import {
   ActiveIcon,
   CompletedIcon,
   ItemIcon,
+  SubTaskIcon,
 } from "../componenets/CustomIcons.jsx";
 import { iconMap } from "../componenets/CustomIcons.jsx";
 import AddButton from "../componenets/AddButton.jsx";
 import EditSubTaskModal from "../componenets/EditSubTaskModal.jsx";
 import TaskItemsModal from "../componenets/TaskItemsModal.jsx";
+import api from "../services/api.js";
 
 const Task = () => {
   const { taskId } = useParams();
@@ -70,17 +72,12 @@ const Task = () => {
     try {
       setIsLoading(true);
       setError("");
-      const token = localStorage.getItem("token");
 
-      const response = await fetch(`/api/tasks/${taskId}/sub_tasks`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await api.getSubtasksByTaskId(taskId);
 
       if (response.ok) {
         const subTasksData = await response.json();
+        console.log("SubTasks Data:", subTasksData);
 
         // Ensure subTasksData is always an array
         const subTasks = Array.isArray(subTasksData) ? subTasksData : [];
@@ -108,7 +105,7 @@ const Task = () => {
         setError(response.status);
       }
     } catch (err) {
-      setError("Network error loading subtasks");
+      setError(err.message);
       console.error("Error fetching subtasks:", err);
     } finally {
       setIsLoading(false);
@@ -117,14 +114,7 @@ const Task = () => {
 
   const fetchTaskInfo = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
+      const response = await api.getTask(taskId);
       if (response.ok) {
         const taskData = await response.json();
         console.log("Task Data:", taskData);
@@ -529,7 +519,7 @@ const Task = () => {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100">
-                                <TaskIcon className="text-purple h-4 w-4" />
+                                <SubTaskIcon className="text-purple h-4 w-4" />
                               </div>
                               <div className="ml-3">
                                 <div className="text-sm font-medium text-gray-900">

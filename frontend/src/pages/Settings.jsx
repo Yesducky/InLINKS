@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import Header from "../componenets/Header.jsx";
 import { Person, ExitToApp } from "@mui/icons-material";
+import api from "../services/api.js"; // Adjust the import path as necessary
 
 const Settings = ({ onLogout }) => {
   const navigate = useNavigate();
@@ -46,16 +47,7 @@ const Settings = ({ onLogout }) => {
       }
 
       try {
-        const token = localStorage.getItem("token");
-        const response = await fetch(
-          `/api/user_types/bg_user_type_id/${user.user_type_id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          },
-        );
+        const response = await api.getUserTypeById(user?.user_type_id);
 
         if (response.ok) {
           const data = await response.json();
@@ -72,7 +64,7 @@ const Settings = ({ onLogout }) => {
       }
     };
 
-    fetchUserType();
+    fetchUserType().then((r) => console.log(r));
   }, [user?.user_type_id]);
 
   const handleLogout = () => {

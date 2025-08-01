@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Input from "rc-input";
 import {
@@ -13,6 +13,7 @@ import {
 } from "@mui/icons-material";
 import { ItemIcon, LotIcon } from "./CustomIcons.jsx";
 import LoadingSpinner from "./LoadingSpinner";
+import api from "../services/api.js";
 
 const TaskItemsModal = ({ isOpen, onClose, task, onItemsUpdated }) => {
   const [items, setItems] = useState([]);
@@ -25,7 +26,7 @@ const TaskItemsModal = ({ isOpen, onClose, task, onItemsUpdated }) => {
   const [materialTypeFilter, setMaterialTypeFilter] = useState("");
   const [viewMode, setViewMode] = useState("grid");
   const [mode, setMode] = useState("view"); // "view", "add"
-  const [itemsViewMode, setItemsViewMode] = useState("items"); // "items" or "lots"
+  const [itemsViewMode, setItemsViewMode] = useState("lots"); // "items" or "lots"
   const [selectedMaterialType, setSelectedMaterialType] = useState(null);
   const [quantityMode, setQuantityMode] = useState("total"); // "items" or "total"
   const [requestedQuantity, setRequestedQuantity] = useState("");
@@ -33,6 +34,7 @@ const TaskItemsModal = ({ isOpen, onClose, task, onItemsUpdated }) => {
   const [lotCounts, setLotCounts] = useState({}); // For tracking count and quantity per lot
   const [page, setPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [visibleCount, setVisibleCount] = useState(10); // For "Show More" functionality
 
   // Animation variants
   const modalVariants = {
@@ -80,10 +82,7 @@ const TaskItemsModal = ({ isOpen, onClose, task, onItemsUpdated }) => {
   const fetchTaskItems = async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`/api/tasks/${task.id}/items`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.getItemsByTaskId(task.id);
 
       if (response.ok) {
         const data = await response.json();
@@ -105,11 +104,12 @@ const TaskItemsModal = ({ isOpen, onClose, task, onItemsUpdated }) => {
   const fetchAvailableItems = async () => {
     setIsLoadingAvailable(true);
     try {
-      const token = localStorage.getItem("token");
-      const url = `/api/tasks/${task.id}/items/available${selectedMaterialType ? `?material_type_id=${selectedMaterialType}` : ""}`;
-      const response = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = selectedMaterialType
+        ? await api.getAvailableItemsByTaskIdAndMaterialTypeId(
+            task.id,
+            selectedMaterialType,
+          )
+        : await api.getAvailableItemsByTaskId(task.id);
 
       if (response.ok) {
         const data = await response.json();
@@ -119,7 +119,7 @@ const TaskItemsModal = ({ isOpen, onClose, task, onItemsUpdated }) => {
         setError("Failed to fetch available items");
       }
     } catch (err) {
-      setError("Network error loading available items");
+      setError(err.message);
       console.error("Error fetching available items:", err);
     } finally {
       setIsLoadingAvailable(false);
@@ -128,10 +128,7 @@ const TaskItemsModal = ({ isOpen, onClose, task, onItemsUpdated }) => {
 
   const fetchMaterialTypes = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/material_types", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.getMaterialTypes();
 
       if (response.ok) {
         const data = await response.json();
@@ -141,16 +138,6 @@ const TaskItemsModal = ({ isOpen, onClose, task, onItemsUpdated }) => {
     } catch (err) {
       console.error("Error fetching material types:", err);
     }
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("zh-TW", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
   };
 
   const getStatusColor = (status) => {
@@ -183,17 +170,7 @@ const TaskItemsModal = ({ isOpen, onClose, task, onItemsUpdated }) => {
     if (!window.confirm("確定要將此物料從任務中移除嗎？")) return;
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(
-        `/api/tasks/${task.id}/items/${itemId}/remove`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
+      const response = await api.removeItemFromTask(task.id, itemId);
 
       if (response.ok) {
         setItems(items.filter((item) => item.id !== itemId));
@@ -256,15 +233,7 @@ const TaskItemsModal = ({ isOpen, onClose, task, onItemsUpdated }) => {
     }
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`/api/tasks/${task.id}/items/assign`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ assignments }),
-      });
+      const response = await api.assignItemToTask(task.id, assignments);
 
       if (response.ok) {
         setMode("view");
@@ -511,7 +480,7 @@ const TaskItemsModal = ({ isOpen, onClose, task, onItemsUpdated }) => {
                               layout
                               initial={false}
                               animate={{
-                                x: itemsViewMode === "items" ? 0 : "100%",
+                                x: itemsViewMode === "lots" ? 0 : "100%",
                                 width: "50%",
                               }}
                               transition={{
@@ -522,17 +491,6 @@ const TaskItemsModal = ({ isOpen, onClose, task, onItemsUpdated }) => {
                               style={{ zIndex: 0 }}
                             />
                             <button
-                              onClick={() => setItemsViewMode("items")}
-                              className={`relative z-10 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                                itemsViewMode === "items"
-                                  ? "text-blue"
-                                  : "text-gray-600 hover:text-gray-800"
-                              }`}
-                              style={{ width: "60px" }}
-                            >
-                              按物料
-                            </button>
-                            <button
                               onClick={() => setItemsViewMode("lots")}
                               className={`relative z-10 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                                 itemsViewMode === "lots"
@@ -542,6 +500,17 @@ const TaskItemsModal = ({ isOpen, onClose, task, onItemsUpdated }) => {
                               style={{ width: "60px" }}
                             >
                               按批次
+                            </button>
+                            <button
+                              onClick={() => setItemsViewMode("items")}
+                              className={`relative z-10 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                                itemsViewMode === "items"
+                                  ? "text-blue"
+                                  : "text-gray-600 hover:text-gray-800"
+                              }`}
+                              style={{ width: "60px" }}
+                            >
+                              按物料
                             </button>
                           </div>
                         </div>
@@ -600,49 +569,70 @@ const TaskItemsModal = ({ isOpen, onClose, task, onItemsUpdated }) => {
                                     </tr>
                                   </thead>
                                   <tbody className="divide-y divide-gray-200">
-                                    {processedItems.map((item) => (
-                                      <tr
-                                        key={item.id}
-                                        className="hover:bg-gray-50"
-                                      >
-                                        <td className="px-4 py-3">
-                                          <div className="flex items-center gap-2">
-                                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100">
-                                              <ItemIcon className="h-4 w-4 text-indigo-600" />
+                                    {processedItems
+                                      .slice(0, visibleCount)
+                                      .map((item) => (
+                                        <tr
+                                          key={item.id}
+                                          className="hover:bg-gray-50"
+                                        >
+                                          <td className="px-4 py-3">
+                                            <div className="flex items-center gap-2">
+                                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100">
+                                                <ItemIcon className="h-4 w-4 text-indigo-600" />
+                                              </div>
+                                              <span className="font-medium">
+                                                {item.id}
+                                              </span>
                                             </div>
-                                            <span className="font-medium">
-                                              {item.id}
+                                          </td>
+                                          <td className="px-4 py-3 text-sm">
+                                            {item.material_type_name}
+                                          </td>
+                                          <td className="px-4 py-3 text-sm">
+                                            {item.quantity} {item.material_unit}
+                                          </td>
+                                          <td className="px-4 py-3 text-sm text-gray-600">
+                                            {item.lot_info?.lot_id || "N/A"}
+                                          </td>
+                                          <td className="px-4 py-3">
+                                            <span
+                                              className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(item.status)}`}
+                                            >
+                                              {getStatusText(item.status)}
                                             </span>
-                                          </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-sm">
-                                          {item.material_type_name}
-                                        </td>
-                                        <td className="px-4 py-3 text-sm">
-                                          {item.quantity} {item.material_unit}
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">
-                                          {item.lot_info?.lot_id || "N/A"}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                          <span
-                                            className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(item.status)}`}
-                                          >
-                                            {getStatusText(item.status)}
-                                          </span>
-                                        </td>
-                                        <td className="px-4 py-3">
+                                          </td>
+                                          <td className="px-4 py-3">
+                                            <button
+                                              onClick={() =>
+                                                handleRemoveItem(item.id)
+                                              }
+                                              className="text-red-600 hover:text-red-800"
+                                            >
+                                              <Delete className="h-4 w-4" />
+                                            </button>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    {visibleCount < processedItems.length && (
+                                      <tr>
+                                        <td
+                                          colSpan={6}
+                                          className="py-2 text-center"
+                                        >
                                           <button
+                                            className="text-blue-600 hover:underline"
                                             onClick={() =>
-                                              handleRemoveItem(item.id)
+                                              setVisibleCount(
+                                                (prev) => prev + 10,
+                                              )
                                             }
-                                            className="text-red-600 hover:text-red-800"
                                           >
-                                            <Delete className="h-4 w-4" />
+                                            顯示更多
                                           </button>
                                         </td>
                                       </tr>
-                                    ))}
+                                    )}
                                   </tbody>
                                 </table>
                               </div>
@@ -964,7 +954,7 @@ const TaskItemsModal = ({ isOpen, onClose, task, onItemsUpdated }) => {
                                   layoutId="activeTab"
                                   initial={false}
                                   animate={{
-                                    x: quantityMode === "items" ? 0 : "100%",
+                                    x: quantityMode === "total" ? 0 : "100%",
                                     width: "50%",
                                   }}
                                   transition={{
@@ -973,19 +963,6 @@ const TaskItemsModal = ({ isOpen, onClose, task, onItemsUpdated }) => {
                                     damping: 30,
                                   }}
                                 />
-                                <button
-                                  onClick={() => setQuantityMode("items")}
-                                  className={`relative z-10 rounded-lg px-6 py-3 text-sm font-medium transition-colors duration-200 ${
-                                    quantityMode === "items"
-                                      ? "text-white shadow-sm"
-                                      : "text-gray-600 hover:text-gray-800"
-                                  }`}
-                                >
-                                  <span className="flex items-center gap-2">
-                                    <span className="text-lg">📦</span>
-                                    按件數
-                                  </span>
-                                </button>
                                 <button
                                   onClick={() => setQuantityMode("total")}
                                   className={`relative z-10 rounded-lg px-6 py-3 text-sm font-medium transition-colors duration-200 ${
@@ -997,6 +974,19 @@ const TaskItemsModal = ({ isOpen, onClose, task, onItemsUpdated }) => {
                                   <span className="flex items-center gap-2">
                                     <span className="text-lg">📏</span>
                                     按總量
+                                  </span>
+                                </button>
+                                <button
+                                  onClick={() => setQuantityMode("items")}
+                                  className={`relative z-10 rounded-lg px-6 py-3 text-sm font-medium transition-colors duration-200 ${
+                                    quantityMode === "items"
+                                      ? "text-white shadow-sm"
+                                      : "text-gray-600 hover:text-gray-800"
+                                  }`}
+                                >
+                                  <span className="flex items-center gap-2">
+                                    <span className="text-lg">📦</span>
+                                    按件數
                                   </span>
                                 </button>
                               </div>

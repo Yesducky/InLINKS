@@ -16,6 +16,7 @@ import FetchDataFail from "../componenets/FetchDataFail.jsx";
 import PermissionGate from "../componenets/PermissionGate";
 import StockLog from "../componenets/StockLog.jsx";
 import LogButton from "../componenets/LogButton.jsx";
+import api from "../services/api.js";
 
 const ItemOverview = () => {
   const [searchParams] = useSearchParams();
@@ -41,6 +42,8 @@ const ItemOverview = () => {
     usedItems: 0,
   });
 
+  const [visibleCount, setVisibleCount] = useState(10);
+
   // Animation variants
   const pageVariants = {
     initial: { opacity: 0 },
@@ -65,21 +68,13 @@ const ItemOverview = () => {
 
   const fetchItems = async () => {
     try {
-      const token = localStorage.getItem("token");
-
       if (cartonId) {
         // If carton_id is provided, fetch items from specific carton
         const [itemsResponse, materialTypesResponse, cartonResponse] =
           await Promise.all([
-            fetch(`/api/cartons/${cartonId}/items`, {
-              headers: { Authorization: `Bearer ${token}` },
-            }),
-            fetch("/api/material_types", {
-              headers: { Authorization: `Bearer ${token}` },
-            }),
-            fetch(`/api/cartons/${cartonId}`, {
-              headers: { Authorization: `Bearer ${token}` },
-            }),
+            api.getCartonItems(cartonId),
+            api.getMaterialTypes(),
+            api.getCarton(cartonId),
           ]);
 
         if (itemsResponse.ok && materialTypesResponse.ok) {
@@ -122,12 +117,8 @@ const ItemOverview = () => {
       } else {
         // Original logic for all items
         const [itemsResponse, materialTypesResponse] = await Promise.all([
-          fetch("/api/items", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch("/api/material_types", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
+          api.getAllItems(),
+          api.getMaterialTypes(),
         ]);
 
         if (itemsResponse.ok && materialTypesResponse.ok) {
@@ -160,7 +151,7 @@ const ItemOverview = () => {
         }
       }
     } catch (err) {
-      setError("Network error loading data");
+      setError(err.message);
       console.error("Error fetching data:", err);
     } finally {
       setIsLoading(false);
@@ -230,6 +221,8 @@ const ItemOverview = () => {
     return materialType ? materialType.material_unit : "";
   };
 
+  const handleShowMore = () => setVisibleCount((prev) => prev + 10);
+
   // Filter items based on search term and status
   const filteredItems = items.filter((item) => {
     const matchesSearch =
@@ -245,6 +238,7 @@ const ItemOverview = () => {
 
     return matchesSearch && matchesStatus;
   });
+  const visibleItems = filteredItems.slice(0, visibleCount);
 
   if (isLoading) {
     return (
@@ -346,7 +340,7 @@ const ItemOverview = () => {
                       {cartonStat.assigned_quantity ?? "-"}{" "}
                       {getMaterialTypeUnit(cartonInfo.material_type_id)}
                     </div>
-                    <div className="text-sm text-gray-500">已分配</div>
+                    <div className="text-sm text-gray-500">���分配</div>
                   </div>
                   <div className="text-center">
                     <div className="text-lg font-semibold text-red-600">
@@ -494,7 +488,7 @@ const ItemOverview = () => {
             >
               <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-6 py-4">
                 <h3 className="text-lg font-semibold text-gray-800">
-                  物料清單 ({filteredItems.length})
+                  物料清單 ({visibleItems.length})
                 </h3>
                 <button
                   onClick={() =>
@@ -510,7 +504,7 @@ const ItemOverview = () => {
                 </button>
               </div>
 
-              {filteredItems.length === 0 ? (
+              {visibleItems.length === 0 ? (
                 <div className="p-8 text-center">
                   <ItemIcon className="mx-auto h-12 w-12 text-gray-400" />
                   <p className="mt-2 text-gray-500">
@@ -542,7 +536,7 @@ const ItemOverview = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 bg-white">
-                      {filteredItems.map((item, index) => (
+                      {visibleItems.map((item, index) => (
                         <motion.tr
                           key={item.id}
                           className="cursor-pointer hover:bg-gray-50"
@@ -587,10 +581,20 @@ const ItemOverview = () => {
                       ))}
                     </tbody>
                   </table>
+                  {visibleCount < filteredItems.length && (
+                    <div className="flex justify-center py-4">
+                      <button
+                        onClick={handleShowMore}
+                        className="bg-blue hover:bg-lightblue rounded-xl px-6 py-2 text-white"
+                      >
+                        顯示更多
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-2 lg:grid-cols-3">
-                  {filteredItems.map((item, index) => (
+                  {visibleItems.map((item, index) => (
                     <motion.div
                       key={item.id}
                       className="cursor-pointer rounded-xl border border-gray-200 bg-gray-50 p-4 transition-shadow duration-200 hover:shadow-md"
@@ -645,6 +649,16 @@ const ItemOverview = () => {
                       </div>
                     </motion.div>
                   ))}
+                  {visibleCount < filteredItems.length && (
+                    <div className="col-span-full flex justify-center py-4">
+                      <button
+                        onClick={handleShowMore}
+                        className="bg-blue hover:bg-lightblue rounded-xl px-6 py-2 text-white"
+                      >
+                        顯示更多
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </motion.div>
