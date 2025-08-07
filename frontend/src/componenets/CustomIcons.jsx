@@ -16,6 +16,7 @@ import WorkOrderIcon from "../assets/icons/work-order.svg?react";
 import TaskIcon from "../assets/icons/task.svg?react";
 import SubTaskIcon from "../assets/icons/sub-task.svg?react";
 import AssignedWorkerIcon from "../assets/icons/assigned-worker.svg?react";
+import LogoWithName from "../assets/icons/logo_with_name.webp";
 
 export {
   LotIcon,
@@ -36,6 +37,7 @@ export {
   TaskIcon,
   SubTaskIcon,
   AssignedWorkerIcon,
+  LogoWithName,
 };
 
 export const iconMap = {
@@ -57,4 +59,5 @@ export const iconMap = {
   TaskIcon,
   SubTaskIcon,
   AssignedWorkerIcon,
+  LogoWithName,
 };
