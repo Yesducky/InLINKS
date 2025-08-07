@@ -224,19 +224,19 @@ const Lot = () => {
               <div className="border-gray mt-4 grid grid-cols-4 gap-4 border-t border-b py-4">
                 <div className="text-center">
                   <div className="text-lg font-semibold text-green-600">
-                    {lot.available_quantity} {lot.material_unit}
+                    {lot.available_quantity}
                   </div>
                   <div className="text-sm text-gray-500">可用數量</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-semibold text-yellow-600">
-                    {lot.assigned_quantity} {lot.material_unit}
+                    {lot.assigned_quantity}
                   </div>
                   <div className="text-sm text-gray-500">已分配</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-semibold text-red-600">
-                    {lot.used_quantity} {lot.material_unit}
+                    {lot.used_quantity}
                   </div>
                   <div className="text-sm text-gray-500">已使用</div>
                 </div>

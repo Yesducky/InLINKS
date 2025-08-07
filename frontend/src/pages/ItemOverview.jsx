@@ -340,7 +340,7 @@ const ItemOverview = () => {
                       {cartonStat.assigned_quantity ?? "-"}{" "}
                       {getMaterialTypeUnit(cartonInfo.material_type_id)}
                     </div>
-                    <div className="text-sm text-gray-500">���分配</div>
+                    <div className="text-sm text-gray-500">已分配</div>
                   </div>
                   <div className="text-center">
                     <div className="text-lg font-semibold text-red-600">

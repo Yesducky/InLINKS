@@ -246,7 +246,8 @@ def init_default_data():
         {'state_name': 'pending', 'state_type': 'task', 'description': 'Task is pending assignment', 'bg_color': '#FFF3E0', 'text_color': '#FFA500', 'icon': 'PendingIcon', 'order_index': 1},
         {'state_name': 'assigned_worker', 'state_type': 'task', 'description': 'Task has been assigned to a worker', 'bg_color': '#FFFFF0', 'text_color': '#FFFF00', 'icon': 'AssignedWorkerIcon', 'order_index': 2},
         {'state_name': 'in_progress', 'state_type': 'task', 'description': 'Task is currently being worked on', 'bg_color': '#E0F7FA', 'text_color': '#008000', 'icon': 'ActiveIcon', 'order_index': 3},
-        {'state_name': 'completed', 'state_type': 'task', 'description': 'Task has been completed', 'bg_color': '#E3F2FD', 'text_color': '#0000FF', 'icon': 'CompletedIcon', 'order_index': 4},
+        {'state_name': 'waiting T&C', 'state_type': 'task', 'description': 'Task is waiting for testing and commissioning', 'bg_color': '#FFFDE7', 'text_color': '#FF9800', 'icon': 'WaitingIcon', 'order_index': 4},
+        {'state_name': 'completed', 'state_type': 'task', 'description': 'Task has been completed', 'bg_color': '#E3F2FD', 'text_color': '#0000FF', 'icon': 'CompletedIcon', 'order_index': 5},
 
         # SubTask states
         {'state_name': 'pending', 'state_type': 'subtask', 'description': 'Subtask is pending assignment', 'bg_color': '#FFF3E0', 'text_color': '#FFA500', 'icon': 'PendingIcon', 'order_index': 1},

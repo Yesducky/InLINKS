@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Close } from "@mui/icons-material";
 import PrintLabelDetail from "./PrintLabelDetail.jsx";
 import api from "../services/api.js";
@@ -178,24 +178,24 @@ const PrintLabel = ({ task, onClose }) => {
               <h3 className="text-sm font-medium text-gray-500">
                 物品列表 ({filteredItems.length})
               </h3>
-              <div className="flex space-x-2">
-                <button
-                  onClick={handlePrintAll}
-                  disabled={loading || filteredItems.length === 0}
-                  className="rounded-full bg-green-100 px-4 py-2 text-sm font-medium text-green-700 transition-colors hover:bg-green-200 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
-                >
-                  打印全部
-                </button>
-                <button
-                  onClick={toggleShowPrinted}
-                  className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                    showPrinted
-                      ? "bg-blue-100 text-blue-700"
-                      : "bg-gray-100 text-gray-700"
-                  }`}
-                >
-                  {showPrinted ? "顯示全部" : "隱藏已打印"}
-                </button>
+              <div className="flex items-center space-x-2">
+                <label className="flex cursor-pointer items-center">
+                  <span className="mr-2 text-sm text-gray-500">未打印</span>
+                  <input
+                    type="checkbox"
+                    checked={showPrinted}
+                    onChange={toggleShowPrinted}
+                    className="sr-only"
+                  />
+                  <div
+                    className={`border-blue flex h-5 w-10 items-center rounded-full border-2 duration-300 ease-in-out ${showPrinted ? "bg-blue-200" : ""}`}
+                  >
+                    <div
+                      className={`bg-blue h-4 w-4 transform rounded-full border-1 border-blue-200 shadow-md duration-300 ease-in-out ${showPrinted ? "translate-x-5" : ""}`}
+                    ></div>
+                  </div>
+                  <span className="ml-2 text-sm text-gray-500">全部</span>
+                </label>
               </div>
             </div>
 
@@ -213,7 +213,7 @@ const PrintLabel = ({ task, onClose }) => {
                     onClick={() => handleItemClick(item)}
                     whileTap={{ scale: 0.98 }}
                   >
-                    <div className="grid grid-cols-6 gap-4 text-xs">
+                    <div className="grid grid-cols-8 gap-4 text-xs">
                       <div className={`col-span-2`}>
                         <span className="text-gray-500">類型</span>
                         <p className="font-medium">{item.material_type_name}</p>
@@ -222,25 +222,31 @@ const PrintLabel = ({ task, onClose }) => {
                         <span className="text-gray-500">編號</span>
                         <p className="font-medium">{item.id}</p>
                       </div>
-                      <div>
+                      <div className={`col-span-2`}>
                         <span className="text-gray-500">數量</span>
                         <p className="font-medium">
-                          {item.quantity}
+                          {item.quantity}&nbsp;
                           {item.material_unit}
                         </p>
                       </div>
                       <div>
-                        <span className="text-gray-500">狀態</span>
+                        <span className="text-gray-500">打印</span>
                         <p
-                          className={`font-medium ${
+                          className={`text-center font-medium ${
                             (item.label_count || 0) === 0
                               ? "text-red-600"
                               : "text-green-600"
                           }`}
                         >
-                          {(item.label_count || 0) === 0
-                            ? "未打印"
-                            : `已打印 (${item.label_count})`}
+                          {/*{(item.label_count || 0) === 0*/}
+                          {/*  ? "未打印"*/}
+                          {/*  : `已打印 (${item.label_count})`}*/}⬤
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">掃描</span>
+                        <p className={`text-center font-medium text-green-600`}>
+                          ⬤
                         </p>
                       </div>
                     </div>
@@ -258,18 +264,30 @@ const PrintLabel = ({ task, onClose }) => {
         </div>
       </motion.div>
 
+      <div className={`fixed bottom-3 left-3`}>
+        <button
+          onClick={handlePrintAll}
+          disabled={loading || filteredItems.length === 0}
+          className="bg-blue rounded-full px-4 py-4 text-sm font-medium text-white shadow-2xl transition-colors hover:bg-green-200 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+        >
+          打印全部
+        </button>
+      </div>
+
       {/* Print Label Detail Modal */}
-      {showPrintDetail && selectedItem && (
-        <PrintLabelDetail
-          item={selectedItem}
-          taskId={task.id}
-          onClose={() => {
-            setShowPrintDetail(false);
-            setSelectedItem(null);
-          }}
-          onPrintSuccess={handlePrintSuccess}
-        />
-      )}
+      <AnimatePresence>
+        {showPrintDetail && selectedItem && (
+          <PrintLabelDetail
+            item={selectedItem}
+            taskId={task.id}
+            onClose={() => {
+              setShowPrintDetail(false);
+              setSelectedItem(null);
+            }}
+            onPrintSuccess={handlePrintSuccess}
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

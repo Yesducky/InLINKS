@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Close, PlayCircleOutlined } from "@mui/icons-material";
 import { iconMap } from "../componenets/CustomIcons.jsx";
 import PrintLabel from "./PrintLabel.jsx";
@@ -166,9 +166,9 @@ const MyTaskDetail = ({ task, onClose }) => {
               >
                 {iconMap[task.state?.icon] &&
                   React.createElement(iconMap[task.state.icon], {
-                    className: "h-8 w-8",
+                    className: "h-4 w-4",
                   })}{" "}
-                &nbsp;
+                &nbsp;&nbsp;
                 {task.state?.state_name}
               </span>
             </div>
@@ -307,7 +307,7 @@ const MyTaskDetail = ({ task, onClose }) => {
                 onClick={() => setShowPrintLabel(true)}
                 className="bg-blue w-full rounded-lg px-4 py-3 font-medium text-white shadow-md transition-all duration-300 hover:bg-blue-700 hover:shadow-lg"
               >
-                <div className="flex items-center justify-center">打印標籤</div>
+                <div className="flex items-center justify-center">標籤狀態</div>
               </button>
 
               {/* Start Task Button */}
@@ -331,15 +331,24 @@ const MyTaskDetail = ({ task, onClose }) => {
                     )}
                   </button>
                 )}
+              {/* scan button */}
+              {task?.state?.state_name === "in_progress" &&
+                task?.assignee_id === user.id && (
+                  <button className="w-full rounded-lg bg-red-600 px-4 py-3 font-medium text-white shadow-md transition-all duration-300 hover:bg-red-700 hover:shadow-lg disabled:cursor-not-allowed disabled:bg-gray-400">
+                    完成任務
+                  </button>
+                )}
             </div>
           </div>
         </div>
       </motion.div>
 
       {/* Print Label Modal */}
-      {showPrintLabel && task && (
-        <PrintLabel task={task} onClose={() => setShowPrintLabel(false)} />
-      )}
+      <AnimatePresence>
+        {showPrintLabel && task && (
+          <PrintLabel task={task} onClose={() => setShowPrintLabel(false)} />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

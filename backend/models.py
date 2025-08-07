@@ -29,6 +29,7 @@ class User(db.Model):
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     last_login = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=get_hk_time)
+    #TODO: Team []
 
     user_type = db.relationship('UserType', backref='users')
 
