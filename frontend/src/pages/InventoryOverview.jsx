@@ -16,6 +16,7 @@ import {
 } from "@mui/icons-material";
 import { ItemIcon, LotIcon } from "../componenets/CustomIcons.jsx";
 import api from "../services/api.js";
+import bg_6 from "../assets/images/bg_6.png";
 
 const InventoryOverview = () => {
   const navigate = useNavigate();
@@ -138,6 +139,11 @@ const InventoryOverview = () => {
         exit="out"
         variants={pageVariants}
         transition={pageTransition}
+        style={{
+          backgroundImage: `url(${bg_6})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
       >
         <Header title={"庫存總覽"} />
         <div className="flex h-64 items-center justify-center">
@@ -156,6 +162,11 @@ const InventoryOverview = () => {
         exit="out"
         variants={pageVariants}
         transition={pageTransition}
+        style={{
+          backgroundImage: `url(${bg_6})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
       >
         <Header title={"庫存總覽"} />
         <FetchDataFail
@@ -175,6 +186,11 @@ const InventoryOverview = () => {
       exit="out"
       variants={pageVariants}
       transition={pageTransition}
+      style={{
+        backgroundImage: `url(${bg_6})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
     >
       <Header title={"庫存總覽"} />
 
@@ -188,7 +204,7 @@ const InventoryOverview = () => {
             transition={{ delay: 0.3, duration: 0.3 }}
           >
             <motion.div
-              className="cursor-pointer rounded-2xl border border-gray-100 bg-white p-4 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl"
+              className="cursor-pointer rounded-2xl border border-gray-100 bg-white/75 p-4 shadow-lg backdrop-blur-xs transition-all duration-200 hover:scale-105 hover:shadow-xl"
               variants={cardVariants}
               initial="hidden"
               animate="visible"
@@ -209,7 +225,7 @@ const InventoryOverview = () => {
             </motion.div>
 
             <motion.div
-              className="cursor-pointer rounded-2xl border border-gray-100 bg-white p-4 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl"
+              className="cursor-pointer rounded-2xl border border-gray-100 bg-white/75 p-4 shadow-lg backdrop-blur-xs transition-all duration-200 hover:scale-105 hover:shadow-xl"
               variants={cardVariants}
               initial="hidden"
               animate="visible"
@@ -230,7 +246,7 @@ const InventoryOverview = () => {
             </motion.div>
 
             <motion.div
-              className="cursor-pointer rounded-2xl border border-gray-100 bg-white p-4 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl"
+              className="cursor-pointer rounded-2xl border border-gray-100 bg-white/75 p-4 shadow-lg backdrop-blur-xs transition-all duration-200 hover:scale-105 hover:shadow-xl"
               variants={cardVariants}
               initial="hidden"
               animate="visible"
@@ -251,7 +267,7 @@ const InventoryOverview = () => {
             </motion.div>
 
             <motion.div
-              className="cursor-pointer rounded-2xl border border-gray-100 bg-white p-4 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl"
+              className="cursor-pointer rounded-2xl border border-gray-100 bg-white/75 p-4 shadow-lg backdrop-blur-xs transition-all duration-200 hover:scale-105 hover:shadow-xl"
               variants={cardVariants}
               initial="hidden"
               animate="visible"
@@ -272,7 +288,7 @@ const InventoryOverview = () => {
             </motion.div>
 
             <motion.div
-              className="cursor-pointer rounded-2xl border border-gray-100 bg-white p-4 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl"
+              className="cursor-pointer rounded-2xl border border-gray-100 bg-white/75 p-4 shadow-lg backdrop-blur-xs transition-all duration-200 hover:scale-105 hover:shadow-xl"
               variants={cardVariants}
               initial="hidden"
               animate="visible"
@@ -293,7 +309,7 @@ const InventoryOverview = () => {
             </motion.div>
 
             <motion.div
-              className="rounded-2xl border border-gray-100 bg-white p-4 shadow-lg"
+              className="rounded-2xl border border-gray-100 bg-white/75 p-4 shadow-lg backdrop-blur-xs"
               variants={cardVariants}
               initial="hidden"
               animate="visible"
@@ -325,7 +341,7 @@ const InventoryOverview = () => {
               <input
                 type="text"
                 placeholder="搜索物料類型 ID 或名稱..."
-                className="w-full rounded-xl border border-gray-300 py-3 pr-4 pl-10 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-gray-300 bg-white/75 py-3 pr-4 pl-10 backdrop-blur-xs transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -334,7 +350,7 @@ const InventoryOverview = () => {
 
           {/* Items List/Grid */}
           <motion.div
-            className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg"
+            className="overflow-hidden rounded-2xl border border-gray-100 bg-white/75 shadow-lg backdrop-blur-xs"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.3 }}
@@ -347,7 +363,7 @@ const InventoryOverview = () => {
                 onClick={() =>
                   setViewMode(viewMode === "list" ? "grid" : "list")
                 }
-                className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
+                className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white/75 px-4 py-2 text-gray-600 shadow-sm backdrop-blur-xs transition-colors duration-200 hover:bg-gray-50"
               >
                 {viewMode === "list" ? (
                   <ViewModule className="h-5 w-5" />
@@ -391,7 +407,7 @@ const InventoryOverview = () => {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 bg-white">
+                  <tbody className="divide-y divide-gray-200 bg-white/75 backdrop-blur-xs">
                     {filteredMaterialTypes.map((materialType, index) => (
                       <motion.tr
                         key={materialType.material_type_id}

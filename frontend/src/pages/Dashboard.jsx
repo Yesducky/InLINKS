@@ -14,6 +14,7 @@ import {
   SettingIcon,
 } from "../componenets/CustomIcons.jsx";
 import api from "../services/api.js";
+import bg_7 from "../assets/images/bg_7.png";
 
 const Dashboard = () => {
   const [cardMenus, setCardMenus] = useState([]);
@@ -124,6 +125,11 @@ const Dashboard = () => {
         exit="out"
         variants={pageVariants}
         transition={pageTransitionFadeIn}
+        style={{
+          backgroundImage: `url(${bg_7})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
       >
         <Header title={"工作台"} />
         <div className="flex h-64 items-center justify-center">
@@ -142,6 +148,11 @@ const Dashboard = () => {
         exit="out"
         variants={pageVariants}
         transition={pageTransitionFadeIn}
+        style={{
+          backgroundImage: `url(${bg_7})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
       >
         <Header title={"工作台"} />
         <FetchDataFail
@@ -161,6 +172,11 @@ const Dashboard = () => {
       exit="out"
       variants={pageVariants}
       transition={pageTransitionFadeOut}
+      style={{
+        backgroundImage: `url(${bg_7})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
     >
       <Header title={"工作台"} />
       <motion.div
@@ -177,14 +193,16 @@ const Dashboard = () => {
           transition={{ delay: 0.4, duration: 0.2 }}
         >
           <div>
-            <h1 className="mb-2 text-2xl font-bold text-gray-800">
+            <h1 className="mb-2 text-2xl font-bold text-white text-shadow-black text-shadow-md">
               歡迎回來，{username}
             </h1>
-            <p className="text-gray-600">選擇功能開始管理您的物料系統</p>
+            <p className="text-white text-shadow-black text-shadow-md">
+              選擇功能開始管理您的物料系統
+            </p>
           </div>
           <motion.button
             onClick={handleSettingsClick}
-            className="flex items-center justify-center rounded-xl border border-gray-100 bg-white p-3 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl"
+            className="flex items-center justify-center rounded-xl border border-gray-100 bg-white/75 p-3 shadow-lg backdrop-blur-xs transition-all duration-200 hover:scale-105 hover:shadow-xl"
             whileHover={{ scale: 1.1, rotate: 180 }}
             whileTap={{ scale: 0.95 }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
@@ -195,7 +213,7 @@ const Dashboard = () => {
 
         {/* Cards Grid */}
         <motion.div
-          className="mx-auto grid max-w-4xl grid-cols-2 gap-6"
+          className="mx-auto grid max-w-4xl grid-cols-2 gap-6 md:grid-cols-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0, duration: 0.2 }}
@@ -204,7 +222,7 @@ const Dashboard = () => {
             <motion.div
               key={cardMenu.id}
               onClick={() => handleCardClick(cardMenu)}
-              className="group relative aspect-square cursor-pointer overflow-hidden rounded-2xl border border-gray-100 bg-white p-8 shadow-lg transition-all duration-300 hover:shadow-2xl"
+              className={` ${cardMenu.id === "CM004" ? "hidden" : ""} ${cardMenu.id === "CM005" ? "col-span-2" : "aspect-square"} group relative cursor-pointer overflow-hidden rounded-2xl border border-gray-100 bg-white/75 p-8 shadow-lg backdrop-blur-xs transition-all duration-300 hover:shadow-2xl`}
               initial={{ opacity: 0, y: 25, scale: 0.8 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{

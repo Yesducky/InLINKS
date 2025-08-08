@@ -8,6 +8,7 @@ import TaskSettingsModal from "../componenets/TaskSettingsModal.jsx";
 import MyTaskDetail from "./MyTaskDetail.jsx";
 import { iconMap, SettingIcon } from "../componenets/CustomIcons.jsx";
 import api from "../services/api.js";
+import bg_3 from "../assets/images/bg_3.png";
 
 const MyTask = () => {
   const [tasks, setTasks] = useState([]);
@@ -264,6 +265,11 @@ const MyTask = () => {
         exit="out"
         variants={pageVariants}
         transition={pageTransition}
+        style={{
+          backgroundImage: `url(${bg_3})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
       >
         <Header title="我的任務" />
         <div className="flex h-64 items-center justify-center">
@@ -282,6 +288,11 @@ const MyTask = () => {
         exit="out"
         variants={pageVariants}
         transition={pageTransition}
+        style={{
+          backgroundImage: `url(${bg_3})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
       >
         <Header title="我的任務" />
         <FetchDataFail error={error} onRetry={fetchTasks} className="h-64" />
@@ -297,12 +308,17 @@ const MyTask = () => {
       exit="out"
       variants={pageVariants}
       transition={pageTransition}
+      style={{
+        backgroundImage: `url(${bg_3})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
     >
       <Header title="我的任務" />
 
       {/* Search Bar - Taobao Style */}
       <motion.div
-        className="sticky top-0 z-10 bg-white px-4 pt-3"
+        className="sticky top-0 z-10 px-4 pt-3"
         initial="initial"
         animate="animate"
         variants={searchBarVariants}
@@ -312,7 +328,7 @@ const MyTask = () => {
           <input
             type="text"
             placeholder="搜索任務 ID、名稱或描述..."
-            className="focus:border-blue w-full rounded-lg border border-gray-300 py-2 pr-4 pl-10 text-sm transition-all duration-300 focus:shadow-md focus:outline-none"
+            className="focus:border-blue w-full rounded-lg border border-gray-300 bg-white py-2 pr-4 pl-10 text-sm transition-all duration-300 focus:shadow-md focus:outline-none"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -383,7 +399,7 @@ const MyTask = () => {
 
         {/* Task Cards - Taobao Style */}
         <motion.div
-          className="mt-2 space-y-3 pb-4"
+          className="mt-2 space-y-3 px-4 pb-4"
           variants={cardContainerVariants}
           initial="hidden"
           animate="visible"
@@ -402,7 +418,7 @@ const MyTask = () => {
             filteredTasks.map((task, _) => (
               <motion.div
                 key={task.id}
-                className="cursor-pointer rounded-lg bg-white p-4 shadow-lg transition-all duration-300 hover:shadow-xl"
+                className="cursor-pointer rounded-lg bg-white/75 p-4 shadow-lg backdrop-blur-xs transition-all duration-300 hover:shadow-xl"
                 onClick={() => handleTaskClick(task)}
                 variants={cardVariants}
                 whileTap={{ scale: 0.99 }}

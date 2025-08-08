@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Person, Lock } from "@mui/icons-material";
 import api from "../services/api.js";
-import loginBg from "../assets/images/login_bg.png";
-import login1 from "../assets/images/login_1.png";
+import bg_5 from "../assets/images/bg_5.png";
 import * as CustomIcons from "../componenets/CustomIcons.jsx";
 
 const Login = ({ onLogin }) => {
@@ -57,18 +56,19 @@ const Login = ({ onLogin }) => {
 
   return (
     <div
-      className="flex min-h-screen items-center justify-center bg-cover bg-center"
-      style={{ backgroundImage: `url(${loginBg})` }}
+      className="flex min-h-screen items-center justify-center bg-cover bg-center p-10"
+      style={{ backgroundImage: `url(${bg_5})` }}
     >
-      <div className="flex w-full flex-col items-center">
+      <div className={`absolute z-10 h-screen w-screen bg-gray-800/50`}></div>
+      <div className="z-20 flex w-full max-w-md flex-col items-center rounded-2xl bg-white/75 py-10 shadow-lg backdrop-blur-xs">
         {/* Centered login_1.png */}
-        <img src={login1} alt="login center" className="object-contain" />
+        {/*<img src={login1} alt="login center" className="object-contain" />*/}
         {/* LogoWithNameIcon below */}
         <div className="flex justify-center">
           <img src={CustomIcons.LogoWithName} alt="logo with name" />
         </div>
         {/*Form Section*/}
-        <form onSubmit={handleSubmit} className="mt-4 w-full space-y-4 px-16">
+        <form onSubmit={handleSubmit} className="mt-4 w-full space-y-4 px-12">
           {/* Username Field */}
           <div className="space-y-2">
             <div className="relative">
@@ -80,7 +80,7 @@ const Login = ({ onLogin }) => {
                 type="text"
                 placeholder="請輸入用戶名稱"
                 required
-                className="focus:ring-blue w-full rounded-xl border border-gray-300 py-3 pr-4 pl-10 text-gray-900 placeholder-gray-500 transition-all duration-200 focus:border-transparent focus:ring-2"
+                className="focus:ring-blue w-full rounded-xl border border-gray-300 bg-white/30 py-3 pr-4 pl-10 text-gray-900 placeholder-gray-500 transition-all duration-200 focus:border-transparent focus:bg-white/80 focus:ring-2"
                 value={credentials.username}
                 onChange={handleInputChange}
               />
@@ -97,7 +97,7 @@ const Login = ({ onLogin }) => {
                 type="password"
                 placeholder="請輸入密碼"
                 required
-                className="focus:ring-blue w-full rounded-xl border border-gray-300 py-3 pr-4 pl-10 text-gray-900 placeholder-gray-500 transition-all duration-200 focus:border-transparent focus:ring-2"
+                className="focus:ring-blue w-full rounded-xl border border-gray-300 bg-white/30 py-3 pr-4 pl-10 text-gray-900 placeholder-gray-500 transition-all duration-200 focus:border-transparent focus:bg-white/80 focus:ring-2"
                 value={credentials.password}
                 onChange={handleInputChange}
               />
@@ -125,12 +125,6 @@ const Login = ({ onLogin }) => {
             )}
           </button>
         </form>
-        {/* Footer */}
-        <div className="mt-8 text-center">
-          <p className="text-sm text-gray-500 opacity-80">
-            ©2025 Leo Hong Jiaen
-          </p>
-        </div>
       </div>
     </div>
   );
