@@ -8,6 +8,7 @@ import PermissionGate from "../componenets/PermissionGate.jsx";
 import StockLog from "../componenets/StockLog.jsx";
 import { motion } from "framer-motion";
 import api from "../services/api.js"; // Import the api module
+import { backgroundVariants } from "../utils/styles.js";
 
 const statusOptions = [
   {
@@ -138,12 +139,13 @@ const Item = () => {
   if (isLoading) {
     return (
       <motion.div
-        className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
+        className="min-h-screen w-full"
         initial="initial"
         animate="in"
         exit="out"
         variants={pageVariants}
         transition={pageTransition}
+        style={backgroundVariants.inventory}
       >
         <Header title="物料資訊" />
         <div className="flex h-64 items-center justify-center">
@@ -154,7 +156,10 @@ const Item = () => {
   }
   if (error) {
     return (
-      <div className="flex min-h-screen w-full flex-col bg-gradient-to-br from-gray-50 to-gray-100">
+      <div
+        className="flex min-h-screen w-full flex-col"
+        style={backgroundVariants.inventory}
+      >
         <Header title="物料資訊" />
         <FetchDataFail
           error={error}
@@ -166,10 +171,13 @@ const Item = () => {
   }
 
   return (
-    <div className="item-container flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-gray-100">
-      <Header title={`物料 ${item.id} 詳細資訊`} />
+    <div
+      className="item-container flex min-h-screen flex-col"
+      style={backgroundVariants.inventory}
+    >
+      <Header title={`物料 ${item.id} `} />
       <div className="mt-2">
-        <div className="bg-white px-8 py-6 shadow-lg">
+        <div className="glassmorphism px-8 py-6 shadow-lg">
           <div className="mb-6 flex items-center gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
               <Inventory2 className="text-blue h-6 w-6" />

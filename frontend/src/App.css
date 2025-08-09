@@ -1,3 +1,33 @@
 @import 'tailwindcss';
 
+/* Custom utility classes for glassmorphism effect */
+@layer utilities {
+  .glassmorphism {
+    @apply bg-white/75 backdrop-blur-xs ;
+  }
 
+  .glassmorphism-strong {
+    @apply bg-white/90 backdrop-blur-xl ;
+  }
+
+  .glassmorphism-light {
+    @apply bg-white/50 backdrop-blur-sm ;
+  }
+}
+
+/*!* You can add more reusable styles here *!*/
+/*.page-background-default {*/
+/*  background-size: cover;*/
+/*  background-position: center;*/
+/*  background-repeat: no-repeat;*/
+/*}*/
+
+/*!* Common card hover effects *!*/
+/*.card-hover {*/
+/*  transition: all 0.2s ease-in-out;*/
+/*}*/
+
+/*.card-hover:hover {*/
+/*  transform: scale(1.02);*/
+/*  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);*/
+/*}*/

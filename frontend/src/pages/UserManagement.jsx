@@ -16,6 +16,7 @@ import {
 } from "@mui/icons-material";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import api from "../services/api.js"; // Adjust the import path as needed
+import { backgroundVariants } from "../utils/styles.js";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -274,6 +275,7 @@ const UserManagement = () => {
       exit="out"
       variants={pageVariants}
       transition={pageTransition}
+      style={backgroundVariants.user_management}
     >
       <Header title={"用戶管理"} />
 
@@ -282,8 +284,12 @@ const UserManagement = () => {
           {/* Page Header */}
           <div className="mb-8 flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">用戶管理</h1>
-              <p className="text-gray-600">管理系統用戶和權限</p>
+              <h1 className="text-2xl font-bold text-white text-shadow-black text-shadow-md">
+                用戶管理
+              </h1>
+              <p className="text-white text-shadow-black text-shadow-md">
+                管理系統用戶和權限
+              </p>
             </div>
             <button
               onClick={() => setShowCreateForm(true)}
@@ -317,7 +323,7 @@ const UserManagement = () => {
           {/* Create User Form */}
           {showCreateForm && (
             <motion.div
-              className="mb-8 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg"
+              className="glassmorphism mb-8 overflow-hidden rounded-2xl border border-gray-100 shadow-lg"
               initial={{ opacity: 0, height: 0, y: -20 }}
               animate={
                 isFormExiting
@@ -466,8 +472,8 @@ const UserManagement = () => {
           )}
 
           {/* Users List */}
-          <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg">
-            <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+          <div className="glassmorphism overflow-scroll rounded-2xl border border-gray-100 shadow-lg">
+            <div className="border-b px-6 py-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-800">
                   用戶列表
@@ -502,7 +508,7 @@ const UserManagement = () => {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="h-fit bg-gray-50">
+                  <thead className="h-fit border-b border-gray-200">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                         用戶名
@@ -524,7 +530,7 @@ const UserManagement = () => {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 bg-white">
+                  <tbody className="divide-y divide-gray-200">
                     {users
                       .filter((user) => !hideDisabledUsers || user.is_active)
                       .map((user) => (
@@ -619,9 +625,9 @@ const UserManagement = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <div className="relative mx-10 max-h-[70vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+              <div className="glassmorphism relative mx-10 max-h-[70vh] w-full max-w-4xl overflow-y-auto rounded-2xl shadow-2xl">
                 <motion.div
-                  className="rounded-2xl bg-white shadow-2xl"
+                  className="glassmorphism rounded-2xl shadow-2xl"
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.8, opacity: 0 }}

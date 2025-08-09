@@ -16,6 +16,7 @@ import FetchDataFail from "../componenets/FetchDataFail.jsx";
 import StockLog from "../componenets/StockLog.jsx";
 import LogButton from "../componenets/LogButton.jsx";
 import api from "../services/api.js";
+import { backgroundVariants } from "../utils/styles.js";
 
 const Lot = () => {
   const { lotId } = useParams();
@@ -130,12 +131,8 @@ const Lot = () => {
   if (isLoading) {
     return (
       <motion.div
-        className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
+        className="min-h-screen w-full"
+        style={backgroundVariants.inventory}
       >
         <Header title="批次詳情" />
         <div className="flex h-64 items-center justify-center">
@@ -148,12 +145,13 @@ const Lot = () => {
   if (error) {
     return (
       <motion.div
-        className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
+        className="min-h-screen w-full"
         initial="initial"
         animate="in"
         exit="out"
         variants={pageVariants}
         transition={pageTransition}
+        style={backgroundVariants.inventory}
       >
         <Header title="批次詳情" />
         <FetchDataFail
@@ -167,12 +165,13 @@ const Lot = () => {
 
   return (
     <motion.div
-      className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
+      className="min-h-screen w-full"
       initial="initial"
       animate="in"
       exit="out"
       variants={pageVariants}
       transition={pageTransition}
+      style={backgroundVariants.inventory}
     >
       <Header title={`批次詳情 `} />
 
@@ -181,7 +180,7 @@ const Lot = () => {
           {/* Lot Info Card */}
           {lot && (
             <motion.div
-              className="mb-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-lg"
+              className="glassmorphism mb-8 rounded-2xl border border-gray-100 p-6 shadow-lg"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.3 }}
@@ -267,11 +266,11 @@ const Lot = () => {
             transition={{ delay: 0.3, duration: 0.3 }}
           >
             <div className="relative max-w-md flex-1">
-              <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
+              <Search className="absolute top-1/2 left-3 z-10 h-5 w-5 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="搜索箱子 ID..."
-                className="w-full rounded-xl border border-gray-300 py-3 pr-4 pl-10 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                className="glassmorphism w-full rounded-xl border border-gray-300 py-3 pr-4 pl-10 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -280,7 +279,7 @@ const Lot = () => {
 
           {/* Cartons List/Grid */}
           <motion.div
-            className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg"
+            className="glassmorphism overflow-hidden rounded-2xl border border-gray-100 shadow-lg"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.3 }}
@@ -293,7 +292,7 @@ const Lot = () => {
                 onClick={() =>
                   setViewMode(viewMode === "list" ? "grid" : "list")
                 }
-                className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 whitespace-nowrap text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
+                className="glassmorphism flex items-center gap-2 rounded-xl border border-gray-100 px-4 py-2 whitespace-nowrap text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
               >
                 {viewMode === "list" ? (
                   <ViewModule className="h-5 w-5" />
@@ -338,7 +337,7 @@ const Lot = () => {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 bg-white">
+                  <tbody className="glassmorphism divide-y divide-gray-200">
                     {filteredCartons.map((carton, index) => (
                       <motion.tr
                         key={carton.id}

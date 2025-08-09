@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Header from "../componenets/Header.jsx";
 import { Person, ExitToApp } from "@mui/icons-material";
 import api from "../services/api.js"; // Adjust the import path as necessary
+import { backgroundVariants } from "../utils/styles.js"; // Adjust the import path as necessary
 
 const Settings = ({ onLogout }) => {
   const navigate = useNavigate();
@@ -83,15 +84,16 @@ const Settings = ({ onLogout }) => {
       exit="out"
       variants={pageVariants}
       transition={pageTransition}
+      style={backgroundVariants.settings}
     >
       <Header title={"個人設置"} />
 
       <div className="px-6 py-8">
         {/* User Info Section */}
         <div className="mx-auto max-w-md">
-          <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg">
+          <div className="glassmorphism overflow-hidden rounded-2xl border border-gray-100 shadow-lg">
             {/* User Avatar Section */}
-            <div className="bg-blue px-6 py-8 text-center text-white">
+            <div className="bg-blue/90 px-6 py-8 text-center text-white">
               <div className="mb-4 flex justify-center">
                 <div className="bg-opacity-20 rounded-full bg-white p-2">
                   <Person className="text-blue" sx={{ fontSize: 60 }} />
@@ -128,10 +130,10 @@ const Settings = ({ onLogout }) => {
             </div>
 
             {/* Logout Button */}
-            <div className="bg-gray-50 p-6">
+            <div className="bg-gray-50/75 p-6">
               <button
                 onClick={handleLogout}
-                className="bg-lightblue flex w-full items-center justify-center gap-3 rounded-xl px-4 py-3 font-medium text-white transition-colors duration-200 hover:bg-red-600"
+                className="bg-blue flex w-full items-center justify-center gap-3 rounded-xl px-4 py-3 font-medium text-white transition-colors duration-200 hover:bg-red-600"
               >
                 <ExitToApp className="h-5 w-5" />
                 登出系統

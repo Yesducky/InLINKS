@@ -8,7 +8,7 @@ import TaskSettingsModal from "../componenets/TaskSettingsModal.jsx";
 import MyTaskDetail from "./MyTaskDetail.jsx";
 import { iconMap, SettingIcon } from "../componenets/CustomIcons.jsx";
 import api from "../services/api.js";
-import bg_3 from "../assets/images/bg_3.png";
+import { backgroundVariants } from "../utils/styles.js";
 
 const MyTask = () => {
   const [tasks, setTasks] = useState([]);
@@ -265,13 +265,9 @@ const MyTask = () => {
         exit="out"
         variants={pageVariants}
         transition={pageTransition}
-        style={{
-          backgroundImage: `url(${bg_3})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
+        style={backgroundVariants.my_tasks}
       >
-        <Header title="我的任務" />
+        <Header title="進度管理" />
         <div className="flex h-64 items-center justify-center">
           <LoadingSpinner variant="circular" size={30} message="載入中..." />
         </div>
@@ -288,13 +284,9 @@ const MyTask = () => {
         exit="out"
         variants={pageVariants}
         transition={pageTransition}
-        style={{
-          backgroundImage: `url(${bg_3})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
+        style={backgroundVariants.my_tasks}
       >
-        <Header title="我的任務" />
+        <Header title="進度管理" />
         <FetchDataFail error={error} onRetry={fetchTasks} className="h-64" />
       </motion.div>
     );
@@ -308,13 +300,9 @@ const MyTask = () => {
       exit="out"
       variants={pageVariants}
       transition={pageTransition}
-      style={{
-        backgroundImage: `url(${bg_3})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
+      style={backgroundVariants.my_tasks}
     >
-      <Header title="我的任務" />
+      <Header title="進度管理" />
 
       {/* Search Bar - Taobao Style */}
       <motion.div

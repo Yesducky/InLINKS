@@ -17,6 +17,7 @@ import PermissionGate from "../componenets/PermissionGate";
 import StockLog from "../componenets/StockLog.jsx";
 import LogButton from "../componenets/LogButton.jsx";
 import api from "../services/api.js";
+import { backgroundVariants } from "../utils/styles.js";
 
 const ItemOverview = () => {
   const [searchParams] = useSearchParams();
@@ -243,12 +244,11 @@ const ItemOverview = () => {
   if (isLoading) {
     return (
       <motion.div
-        className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
+        className="min-h-screen w-full"
         initial="initial"
         animate="in"
         exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
+        style={backgroundVariants.inventory}
       >
         <Header title="物料清單" />
         <div className="flex h-64 items-center justify-center">
@@ -261,12 +261,13 @@ const ItemOverview = () => {
   if (error) {
     return (
       <motion.div
-        className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
+        className="min-h-screen w-full"
         initial="initial"
         animate="in"
         exit="out"
         variants={pageVariants}
         transition={pageTransition}
+        style={backgroundVariants.inventory}
       >
         <Header title="物料清單" />
         <FetchDataFail error={error} onRetry={fetchItems} className="h-64" />
@@ -275,14 +276,16 @@ const ItemOverview = () => {
   }
 
   return (
-    <PermissionGate resource="items" action="read" header={`物料清單`}>
+    // <PermissionGate resource="items" action="read" header={`物料清單`}>
+    <>
       <motion.div
-        className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
+        className="max-h-screen min-h-screen w-full overflow-y-scroll"
         initial="initial"
         animate="in"
         exit="out"
         variants={pageVariants}
         transition={pageTransition}
+        style={backgroundVariants.inventory}
       >
         <Header title={cartonId ? `箱子詳情 - 物料清單` : "物料清單"} />
 
@@ -291,7 +294,7 @@ const ItemOverview = () => {
             {/* Carton Info Card - only show when viewing specific carton */}
             {cartonId && cartonInfo && (
               <motion.div
-                className="mb-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-lg"
+                className="glassmorphism mb-8 rounded-2xl border border-gray-100 p-6 shadow-lg"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.25, duration: 0.3 }}
@@ -376,7 +379,7 @@ const ItemOverview = () => {
               transition={{ delay: 0.3, duration: 0.3 }}
             >
               <motion.div
-                className={`cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "all" ? "ring-lightblue ring-2" : ""}`}
+                className={`glassmorphism cursor-pointer rounded-2xl border border-gray-100 p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "all" ? "ring-lightblue ring-2" : ""}`}
                 variants={cardVariants}
                 initial="hidden"
                 animate="visible"
@@ -397,7 +400,7 @@ const ItemOverview = () => {
               </motion.div>
 
               <motion.div
-                className={`cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "available" ? "ring-2 ring-green-500" : ""}`}
+                className={`glassmorphism cursor-pointer rounded-2xl border border-gray-100 p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "available" ? "ring-2 ring-green-500" : ""}`}
                 variants={cardVariants}
                 initial="hidden"
                 animate="visible"
@@ -418,7 +421,7 @@ const ItemOverview = () => {
               </motion.div>
 
               <motion.div
-                className={`cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "assigned" ? "ring-2 ring-yellow-500" : ""}`}
+                className={`glassmorphism cursor-pointer rounded-2xl border border-gray-100 p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "assigned" ? "ring-2 ring-yellow-500" : ""}`}
                 variants={cardVariants}
                 initial="hidden"
                 animate="visible"
@@ -439,7 +442,7 @@ const ItemOverview = () => {
               </motion.div>
 
               <motion.div
-                className={`cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "used" ? "ring-2 ring-red-500" : ""}`}
+                className={`glassmorphism cursor-pointer rounded-2xl border border-gray-100 p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "used" ? "ring-2 ring-red-500" : ""}`}
                 variants={cardVariants}
                 initial="hidden"
                 animate="visible"
@@ -468,11 +471,11 @@ const ItemOverview = () => {
               transition={{ delay: 0.4, duration: 0.3 }}
             >
               <div className="relative max-w-md flex-1">
-                <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                <Search className="absolute top-1/2 left-3 z-10 h-5 w-5 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   placeholder="搜索物料 ID、批次 ID 或物料名稱..."
-                  className="w-full rounded-xl border border-gray-300 py-3 pr-4 pl-10 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                  className="glassmorphism w-full rounded-xl border border-gray-300 py-3 pr-4 pl-10 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -481,7 +484,7 @@ const ItemOverview = () => {
 
             {/* Items List/Grid */}
             <motion.div
-              className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg"
+              className="glassmorphism overflow-hidden rounded-2xl border border-gray-100 shadow-lg"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.3 }}
@@ -494,7 +497,7 @@ const ItemOverview = () => {
                   onClick={() =>
                     setViewMode(viewMode === "list" ? "grid" : "list")
                   }
-                  className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 whitespace-nowrap text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
+                  className="glassmorphism flex items-center gap-2 rounded-xl border border-gray-100 px-4 py-2 whitespace-nowrap text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
                 >
                   {viewMode === "list" ? (
                     <ViewModule className="h-5 w-5" />
@@ -535,7 +538,7 @@ const ItemOverview = () => {
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200 bg-white">
+                    <tbody className="glassmorphism divide-y divide-gray-200">
                       {visibleItems.map((item, index) => (
                         <motion.tr
                           key={item.id}
@@ -672,7 +675,8 @@ const ItemOverview = () => {
         entityType={"carton"}
         entityId={cartonId || null}
       />
-    </PermissionGate>
+    </>
+    // </PermissionGate>
   );
 };
 

@@ -17,6 +17,7 @@ import { LotIcon } from "../componenets/CustomIcons.jsx";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
 import api from "../services/api.js";
+import { backgroundVariants } from "../utils/styles.js";
 
 const LotOverview = () => {
   const { materialTypeId } = useParams();
@@ -120,12 +121,8 @@ const LotOverview = () => {
   if (isLoading) {
     return (
       <motion.div
-        className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
+        className="min-h-screen w-full"
+        style={backgroundVariants.inventory}
       >
         <Header
           title={materialType ? `${materialType.name} 批次` : "批次總覽"}
@@ -140,12 +137,13 @@ const LotOverview = () => {
   if (error) {
     return (
       <motion.div
-        className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
+        className="min-h-screen w-full"
         initial="initial"
         animate="in"
         exit="out"
         variants={pageVariants}
         transition={pageTransition}
+        style={backgroundVariants.inventory}
       >
         <Header
           title={materialType ? `${materialType.name} 批次` : "批次總覽"}
@@ -157,12 +155,13 @@ const LotOverview = () => {
 
   return (
     <motion.div
-      className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
+      className="min-h-screen w-full"
       initial="initial"
       animate="in"
       exit="out"
       variants={pageVariants}
       transition={pageTransition}
+      style={backgroundVariants.inventory}
     >
       <Header title={materialType ? `${materialType.name} 物料` : "批次總覽"} />
 
@@ -171,7 +170,7 @@ const LotOverview = () => {
           {/* Material Type Info Card (if specific material type) */}
           {materialType && (
             <motion.div
-              className="mb-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-lg"
+              className="glassmorphism mb-8 rounded-2xl border border-gray-100 p-6 shadow-lg"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.3 }}
@@ -208,11 +207,11 @@ const LotOverview = () => {
             transition={{ delay: 0.4, duration: 0.3 }}
           >
             <div className="relative max-w-md flex-1">
-              <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
+              <Search className="absolute top-1/2 left-3 z-10 h-5 w-5 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="搜索批次 ID 或工廠批次號..."
-                className="focus:ring-blue w-full rounded-xl border border-gray-300 py-3 pr-4 pl-10 transition-all duration-200 focus:border-transparent focus:ring-2"
+                className="focus:ring-blue glassmorphism w-full rounded-xl border border-gray-300 py-3 pr-4 pl-10 transition-all duration-200 focus:border-transparent focus:ring-2"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -221,7 +220,7 @@ const LotOverview = () => {
 
           {/* Lots List/Grid */}
           <motion.div
-            className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg"
+            className="glassmorphism overflow-hidden rounded-2xl border border-gray-100 shadow-lg"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.3 }}
@@ -234,7 +233,7 @@ const LotOverview = () => {
                 onClick={() =>
                   setViewMode(viewMode === "list" ? "grid" : "list")
                 }
-                className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
+                className="glassmorphism flex items-center gap-2 rounded-xl border border-gray-100 px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
               >
                 {viewMode === "list" ? (
                   <ViewModule className="h-5 w-5" />
@@ -282,7 +281,7 @@ const LotOverview = () => {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 bg-white">
+                  <tbody className="glassmorphism divide-y divide-gray-200">
                     {filteredLots.map((lot, index) => (
                       <motion.tr
                         key={lot.id}

@@ -22,6 +22,7 @@ import { iconMap } from "../componenets/CustomIcons.jsx";
 import AddButton from "../componenets/AddButton.jsx";
 import EditWorkOrderModal from "../componenets/EditWorkOrderModal.jsx";
 import api from "../services/api.js";
+import { backgroundVariants } from "../utils/styles.js";
 
 const Project = () => {
   const { projectId } = useParams();
@@ -163,12 +164,13 @@ const Project = () => {
   if (isLoading) {
     return (
       <motion.div
-        className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
+        className="min-h-screen w-full"
         initial="initial"
         animate="in"
         exit="out"
         variants={pageVariants}
         transition={pageTransition}
+        style={backgroundVariants.projects}
       >
         <Header title={`項目 #${projectId}`} />
         <div className="flex h-64 items-center justify-center">
@@ -181,12 +183,13 @@ const Project = () => {
   if (error) {
     return (
       <motion.div
-        className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
+        className="min-h-screen w-full"
         initial="initial"
         animate="in"
         exit="out"
         variants={pageVariants}
         transition={pageTransition}
+        style={backgroundVariants.projects}
       >
         <Header title={`項目 #${projectId}`} />
         <FetchDataFail
@@ -205,12 +208,13 @@ const Project = () => {
       header={`項目 #${projectId}`}
     >
       <motion.div
-        className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
+        className="min-h-screen w-full"
         initial="initial"
         animate="in"
         exit="out"
         variants={pageVariants}
         transition={pageTransition}
+        style={backgroundVariants.projects}
       >
         <Header title={`項目 #${projectId}`} />
 
@@ -219,7 +223,7 @@ const Project = () => {
             {/* Project Info Card - Complete Information */}
             {projectInfo && (
               <motion.div
-                className="mb-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-lg"
+                className="glassmorphism mb-8 rounded-2xl border border-gray-100 p-6 shadow-lg"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.3 }}
@@ -239,14 +243,14 @@ const Project = () => {
                 </div>
 
                 <div className="mt-6 grid grid-cols-1 gap-4 border-t border-gray-200 pt-4 md:grid-cols-2 lg:grid-cols-4">
-                  <div>
-                    <div className="text-sm font-medium text-gray-500">
-                      項目ID
-                    </div>
-                    <div className="text-lg font-semibold text-gray-900">
-                      #{projectInfo.id}
-                    </div>
-                  </div>
+                  {/*<div>*/}
+                  {/*  <div className="text-sm font-medium text-gray-500">*/}
+                  {/*    項目ID*/}
+                  {/*  </div>*/}
+                  {/*  <div className="text-lg font-semibold text-gray-900">*/}
+                  {/*    #{projectInfo.id}*/}
+                  {/*  </div>*/}
+                  {/*</div>*/}
                   <div>
                     <div className="text-sm font-medium text-gray-500">
                       負責人
@@ -336,14 +340,14 @@ const Project = () => {
                     >
                       <button
                         onClick={() => setShowLotsModal(true)}
-                        className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
+                        className="glassmorphism flex items-center gap-2 rounded-xl border border-gray-100 px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
                       >
                         <LotIcon className="h-4 w-4" />
                         批次管理
                       </button>
                       <button
                         onClick={() => setShowEditModal(true)}
-                        className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
+                        className="glassmorphism flex items-center gap-2 rounded-xl border border-gray-100 px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
                       >
                         <Edit className="h-4 w-4" />
                         編輯
@@ -362,7 +366,7 @@ const Project = () => {
               transition={{ delay: 0.3, duration: 0.3 }}
             >
               <motion.div
-                className={`cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "all" ? "ring-2 ring-blue-500" : ""}`}
+                className={`glassmorphism cursor-pointer rounded-2xl border border-gray-100 p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "all" ? "ring-2 ring-blue-500" : ""}`}
                 variants={cardVariants}
                 initial="hidden"
                 animate="visible"
@@ -383,7 +387,7 @@ const Project = () => {
               </motion.div>
 
               <motion.div
-                className={`cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "active" ? "ring-2 ring-green-500" : ""}`}
+                className={`glassmorphism cursor-pointer rounded-2xl border border-gray-100 p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "active" ? "ring-2 ring-green-500" : ""}`}
                 variants={cardVariants}
                 initial="hidden"
                 animate="visible"
@@ -404,7 +408,7 @@ const Project = () => {
               </motion.div>
 
               <motion.div
-                className={`cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "pending" ? "ring-2 ring-yellow-500" : ""}`}
+                className={`glassmorphism cursor-pointer rounded-2xl border border-gray-100 p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "pending" ? "ring-2 ring-yellow-500" : ""}`}
                 variants={cardVariants}
                 initial="hidden"
                 animate="visible"
@@ -425,7 +429,7 @@ const Project = () => {
               </motion.div>
 
               <motion.div
-                className={`cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "completed" ? "ring-2 ring-red-500" : ""}`}
+                className={`glassmorphism cursor-pointer rounded-2xl border border-gray-100 p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "completed" ? "ring-2 ring-red-500" : ""}`}
                 variants={cardVariants}
                 initial="hidden"
                 animate="visible"
@@ -454,11 +458,11 @@ const Project = () => {
               transition={{ delay: 0.4, duration: 0.3 }}
             >
               <div className="relative max-w-md flex-1">
-                <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                <Search className="absolute top-1/2 left-3 z-10 h-5 w-5 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   placeholder="搜索工單 ID、名稱或批次號..."
-                  className="w-full rounded-xl border border-gray-300 py-3 pr-4 pl-10 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                  className="glassmorphism w-full rounded-xl border border-gray-300 py-3 pr-4 pl-10 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -467,7 +471,7 @@ const Project = () => {
 
             {/* Work Orders List/Grid */}
             <motion.div
-              className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg"
+              className="glassmorphism overflow-hidden rounded-2xl border border-gray-100 shadow-lg"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.3 }}
@@ -480,7 +484,7 @@ const Project = () => {
                   onClick={() =>
                     setViewMode(viewMode === "list" ? "grid" : "list")
                   }
-                  className="flex w-fit items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
+                  className="glassmorphism flex w-fit items-center gap-2 rounded-xl border border-gray-100 px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
                 >
                   {viewMode === "list" ? (
                     <ViewModule className="h-5 w-5" />
@@ -536,7 +540,7 @@ const Project = () => {
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200 bg-white">
+                    <tbody className="glassmorphism divide-y divide-gray-200">
                       {filteredWorkOrders.map((workOrder, index) => (
                         <motion.tr
                           key={workOrder.id}

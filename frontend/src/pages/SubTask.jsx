@@ -12,6 +12,7 @@ import LogButton from "../componenets/LogButton.jsx";
 import { SubTaskIcon } from "../componenets/CustomIcons.jsx";
 import { iconMap } from "../componenets/CustomIcons.jsx";
 import api from "../services/api.js";
+import { backgroundVariants } from "../utils/styles.js";
 
 const SubTask = () => {
   const { subTaskId } = useParams();
@@ -72,12 +73,13 @@ const SubTask = () => {
   if (isLoading) {
     return (
       <motion.div
-        className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
+        className="min-h-screen w-full"
         initial="initial"
         animate="in"
         exit="out"
         variants={pageVariants}
         transition={pageTransition}
+        style={backgroundVariants.projects}
       >
         <Header title={`子任務 #${subTaskId}`} />
         <div className="flex h-64 items-center justify-center">
@@ -90,12 +92,13 @@ const SubTask = () => {
   if (error) {
     return (
       <motion.div
-        className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
+        className="min-h-screen w-full"
         initial="initial"
         animate="in"
         exit="out"
         variants={pageVariants}
         transition={pageTransition}
+        style={backgroundVariants.projects}
       >
         <Header title={`子任務 #${subTaskId}`} />
         <FetchDataFail
@@ -114,12 +117,13 @@ const SubTask = () => {
       header={`子任務 #${subTaskId}`}
     >
       <motion.div
-        className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
+        className="min-h-screen w-full"
         initial="initial"
         animate="in"
         exit="out"
         variants={pageVariants}
         transition={pageTransition}
+        style={backgroundVariants.projects}
       >
         <Header title={`子任務 #${subTaskId}`} />
 
@@ -128,7 +132,7 @@ const SubTask = () => {
             {/* SubTask Info Card - Complete Information */}
             {subTaskInfo && (
               <motion.div
-                className="mb-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-lg"
+                className="glassmorphism mb-8 rounded-2xl border border-gray-100 p-6 shadow-lg"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.3 }}
@@ -255,7 +259,7 @@ const SubTask = () => {
                     >
                       <button
                         onClick={() => setShowEditModal(true)}
-                        className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
+                        className="glassmorphism flex items-center gap-2 rounded-xl border border-gray-100 px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
                       >
                         <Edit className="h-4 w-4" />
                         編輯

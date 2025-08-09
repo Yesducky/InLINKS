@@ -14,7 +14,7 @@ import {
   SettingIcon,
 } from "../componenets/CustomIcons.jsx";
 import api from "../services/api.js";
-import bg_7 from "../assets/images/bg_7.png";
+import { backgroundVariants } from "../utils/styles.js";
 
 const Dashboard = () => {
   const [cardMenus, setCardMenus] = useState([]);
@@ -125,11 +125,7 @@ const Dashboard = () => {
         exit="out"
         variants={pageVariants}
         transition={pageTransitionFadeIn}
-        style={{
-          backgroundImage: `url(${bg_7})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
+        style={backgroundVariants.dashboard}
       >
         <Header title={"工作台"} />
         <div className="flex h-64 items-center justify-center">
@@ -148,11 +144,7 @@ const Dashboard = () => {
         exit="out"
         variants={pageVariants}
         transition={pageTransitionFadeIn}
-        style={{
-          backgroundImage: `url(${bg_7})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
+        style={backgroundVariants.dashboard}
       >
         <Header title={"工作台"} />
         <FetchDataFail
@@ -172,11 +164,7 @@ const Dashboard = () => {
       exit="out"
       variants={pageVariants}
       transition={pageTransitionFadeOut}
-      style={{
-        backgroundImage: `url(${bg_7})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
+      style={backgroundVariants.dashboard}
     >
       <Header title={"工作台"} />
       <motion.div

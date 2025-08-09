@@ -19,6 +19,7 @@ import { iconMap } from "../componenets/CustomIcons.jsx";
 import AddButton from "../componenets/AddButton.jsx";
 import EditTaskModal from "../componenets/EditTaskModal.jsx";
 import api from "../services/api.js";
+import { backgroundVariants } from "../utils/styles.js";
 
 const WorkOrder = () => {
   const { workOrderId } = useParams();
@@ -159,6 +160,7 @@ const WorkOrder = () => {
         exit="out"
         variants={pageVariants}
         transition={pageTransition}
+        style={backgroundVariants.projects}
       >
         <Header title={`工單 #${workOrderId}`} />
         <div className="flex h-64 items-center justify-center">
@@ -177,6 +179,7 @@ const WorkOrder = () => {
         exit="out"
         variants={pageVariants}
         transition={pageTransition}
+        style={backgroundVariants.projects}
       >
         <Header title={`工單 #${workOrderId}`} />
         <FetchDataFail
@@ -201,6 +204,7 @@ const WorkOrder = () => {
         exit="out"
         variants={pageVariants}
         transition={pageTransition}
+        style={backgroundVariants.projects}
       >
         <Header title={`工單 #${workOrderId}`} />
 
@@ -209,7 +213,7 @@ const WorkOrder = () => {
             {/* Work Order Info Card - Complete Information */}
             {workOrderInfo && (
               <motion.div
-                className="mb-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-lg"
+                className="glassmorphism mb-8 rounded-2xl border border-gray-100 p-6 shadow-lg"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.3 }}
@@ -229,12 +233,30 @@ const WorkOrder = () => {
                 </div>
 
                 <div className="mt-6 grid grid-cols-1 gap-4 border-t border-gray-200 pt-4 md:grid-cols-2 lg:grid-cols-4">
+                  {/*<div>*/}
+                  {/*  <div className="text-sm font-medium text-gray-500">*/}
+                  {/*    工單ID*/}
+                  {/*  </div>*/}
+                  {/*  <div className="text-lg font-semibold text-gray-900">*/}
+                  {/*    #{workOrderInfo.id}*/}
+                  {/*  </div>*/}
+                  {/*</div>*/}
                   <div>
                     <div className="text-sm font-medium text-gray-500">
-                      工單ID
+                      所屬項目
                     </div>
                     <div className="text-lg font-semibold text-gray-900">
-                      #{workOrderInfo.id}
+                      {workOrderInfo?.parent_project?.name || "未設定"} (
+                      {workOrderInfo?.parent_project?.id || "未設定"})
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-sm font-medium text-gray-500">
+                      指派給
+                    </div>
+                    <div className="text-lg font-semibold text-gray-900">
+                      {workOrderInfo.assignee?.name || "未指派"}
                     </div>
                   </div>
                   <div>
@@ -261,23 +283,7 @@ const WorkOrder = () => {
                       </span>
                     </div>
                   </div>
-                  <div>
-                    <div className="text-sm font-medium text-gray-500">
-                      所屬項目
-                    </div>
-                    <div className="text-lg font-semibold text-gray-900">
-                      {workOrderInfo?.parent_project?.name || "未設定"} (
-                      {workOrderInfo?.parent_project?.id || "未設定"})
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium text-gray-500">
-                      指派給
-                    </div>
-                    <div className="text-lg font-semibold text-gray-900">
-                      {workOrderInfo.assignee?.name || "未指派"}
-                    </div>
-                  </div>
+
                   {/*<div>*/}
                   {/*  <div className="text-sm font-medium text-gray-500">*/}
                   {/*    工作流程*/}
@@ -340,7 +346,7 @@ const WorkOrder = () => {
                     >
                       <button
                         onClick={() => setShowEditModal(true)}
-                        className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
+                        className="glassmorphism flex items-center gap-2 rounded-xl border border-gray-100 px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
                       >
                         <Edit className="h-4 w-4" />
                         編輯
@@ -359,7 +365,7 @@ const WorkOrder = () => {
               transition={{ delay: 0.3, duration: 0.3 }}
             >
               <motion.div
-                className={`cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "all" ? "ring-2 ring-blue-500" : ""}`}
+                className={`glassmorphism cursor-pointer rounded-2xl border border-gray-100 p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "all" ? "ring-2 ring-blue-500" : ""}`}
                 variants={cardVariants}
                 initial="hidden"
                 animate="visible"
@@ -380,7 +386,7 @@ const WorkOrder = () => {
               </motion.div>
 
               <motion.div
-                className={`cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "active" ? "ring-2 ring-green-500" : ""}`}
+                className={`glassmorphism cursor-pointer rounded-2xl border border-gray-100 p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "active" ? "ring-2 ring-green-500" : ""}`}
                 variants={cardVariants}
                 initial="hidden"
                 animate="visible"
@@ -401,7 +407,7 @@ const WorkOrder = () => {
               </motion.div>
 
               <motion.div
-                className={`cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "pending" ? "ring-2 ring-yellow-500" : ""}`}
+                className={`glassmorphism cursor-pointer rounded-2xl border border-gray-100 p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "pending" ? "ring-2 ring-yellow-500" : ""}`}
                 variants={cardVariants}
                 initial="hidden"
                 animate="visible"
@@ -422,7 +428,7 @@ const WorkOrder = () => {
               </motion.div>
 
               <motion.div
-                className={`cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "completed" ? "ring-2 ring-red-500" : ""}`}
+                className={`glassmorphism cursor-pointer rounded-2xl border border-gray-100 p-6 shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl ${selectedStatus === "completed" ? "ring-2 ring-red-500" : ""}`}
                 variants={cardVariants}
                 initial="hidden"
                 animate="visible"
@@ -451,11 +457,11 @@ const WorkOrder = () => {
               transition={{ delay: 0.4, duration: 0.3 }}
             >
               <div className="relative max-w-md flex-1">
-                <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                <Search className="absolute top-1/2 left-3 z-10 h-5 w-5 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   placeholder="搜索任務 ID、名稱或描述..."
-                  className="w-full rounded-xl border border-gray-300 py-3 pr-4 pl-10 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                  className="glassmorphism w-full rounded-xl border border-gray-300 py-3 pr-4 pl-10 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -464,7 +470,7 @@ const WorkOrder = () => {
 
             {/* Tasks List/Grid */}
             <motion.div
-              className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg"
+              className="glassmorphism overflow-hidden rounded-2xl border border-gray-100 shadow-lg"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.3 }}
@@ -477,7 +483,7 @@ const WorkOrder = () => {
                   onClick={() =>
                     setViewMode(viewMode === "list" ? "grid" : "list")
                   }
-                  className="flex w-fit items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
+                  className="glassmorphism flex w-fit items-center gap-2 rounded-xl border border-gray-100 px-4 py-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-50"
                 >
                   {viewMode === "list" ? (
                     <ViewModule className="h-5 w-5" />
@@ -527,7 +533,7 @@ const WorkOrder = () => {
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200 bg-white">
+                    <tbody className="glassmorphism divide-y divide-gray-200">
                       {filteredTasks.map((task, index) => (
                         <motion.tr
                           key={task.id}
