@@ -353,7 +353,7 @@ const TaskItemsModal = ({ isOpen, onClose, task, onItemsUpdated }) => {
   const groupItemsByLots = (itemsList) => {
     const lotsMap = {};
     itemsList.forEach((item) => {
-      const lotId = item.lot_info?.lot_id || "N/A";
+      const lotId = item.lot_info?.id || "N/A";
       if (!lotsMap[lotId]) {
         lotsMap[lotId] = {
           lot_id: lotId,
