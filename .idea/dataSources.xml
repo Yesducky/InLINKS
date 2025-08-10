@@ -17,7 +17,7 @@
       </libraries>
     </data-source>
     <data-source source="LOCAL" name="inlinks [2]" uuid="ee4bffc8-02a8-4b98-ad5c-1573ed9ace0e">
-      <driver-ref>sqlite.xerial</driver-ref>
+      <driver-ref>8a5c265b-ca4b-4da2-9351-08aaca131a20</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
       <jdbc-url>jdbc:sqlite:C:\Users\user\IdeaProjects\InLINKS\backend\instance\inlinks.db</jdbc-url>

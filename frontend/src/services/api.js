@@ -180,6 +180,12 @@ const api = {
     post(`/api/tasks/${taskId}/print-all`, { show_printed: showPrinted }, true), // print all labels for a task
   printLabelByItemId: (itemId, taskId) =>
     post(`/api/items/${itemId}/print`, { task_id: taskId }, true),
+
+  //blockchain
+  getItemBlockchainHistory: (itemId) =>
+    get(`/api/item/${itemId}/history`, true),
+  getItemStateAtTransaction: (itemId, transactionId) =>
+    get(`/api/item/${itemId}/state/transaction/${transactionId}`, true),
 };
 
 export default api;

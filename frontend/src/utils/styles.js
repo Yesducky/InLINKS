@@ -27,6 +27,7 @@ export const backgroundVariants = {
   dashboard: createBackgroundStyles(bg_7),
   user_management: createBackgroundStyles(bg_1),
   settings: createBackgroundStyles(bg_2),
+  scan: createBackgroundStyles(bg_4),
 };
 
 export const commonAnimationVariantsOne = {

@@ -13,21 +13,21 @@ process_bp = Blueprint('process', __name__)
 
 # Tasks endpoints
 
-@process_bp.route('/get_process_logs/<string:type>/<string:id>', methods=['GET'])
+@process_bp.route('/get_process_logs/<string:entity_type>/<string:entity_id>', methods=['GET'])
 @jwt_required()
-def get_process_logs(type, id):
+def get_process_logs(entity_type, entity_id):
 
     query = ProcessLog.query
-    print(type, id)
+    print(entity_type, entity_id)
 
-    if type == 'project':
-        query = query.filter_by(project_id=id)
-    elif type == 'work_order':
-        query = query.filter_by(work_order_id=id)
-    elif type == 'task':
-        query = query.filter_by(task_id=id)
-    elif type == 'subtask':
-        query = query.filter_by(subtask_id=id)
+    if entity_type == 'project':
+        query = query.filter_by(project_id=entity_id)
+    elif entity_type == 'work_order':
+        query = query.filter_by(work_order_id=entity_id)
+    elif entity_type == 'task':
+        query = query.filter_by(task_id=entity_id)
+    elif entity_type == 'subtask':
+        query = query.filter_by(subtask_id=entity_id)
     else:
         return jsonify({'error': 'Invalid type'}), 400
 

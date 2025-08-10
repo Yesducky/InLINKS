@@ -12,6 +12,7 @@ def get_hk_time():
 # Database Models - Common Collection
 class UserType(db.Model):
     __tablename__ = 'user_types'
+    __table_args__ = {'extend_existing': True}
     id = db.Column(db.String(20), primary_key=True)  # UT001, UT002, etc.
     type = db.Column(db.String(50), nullable=False)  # admin, worker, client, consultant, pm
     permission = db.Column(db.String(100), nullable=False)  # all, write, read_only
@@ -289,3 +290,55 @@ class PermissionAudit(db.Model):
     ip_address = db.Column(db.String(45))
     user_agent = db.Column(db.Text)
 
+# Blockchain Models
+class BlockchainBlock(db.Model):
+    __tablename__ = 'blockchain_blocks'
+    id = db.Column(db.String(20), primary_key=True)  # BC001, BC002, etc.
+    block_number = db.Column(db.Integer, unique=True, nullable=False)
+    block_hash = db.Column(db.String(66), unique=True, nullable=False)
+    previous_hash = db.Column(db.String(66), nullable=False)
+    timestamp = db.Column(db.DateTime, default=get_hk_time)
+    transaction_count = db.Column(db.Integer, default=0)
+    merkle_root = db.Column(db.String(66), nullable=False)
+    created_at = db.Column(db.DateTime, default=get_hk_time)
+
+class BlockchainTransaction(db.Model):
+    __tablename__ = 'blockchain_transactions'
+    id = db.Column(db.String(20), primary_key=True)  # BCT001, BCT002, etc.
+    transaction_hash = db.Column(db.String(66), unique=True, nullable=False)
+    block_id = db.Column(db.String(20), db.ForeignKey('blockchain_blocks.id'), nullable=False)
+    item_id = db.Column(db.String(20), db.ForeignKey('items.id'), nullable=False)
+    user_id = db.Column(db.String(20), db.ForeignKey('users.id'), nullable=False)
+    
+    transaction_type = db.Column(db.String(20), nullable=False)  # CREATE, SPLIT, ASSIGN, UPDATE, TRANSFER
+    old_quantity = db.Column(db.Float)
+    new_quantity = db.Column(db.Float)
+    old_status = db.Column(db.String(20))
+    new_status = db.Column(db.String(20))
+    old_location = db.Column(db.String(100))
+    new_location = db.Column(db.String(100))
+    
+    transaction_data = db.Column(db.Text)  # JSON string of full transaction details
+    timestamp = db.Column(db.DateTime, default=get_hk_time)
+    
+    # Relationships
+    block = db.relationship('BlockchainBlock', backref='transactions')
+    item = db.relationship('Item', backref='blockchain_transactions')
+    user = db.relationship('User', backref='blockchain_transactions')
+
+class BlockchainItemState(db.Model):
+    __tablename__ = 'blockchain_item_states'
+    id = db.Column(db.String(20), primary_key=True)  # BIS001, BIS002, etc.
+    item_id = db.Column(db.String(20), db.ForeignKey('items.id'), nullable=False)
+    transaction_id = db.Column(db.String(20), db.ForeignKey('blockchain_transactions.id'), nullable=False)
+    
+    current_quantity = db.Column(db.Float, nullable=False)
+    current_status = db.Column(db.String(20), nullable=False)
+    current_location = db.Column(db.String(100))
+    
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=get_hk_time)
+    
+    # Relationships
+    item = db.relationship('Item', backref='blockchain_states')
+    transaction = db.relationship('BlockchainTransaction', backref='item_states')

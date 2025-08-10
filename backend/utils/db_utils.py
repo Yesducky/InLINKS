@@ -32,6 +32,12 @@ def generate_id(prefix, model_class):
         return f'{prefix}{new_num:08d}'  # 8 digits for process logs
     elif prefix == 'SL':
         return f'{prefix}{new_num:08d}'  # 8 digits for stock logs
+    elif prefix == 'BC':
+        return f'{prefix}{new_num:06d}'
+    elif prefix == 'BIS':
+        return f'{prefix}{new_num:08d}'
+    elif prefix == 'BCT':
+        return f'{prefix}{new_num:08d}'
     else:
         return f'{prefix}{new_num:03d}'  # 3 digits for other types (default)
 

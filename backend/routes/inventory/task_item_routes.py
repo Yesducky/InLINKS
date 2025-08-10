@@ -8,6 +8,7 @@ from models import Item, Task, Lot, MaterialType, StockLog, Project, Carton
 from utils.db_utils import generate_id
 from utils.stock_logger import StockLogger
 from utils.process_logger import ProcessLogger
+from services.blockchain_service import BlockchainService
 from __init__ import db
 from utils.auth_middleware import require_permission
 import json
@@ -191,6 +192,7 @@ def assign_items_to_task(task_id):
         assignments = data['assignments']
         user_id = get_jwt_identity()
         assigned_items = []
+        blockchain_service = BlockchainService()
         
         # Check if we're using items mode vs total mode
         # In items mode, we get count and quantity per lot
@@ -238,6 +240,9 @@ def assign_items_to_task(task_id):
                         item.task_ids = json.dumps(task_ids)
                     except:
                         item.task_ids = json.dumps([task_id])
+                    
+                    # Record blockchain transaction for assignment
+                    blockchain_service.record_item_assignment(item.id, task_id, user_id)
                     
                     # Log the assignment
                     StockLogger.log_assign_item_to_task(user_id, item.id, task_id, float(item.quantity))
@@ -295,6 +300,9 @@ def assign_items_to_task(task_id):
                         except:
                             item.task_ids = json.dumps([task_id])
                         
+                        # Record blockchain transaction for assignment
+                        blockchain_service.record_item_assignment(item.id, task_id, user_id)
+                        
                         # Log the assignment
                         StockLogger.log_assign_item_to_task(user_id, item.id, task_id, item_quantity)
                         
@@ -343,6 +351,18 @@ def assign_items_to_task(task_id):
                         
                         db.session.add(child_item)
                         
+                        # Record blockchain transaction for item split
+                        blockchain_service.record_item_split(
+                            parent_item_id=item.id,
+                            child_item_id=child_item_id,
+                            split_quantity=child_quantity,
+                            remaining_quantity=parent_quantity,
+                            user_id=user_id
+                        )
+
+                        # Record blockchain transaction for child item assignment
+                        blockchain_service.record_item_assignment(child_item_id, task_id, user_id)
+
                         # Log the creation and assignment
                         StockLogger.log_create(user_id, 'item', child_item_id)
                         StockLogger.log_assign_item_to_task(user_id, child_item_id, task_id, child_quantity)
@@ -373,6 +393,7 @@ def assign_items_to_task(task_id):
         
     except Exception as e:
         db.session.rollback()
+        print(e)
         return jsonify({'error': 'Failed to assign items', 'details': str(e)}), 500
 
 @task_item_bp.route('/tasks/<string:task_id>/items/<string:item_id>/remove', methods=['DELETE'])

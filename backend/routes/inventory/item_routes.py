@@ -4,10 +4,11 @@ Item routes - Handle all item-related operations
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import Item, Carton
+from models import Item, Carton, BlockchainTransaction
 from utils.db_utils import generate_id
 from utils.item_utils import get_item_with_children_recursive
 from utils.stock_logger import StockLogger
+from services.blockchain_service import BlockchainService
 from __init__ import db
 from utils.auth_middleware import require_permission
 
@@ -101,6 +102,10 @@ def items():
             # Log item creation
             user_id = get_jwt_identity()
             StockLogger.log_create(user_id, 'item', item_id)
+            
+            # Record on blockchain
+            blockchain_service = BlockchainService()
+            blockchain_service.record_item_creation(item_id, data['quantity'], user_id)
             
             db.session.commit()
             return jsonify({'message': 'Item created successfully', 'id': item_id}), 201

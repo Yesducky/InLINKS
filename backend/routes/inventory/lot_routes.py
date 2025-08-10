@@ -9,6 +9,7 @@ from utils.db_utils import generate_id
 from utils.item_utils import get_item_with_children_recursive
 from utils.stock_logger import StockLogger
 from utils.process_logger import ProcessLogger
+from services.blockchain_service import BlockchainService
 from __init__ import db
 import json
 
@@ -296,6 +297,7 @@ def add_lot():
         lot_id = generate_id('LOT', Lot)
         carton_ids = []
         all_item_ids = []
+        blockchain_service = BlockchainService()
         for carton_idx in range(carton_count):
             carton_id = generate_id('CTN', Carton)
             item_ids = []
@@ -315,6 +317,10 @@ def add_lot():
                 db.session.flush()
                 # Log item creation
                 StockLogger.log_create(current_user_id, 'item', item_id, f'Auto-created for lot {factory_lot_number}')
+                
+                # Record on blockchain
+                blockchain_service.record_item_creation(item_id, item_quantity, current_user_id)
+                
                 item_ids.append(item_id)
                 all_item_ids.append(item_id)
             carton = Carton(
