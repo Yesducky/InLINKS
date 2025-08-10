@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Person, Lock } from "@mui/icons-material";
 import api from "../services/api.js";
-import bg_5 from "../assets/images/bg_5.png";
 import * as CustomIcons from "../componenets/CustomIcons.jsx";
+import { backgroundVariants } from "../utils/styles.js";
 
 const Login = ({ onLogin }) => {
   const [credentials, setCredentials] = useState({
@@ -57,7 +57,7 @@ const Login = ({ onLogin }) => {
   return (
     <div
       className="flex min-h-screen items-center justify-center bg-cover bg-center p-10"
-      style={{ backgroundImage: `url(${bg_5})` }}
+      style={backgroundVariants.login}
     >
       <div className={`absolute z-10 h-screen w-screen bg-gray-800/50`}></div>
       <div className="z-20 flex w-full max-w-md flex-col items-center rounded-2xl bg-white/75 py-10 shadow-lg backdrop-blur-xs">

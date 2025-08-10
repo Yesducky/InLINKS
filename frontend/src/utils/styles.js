@@ -1,10 +1,10 @@
-import bg_1 from "../assets/images/bg_1.png";
-import bg_2 from "../assets/images/bg_2.png";
-import bg_3 from "../assets/images/bg_3.png";
-import bg_4 from "../assets/images/bg_4.png";
-import bg_5 from "../assets/images/bg_5.png";
-import bg_6 from "../assets/images/bg_6.png";
-import bg_7 from "../assets/images/bg_7.png";
+import bg_1 from "../assets/images/bg_1.webp";
+import bg_2 from "../assets/images/bg_2.webp";
+import bg_3 from "../assets/images/bg_3.webp";
+import bg_4 from "../assets/images/bg_4.webp";
+import bg_5 from "../assets/images/bg_5.webp";
+import bg_6 from "../assets/images/bg_6.webp";
+import bg_7 from "../assets/images/bg_7.webp";
 
 // Dynamic background styles function
 export const createBackgroundStyles = (bgImage = bg_6) => ({
@@ -21,6 +21,7 @@ export const backgroundStyles = createBackgroundStyles();
 
 // Predefined background variants (add more as needed)
 export const backgroundVariants = {
+  login: createBackgroundStyles(bg_5),
   inventory: createBackgroundStyles(bg_6),
   projects: createBackgroundStyles(bg_5),
   my_tasks: createBackgroundStyles(bg_3),
