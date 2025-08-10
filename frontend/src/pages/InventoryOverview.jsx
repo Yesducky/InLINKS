@@ -122,6 +122,10 @@ const InventoryOverview = () => {
     },
   );
 
+  const handleAddMaterialSuccess = () => {
+    fetchInventoryData();
+  };
+
   if (isLoading) {
     return (
       <motion.div
@@ -535,6 +539,7 @@ const InventoryOverview = () => {
           <AddMaterial
             open={showAddMaterial}
             onClose={() => setShowAddMaterial(false)}
+            onSuccess={handleAddMaterialSuccess}
           />
         )}
       </AnimatePresence>

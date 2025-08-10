@@ -12,7 +12,7 @@ import {
 } from "@mui/icons-material";
 import api from "../services/api.js";
 
-const AddMaterial = ({ open, onClose }) => {
+const AddMaterial = ({ open, onClose, onSuccess }) => {
   const [materialTypes, setMaterialTypes] = useState([]);
   const [isLoadingTypes, setIsLoadingTypes] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -213,11 +213,12 @@ const AddMaterial = ({ open, onClose }) => {
 
       if (response.ok) {
         setMessage({ type: "success", text: "批次添加成功！" });
+        if (onSuccess) onSuccess();
         // Reset form after successful submission
         setTimeout(() => {
           handleReset();
           onClose(); // Close modal after successful submission
-        }, 2000);
+        }, 500);
       } else {
         setMessage({ type: "error", text: data.message || "添加失敗" });
       }
