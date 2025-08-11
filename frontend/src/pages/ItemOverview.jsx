@@ -245,9 +245,9 @@ const ItemOverview = () => {
     return (
       <motion.div
         className="min-h-screen w-full"
-        initial="initial"
-        animate="in"
-        exit="out"
+        // initial="initial"
+        // animate="in"
+        // exit="out"
         style={backgroundVariants.inventory}
       >
         <Header title="物料清單" />
@@ -262,11 +262,11 @@ const ItemOverview = () => {
     return (
       <motion.div
         className="min-h-screen w-full"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
+        // initial="initial"
+        // animate="in"
+        // exit="out"
+        // variants={pageVariants}
+        // transition={pageTransition}
         style={backgroundVariants.inventory}
       >
         <Header title="物料清單" />
@@ -280,11 +280,11 @@ const ItemOverview = () => {
     <>
       <motion.div
         className="max-h-screen min-h-screen w-full overflow-y-scroll"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
+        // initial="initial"
+        // animate="in"
+        // exit="out"
+        // variants={pageVariants}
+        // transition={pageTransition}
         style={backgroundVariants.inventory}
       >
         <Header title={cartonId ? `箱子詳情 - 物料清單` : "物料清單"} />

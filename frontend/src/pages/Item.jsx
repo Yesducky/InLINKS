@@ -140,11 +140,11 @@ const Item = () => {
     return (
       <motion.div
         className="min-h-screen w-full"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
+        // initial="initial"
+        // animate="in"
+        // exit="out"
+        // variants={pageVariants}
+        // transition={pageTransition}
         style={backgroundVariants.inventory}
       >
         <Header title="物料資訊" />

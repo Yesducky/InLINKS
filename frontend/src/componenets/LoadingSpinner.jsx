@@ -15,7 +15,7 @@ const LoadingSpinner = ({
   size = 40,
   message = "Loading...",
   backdrop = false,
-  color = "primary",
+  color = "#ffffff",
   fullPage = false,
   thickness = 3.6,
 }) => {
@@ -44,11 +44,10 @@ const LoadingSpinner = ({
           <Box sx={{ position: "relative", display: "inline-flex" }}>
             <CircularProgress
               size={size}
-              color={color}
               thickness={thickness}
               sx={{
                 animationDuration: "1.4s",
-                color: "#052639",
+                color: color,
               }}
             />
           </Box>
@@ -57,7 +56,6 @@ const LoadingSpinner = ({
         {variant === "linear" && (
           <Box sx={{ width: "100%", maxWidth: 300 }}>
             <LinearProgress
-              color={color}
               sx={{
                 height: 6,
                 borderRadius: 3,
@@ -116,11 +114,12 @@ const LoadingSpinner = ({
           <Fade in={true} timeout={500}>
             <Typography
               variant="body2"
-              color="text.secondary"
               sx={{
                 textAlign: "center",
                 fontWeight: 500,
                 mt: 1,
+                color: color,
+                textShadow: "20px 20px 80px rgba(0,0,0,0.15)",
               }}
             >
               {message}

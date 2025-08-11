@@ -74,11 +74,11 @@ const SubTask = () => {
     return (
       <motion.div
         className="min-h-screen w-full"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
+        // initial="initial"
+        // animate="in"
+        // exit="out"
+        // variants={pageVariants}
+        // transition={pageTransition}
         style={backgroundVariants.projects}
       >
         <Header title={`子任務 #${subTaskId}`} />
@@ -93,11 +93,11 @@ const SubTask = () => {
     return (
       <motion.div
         className="min-h-screen w-full"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
+        // initial="initial"
+        // animate="in"
+        // exit="out"
+        // variants={pageVariants}
+        // transition={pageTransition}
         style={backgroundVariants.projects}
       >
         <Header title={`子任務 #${subTaskId}`} />
@@ -115,14 +115,15 @@ const SubTask = () => {
       resource="subtask"
       action="read"
       header={`子任務 #${subTaskId}`}
+      style={backgroundVariants.projects}
     >
       <motion.div
         className="min-h-screen w-full"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
+        // initial="initial"
+        // animate="in"
+        // exit="out"
+        // variants={pageVariants}
+        // transition={pageTransition}
         style={backgroundVariants.projects}
       >
         <Header title={`子任務 #${subTaskId}`} />

@@ -159,11 +159,11 @@ const ProjectManagement = () => {
     return (
       <motion.div
         className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
+        // initial="initial"
+        // animate="in"
+        // exit="out"
+        // variants={pageVariants}
+        // transition={pageTransition}
         style={backgroundVariants.projects}
       >
         <Header title="物流管理" />
@@ -178,11 +178,11 @@ const ProjectManagement = () => {
     return (
       <motion.div
         className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
+        // initial="initial"
+        // animate="in"
+        // exit="out"
+        // variants={pageVariants}
+        // transition={pageTransition}
         style={backgroundVariants.projects}
       >
         <Header title="物流管理" />
@@ -192,14 +192,19 @@ const ProjectManagement = () => {
   }
 
   return (
-    <PermissionGate resource="project" action="read" header="物流管理">
+    <PermissionGate
+      resource="project"
+      action="read"
+      header="物流管理"
+      style={backgroundVariants.projects}
+    >
       <motion.div
         className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
+        // initial="initial"
+        // animate="in"
+        // exit="out"
+        // variants={pageVariants}
+        // transition={pageTransition}
         style={backgroundVariants.projects}
       >
         <Header title="物流管理" />

@@ -437,15 +437,29 @@ class BlockchainService:
 
             return {
                 'item_id': item_id,
-                'transaction_id': transaction_id,
                 'block_id': transaction.block_id,
                 'block_number': block.block_number if block else None,
                 'quantity': item_state.current_quantity,
                 'status': item_state.current_status,
                 'location': item_state.current_location,
-                'transaction_hash': transaction.transaction_hash,
+                'transaction': {
+                    'id': transaction.id,
+                    'transaction_hash': transaction.transaction_hash,
+                    'transaction_type': transaction.transaction_type,
+                    'user': {
+                        'id': transaction.user.id,
+                        'username': transaction.user.username
+                    }
+                },
+                'block':{
+                    'id': block.id if block else None,
+                    'block_hash': block.block_hash if block else None,
+                    'previous_hash': block.previous_hash if block else None,
+                    'timestamp': block.timestamp.isoformat() if block else None,
+                    'merkle_root': block.merkle_root if block else None,
+                    'transaction_count': block.transaction_count if block else 0
+                },
                 'timestamp': transaction.timestamp.isoformat(),
-                'transaction_type': transaction.transaction_type,
                 'is_active': item_state.is_active
             }
 

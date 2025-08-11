@@ -120,7 +120,7 @@ const ItemStateViewer = ({ transactionId, itemId, blockId, open, onClose }) => {
           {/* Modal */}
           <div className="flex min-h-full items-center justify-center p-4">
             <motion.div
-              className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl"
+              className="relative h-[80vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-2xl"
               variants={modalVariants}
               initial="hidden"
               animate="visible"
@@ -136,7 +136,7 @@ const ItemStateViewer = ({ transactionId, itemId, blockId, open, onClose }) => {
               </button>
 
               {/* Content */}
-              <div className="p-6">
+              <div className="h-full p-6">
                 {/* Header */}
                 <div className="mb-6 flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
@@ -147,17 +147,18 @@ const ItemStateViewer = ({ transactionId, itemId, blockId, open, onClose }) => {
                       物品狀態快照
                     </h2>
                     <p className="text-sm text-gray-500">
-                      區塊 #{blockId} | 物品 #{itemId}
+                      區塊 #{stateData?.block_id} | 物品 #{stateData?.item_id}
                     </p>
                   </div>
                 </div>
 
                 {loading ? (
-                  <div className="flex items-center justify-center py-8">
+                  <div className="flex h-full w-full items-center justify-center pb-20">
                     <LoadingSpinner
                       variant="circular"
                       size={32}
                       message="載入狀態中..."
+                      color={"#999999"}
                     />
                   </div>
                 ) : error ? (
@@ -250,8 +251,8 @@ const ItemStateViewer = ({ transactionId, itemId, blockId, open, onClose }) => {
                             <span className="text-sm font-medium text-blue-600">
                               交易雜湊
                             </span>
-                            <span className="max-w-[120px] truncate font-mono text-xs text-blue-700">
-                              {stateData.transaction.hash}
+                            <span className="max-w-[120px] font-mono text-xs break-all text-blue-700">
+                              {stateData.transaction.transaction_hash}
                             </span>
                           </div>
                         </div>
@@ -269,17 +270,17 @@ const ItemStateViewer = ({ transactionId, itemId, blockId, open, onClose }) => {
                             區塊ID
                           </span>
                           <span className="font-mono text-sm text-gray-800">
-                            {blockId}
+                            {stateData?.block?.id}
                           </span>
                         </div>
-                        {stateData.block_info && (
+                        {stateData?.block && (
                           <>
                             <div className="flex items-center justify-between">
                               <span className="text-sm font-medium text-gray-600">
-                                區塊號碼
+                                區塊哈希
                               </span>
-                              <span className="text-sm text-gray-800">
-                                #{stateData.block_info.block_number}
+                              <span className="max-w-[120px] font-mono text-xs break-all text-gray-800">
+                                #{stateData.block?.block_hash}
                               </span>
                             </div>
                             <div className="flex items-center justify-between">
@@ -287,9 +288,19 @@ const ItemStateViewer = ({ transactionId, itemId, blockId, open, onClose }) => {
                                 交易數量
                               </span>
                               <span className="text-sm text-gray-800">
-                                {stateData.block_info.transaction_count}
+                                {stateData.block?.transaction_count}
                               </span>
                             </div>
+                            {stateData.block?.merkle_root && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-gray-600">
+                                  Merkle Root
+                                </span>
+                                <span className="max-w-[120px] font-mono text-xs break-all text-gray-800">
+                                  {stateData.block.merkle_root}
+                                </span>
+                              </div>
+                            )}
                           </>
                         )}
                       </div>

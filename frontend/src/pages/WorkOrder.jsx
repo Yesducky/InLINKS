@@ -155,11 +155,11 @@ const WorkOrder = () => {
     return (
       <motion.div
         className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
+        // initial="initial"
+        // animate="in"
+        // exit="out"
+        // variants={pageVariants}
+        // transition={pageTransition}
         style={backgroundVariants.projects}
       >
         <Header title={`工單 #${workOrderId}`} />
@@ -174,11 +174,11 @@ const WorkOrder = () => {
     return (
       <motion.div
         className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
+        // initial="initial"
+        // animate="in"
+        // exit="out"
+        // variants={pageVariants}
+        // transition={pageTransition}
         style={backgroundVariants.projects}
       >
         <Header title={`工單 #${workOrderId}`} />
@@ -196,14 +196,15 @@ const WorkOrder = () => {
       resource="work_order"
       action="read"
       header={`工單 #${workOrderId}`}
+      style={backgroundVariants.projects}
     >
       <motion.div
         className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
+        // initial="initial"
+        // animate="in"
+        // exit="out"
+        // variants={pageVariants}
+        // transition={pageTransition}
         style={backgroundVariants.projects}
       >
         <Header title={`工單 #${workOrderId}`} />

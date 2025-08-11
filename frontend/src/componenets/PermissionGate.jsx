@@ -12,6 +12,7 @@ const PermissionGate = ({
   requireAll = false,
   header = "身份驗證",
   show = true,
+  style = null,
 }) => {
   const { hasPermission, canRead, canWrite, canDelete, canCreate, loading } =
     usePermissions();
@@ -19,9 +20,7 @@ const PermissionGate = ({
   if (loading && show) {
     return (
       <>
-        <div
-          className={`h-full w-full bg-gradient-to-br from-gray-50 to-gray-100`}
-        >
+        <div className={`h-full w-full`} style={style}>
           <Header title={header} />
           <div className="flex h-64 items-center justify-center">
             <LoadingSpinner

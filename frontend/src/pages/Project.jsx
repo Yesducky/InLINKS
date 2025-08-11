@@ -165,11 +165,11 @@ const Project = () => {
     return (
       <motion.div
         className="min-h-screen w-full"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
+        // initial="initial"
+        // animate="in"
+        // exit="out"
+        // variants={pageVariants}
+        // transition={pageTransition}
         style={backgroundVariants.projects}
       >
         <Header title={`項目 #${projectId}`} />
@@ -184,11 +184,11 @@ const Project = () => {
     return (
       <motion.div
         className="min-h-screen w-full"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
+        // initial="initial"
+        // animate="in"
+        // exit="out"
+        // variants={pageVariants}
+        // transition={pageTransition}
         style={backgroundVariants.projects}
       >
         <Header title={`項目 #${projectId}`} />
@@ -206,14 +206,15 @@ const Project = () => {
       resource="project"
       action="read"
       header={`項目 #${projectId}`}
+      style={backgroundVariants.projects}
     >
       <motion.div
         className="min-h-screen w-full"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
+        // initial="initial"
+        // animate="in"
+        // exit="out"
+        // variants={pageVariants}
+        // transition={pageTransition}
         style={backgroundVariants.projects}
       >
         <Header title={`項目 #${projectId}`} />

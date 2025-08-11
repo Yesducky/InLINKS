@@ -130,11 +130,11 @@ const InventoryOverview = () => {
     return (
       <motion.div
         className="min-h-screen w-full"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
+        // initial="initial"
+        // animate="in"
+        // exit="out"
+        // variants={pageVariants}
+        // transition={pageTransition}
         style={backgroundVariants.inventory}
       >
         <Header title={"庫存總覽"} />
@@ -149,11 +149,11 @@ const InventoryOverview = () => {
     return (
       <motion.div
         className="min-h-screen w-full"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
+        // initial="initial"
+        // animate="in"
+        // exit="out"
+        // variants={pageVariants}
+        // transition={pageTransition}
         style={backgroundVariants.inventory}
       >
         <Header title={"庫存總覽"} />
@@ -170,11 +170,11 @@ const InventoryOverview = () => {
     <>
       <motion.div
         className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
+        // initial="initial"
+        // animate="in"
+        // exit="out"
+        // variants={pageVariants}
+        // transition={pageTransition}
         style={backgroundVariants.inventory}
       >
         <Header title={"庫存總覽"} />

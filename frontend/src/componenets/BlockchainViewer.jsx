@@ -216,6 +216,7 @@ const BlockchainViewer = ({ itemId, open, onClose }) => {
                   variant="circular"
                   size={40}
                   message="載入區塊鏈資料中..."
+                  color={`#999999`}
                 />
               </div>
             ) : !blockchainData || !blockchainData.blockchain_history ? (
@@ -260,7 +261,7 @@ const BlockchainViewer = ({ itemId, open, onClose }) => {
                 <div className="glassmorphism rounded-xl border border-gray-100 shadow-sm">
                   <div className="rounded-t-xl border-b border-gray-200 bg-gray-50 px-4 py-3">
                     <h3 className="font-semibold text-gray-800">
-                      交易歷史 ({blockchainData.blockchain_history.length})
+                      物品歷史 ({blockchainData.blockchain_history.length})
                     </h3>
                   </div>
 

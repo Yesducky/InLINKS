@@ -177,11 +177,11 @@ const Task = () => {
     return (
       <motion.div
         className="min-h-screen w-full"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
+        // initial="initial"
+        // animate="in"
+        // exit="out"
+        // variants={pageVariants}
+        // transition={pageTransition}
         style={backgroundVariants.projects}
       >
         <Header title={`任務 #${taskId}`} />
@@ -196,11 +196,11 @@ const Task = () => {
     return (
       <motion.div
         className="min-h-screen w-full"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
+        // initial="initial"
+        // animate="in"
+        // exit="out"
+        // variants={pageVariants}
+        // transition={pageTransition}
         style={backgroundVariants.projects}
       >
         <Header title={`任務 #${taskId}`} />
@@ -214,14 +214,19 @@ const Task = () => {
   }
 
   return (
-    <PermissionGate resource="task" action="read" header={`任務 #${taskId}`}>
+    <PermissionGate
+      resource="task"
+      action="read"
+      header={`任務 #${taskId}`}
+      style={backgroundVariants.projects}
+    >
       <motion.div
         className="min-h-screen w-full"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
+        // initial="initial"
+        // animate="in"
+        // exit="out"
+        // variants={pageVariants}
+        // transition={pageTransition}
         style={backgroundVariants.projects}
       >
         <Header title={`任務 #${taskId}`} />

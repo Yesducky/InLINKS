@@ -138,11 +138,6 @@ const LotOverview = () => {
     return (
       <motion.div
         className="min-h-screen w-full"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
         style={backgroundVariants.inventory}
       >
         <Header
@@ -156,11 +151,11 @@ const LotOverview = () => {
   return (
     <motion.div
       className="min-h-screen w-full"
-      initial="initial"
-      animate="in"
-      exit="out"
-      variants={pageVariants}
-      transition={pageTransition}
+      // initial="initial"
+      // animate="in"
+      // exit="out"
+      // variants={pageVariants}
+      // transition={pageTransition}
       style={backgroundVariants.inventory}
     >
       <Header title={materialType ? `${materialType.name} 物料` : "批次總覽"} />

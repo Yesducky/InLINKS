@@ -48,6 +48,7 @@ const Lot = () => {
 
   const fetchLotDetails = async () => {
     try {
+      setIsLoading(true);
       // Fetch lot details
       const lotResponse = await api.getLotsById(lotId);
 
@@ -146,11 +147,6 @@ const Lot = () => {
     return (
       <motion.div
         className="min-h-screen w-full"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
         style={backgroundVariants.inventory}
       >
         <Header title="批次詳情" />
@@ -166,11 +162,11 @@ const Lot = () => {
   return (
     <motion.div
       className="min-h-screen w-full"
-      initial="initial"
-      animate="in"
-      exit="out"
-      variants={pageVariants}
-      transition={pageTransition}
+      // initial="initial"
+      // animate="in"
+      // exit="out"
+      // variants={pageVariants}
+      // transition={pageTransition}
       style={backgroundVariants.inventory}
     >
       <Header title={`批次詳情 `} />
