@@ -86,7 +86,7 @@ const TaskItemsModal = ({ isOpen, onClose, task, onItemsUpdated }) => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log(data);
+
         setItems(data.items);
         setError("");
       } else {
@@ -132,7 +132,6 @@ const TaskItemsModal = ({ isOpen, onClose, task, onItemsUpdated }) => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("Material Types:", data);
         setMaterialTypes(data);
       }
     } catch (err) {
@@ -166,11 +165,11 @@ const TaskItemsModal = ({ isOpen, onClose, task, onItemsUpdated }) => {
     }
   };
 
-  const handleRemoveItem = async (itemId) => {
-    if (!window.confirm("確定要將此物料從任務中移除嗎？")) return;
+  const handleRemoveItem = async (itemId, alert = false) => {
+    if (alert && !window.confirm("確定要將此物料從任務中移除嗎？")) return;
 
     try {
-      const response = await api.removeItemFromTask(task.id, itemId);
+      const response = await api.removeItemFromTask(itemId, task.id);
 
       if (response.ok) {
         setItems(items.filter((item) => item.id !== itemId));
@@ -835,9 +834,16 @@ const TaskItemsModal = ({ isOpen, onClose, task, onItemsUpdated }) => {
                                     <button
                                       onClick={() => {
                                         // Remove all items from this lot
-                                        lot.items.forEach((item) =>
-                                          handleRemoveItem(item.id),
-                                        );
+                                        //alert
+                                        if (
+                                          window.confirm(
+                                            "確定要從此批次移除所有物料嗎？",
+                                          )
+                                        ) {
+                                          lot.items.forEach((item) =>
+                                            handleRemoveItem(item.id, false),
+                                          );
+                                        }
                                       }}
                                       className="text-red-600 hover:text-red-800"
                                     >

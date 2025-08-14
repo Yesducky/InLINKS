@@ -169,7 +169,7 @@ const InventoryOverview = () => {
   return (
     <>
       <motion.div
-        className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
+        className="min-h-screen w-full"
         // initial="initial"
         // animate="in"
         // exit="out"

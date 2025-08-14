@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -6,7 +6,7 @@ import {
   Navigate,
   useLocation,
 } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import "./App.css";
 import Login from "./pages/Login.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
@@ -66,9 +66,25 @@ const GlobalBackButton = () => {
 // Animated Routes wrapper
 const AnimatedRoutes = ({ user, handleLogin, handleLogout }) => {
   const location = useLocation();
+  // const isFirstRef = useRef(true);
+  //
+  // useEffect(() => {
+  //   isFirstRef.current = false;
+  // }, []);
 
   return (
     <AnimatePresence mode="wait" initial={false}>
+      {/* Global black transition overlay (skip on first load) */}
+      {/*{!isFirstRef.current && (*/}
+      {/*  <motion.div*/}
+      {/*    key={`${location.pathname}-overlay`}*/}
+      {/*    className="pointer-events-none fixed inset-0 z-[999] bg-black"*/}
+      {/*    initial={{ opacity: 1 }}*/}
+      {/*    animate={{ opacity: 0 }}*/}
+      {/*    exit={{ opacity: 1 }}*/}
+      {/*    transition={{ duration: 0.1, ease: "easeInOut" }}*/}
+      {/*  />*/}
+      {/*)}*/}
       <Routes location={location} key={location.pathname}>
         <Route
           path="/login"

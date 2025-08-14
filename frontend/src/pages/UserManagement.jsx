@@ -270,11 +270,11 @@ const UserManagement = () => {
   return (
     <motion.div
       className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100"
-      initial="initial"
-      animate="in"
-      exit="out"
-      variants={pageVariants}
-      transition={pageTransition}
+      // initial="initial"
+      // animate="in"
+      // exit="out"
+      // variants={pageVariants}
+      // transition={pageTransition}
       style={backgroundVariants.user_management}
     >
       <Header title={"用戶管理"} />

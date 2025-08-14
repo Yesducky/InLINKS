@@ -753,6 +753,7 @@ const Task = () => {
         onItemsUpdated={() => {
           fetchTaskSubTasks();
           fetchTaskInfo();
+          fetchTaskItems();
         }}
       />
 

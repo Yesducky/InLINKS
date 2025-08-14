@@ -243,11 +243,11 @@ const Scan = () => {
   return (
     <motion.div
       className="min-h-screen w-full bg-gray-100"
-      initial="initial"
-      animate="in"
-      exit="out"
-      variants={pageVariants}
-      transition={pageTransition}
+      // initial="initial"
+      // animate="in"
+      // exit="out"
+      // variants={pageVariants}
+      // transition={pageTransition}
       style={backgroundVariants.scan}
     >
       <Header title="掃描驗證" />

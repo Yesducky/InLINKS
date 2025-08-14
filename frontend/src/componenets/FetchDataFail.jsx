@@ -61,10 +61,12 @@ const FetchDataFail = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.3 }}
       >
-        <h3 className="mb-4 text-lg font-semibold text-gray-800">
+        <h3 className="mb-4 text-lg font-semibold text-white text-shadow-md">
           資料載入失敗
         </h3>
-        <p className={`text-normal mb-20 text-gray-600`}>Error code: {error}</p>
+        <p className={`text-normal mb-20 text-gray-100 text-shadow-md`}>
+          Error code: {error}
+        </p>
         <br />
 
         {showRetryButton && onRetry && (

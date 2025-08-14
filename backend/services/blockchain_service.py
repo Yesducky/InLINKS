@@ -371,6 +371,71 @@ class BlockchainService:
         print(f"Assignment transaction {transaction.id} added to block {current_block.id}")
         return transaction
     
+    def record_item_task_removal(self, item_id, task_id, old_status, new_status, old_task_ids, new_task_ids, user_id):
+        """Record item task removal transaction on blockchain"""
+        try:
+            item = Item.query.get(item_id)
+            if not item:
+                raise ValueError(f"Item {item_id} not found")
+
+            transaction_data = {
+                'item_id': item_id,
+                'task_id': task_id,
+                'transaction_type': 'TASK_REMOVAL',
+                'old_status': old_status,
+                'new_status': new_status,
+                'old_task_ids': old_task_ids,
+                'new_task_ids': new_task_ids,
+                'user_id': user_id,
+                'quantity': float(item.quantity)
+            }
+
+            print(f"Recording item task removal: {transaction_data}")
+
+            # Determine location changes
+            old_location = f"Tasks: {', '.join(old_task_ids)}" if old_task_ids else None
+            new_location = f"Tasks: {', '.join(new_task_ids)}" if new_task_ids else None
+
+            transaction = BlockchainTransaction(
+                id=generate_id('BCT', BlockchainTransaction),
+                transaction_hash=self.calculate_transaction_hash(transaction_data),
+                item_id=item_id,
+                user_id=user_id,
+                transaction_type='TASK_REMOVAL',
+                old_quantity=float(item.quantity),
+                new_quantity=float(item.quantity),  # Quantity doesn't change in task removal
+                old_status=old_status,
+                new_status=new_status,
+                old_location=old_location,
+                new_location=new_location,
+                transaction_data=json.dumps(transaction_data)
+            )
+
+            # Add transaction to current block
+            current_block = self.add_transaction_to_block(transaction)
+
+            # Create item state record
+            item_state = BlockchainItemState(
+                id=generate_id('BIS', BlockchainItemState),
+                item_id=item_id,
+                transaction_id=transaction.id,
+                current_quantity=float(item.quantity),
+                current_status=new_status,
+                current_location=new_location,
+                is_active=True
+            )
+
+            db.session.add(item_state)
+            db.session.commit()
+
+            print(f"Task removal transaction {transaction.id} added to block {current_block.id}")
+            return transaction
+
+        except Exception as e:
+            print(f"Error recording item task removal: {e}")
+            db.session.rollback()
+            raise
+
     def get_item_blockchain_history(self, item_id):
         """Get complete blockchain history for an item"""
         transactions = BlockchainTransaction.query.filter_by(item_id=item_id)\

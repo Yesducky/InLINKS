@@ -194,4 +194,33 @@ def get_item_state_at_transaction(item_id, transaction_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@blockchain_bp.route('/item/<item_id>/state/block/<block_id>', methods=['GET'])
+def get_item_state_at_block(item_id, block_id):
+    """Get item state at a specific block by block ID"""
+    try:
+        # Verify item exists
+        item = Item.query.get(item_id)
+        if not item:
+            return jsonify({'success': False, 'error': 'Item not found'}), 404
 
+        # Get the latest transaction for this item in the specified block
+        transaction = BlockchainTransaction.query.filter_by(
+            item_id=item_id,
+            block_id=block_id
+        ).order_by(BlockchainTransaction.timestamp.desc()).first()
+
+        if not transaction:
+            return jsonify({'success': False, 'error': 'No transactions found for this item in the specified block'}), 404
+
+        # Get item state at this transaction
+        state = blockchain_service.get_item_state_at_block(item_id, transaction.id)
+
+        if not state:
+            return jsonify({'success': False, 'error': 'State not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'state': state
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500

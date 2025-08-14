@@ -79,11 +79,11 @@ const Settings = ({ onLogout }) => {
   return (
     <motion.div
       className="min-h-screen w-full bg-gray-100"
-      initial="initial"
-      animate="in"
-      exit="out"
-      variants={pageVariants}
-      transition={pageTransition}
+      // initial="initial"
+      // animate="in"
+      // exit="out"
+      // variants={pageVariants}
+      // transition={pageTransition}
       style={backgroundVariants.settings}
     >
       <Header title={"個人設置"} />

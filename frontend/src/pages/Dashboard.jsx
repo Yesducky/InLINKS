@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import Header from "../componenets/Header.jsx";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
+import { preloadImages } from "../utils/preloadImages.js";
 import {
   TaskIcon,
   InventoryIcon,
@@ -20,6 +21,10 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(0);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    preloadImages();
+  }, []);
 
   // Icon mapping object
   const iconMapping = {
@@ -119,7 +124,7 @@ const Dashboard = () => {
     // Static background, animated spinner fades in
     return (
       <div
-        className="h-screen w-full overflow-y-auto"
+        className="h-screen w-full overflow-y-auto bg-black"
         style={backgroundVariants.dashboard}
       >
         <motion.div

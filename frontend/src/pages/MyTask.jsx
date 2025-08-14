@@ -28,9 +28,9 @@ const MyTask = () => {
 
   // Animation variants
   const pageVariants = {
-    initial: { opacity: 0, y: 20 },
-    in: { opacity: 1, y: 0 },
-    out: { opacity: 0, y: -20 },
+    initial: { opacity: 0, y: 20, backgroundColor: "#000" },
+    in: { opacity: 1, y: 0, backgroundColor: "#000" },
+    out: { opacity: 0, y: -20, backgroundColor: "#000" },
   };
 
   const pageTransition = {
@@ -259,12 +259,12 @@ const MyTask = () => {
   if (isLoading) {
     return (
       <motion.div
-        className="min-h-screen w-full bg-gray-100"
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
+        className="min-h-screen w-full bg-black"
+        // initial="initial"
+        // animate="in"
+        // exit="out"
+        // variants={pageVariants}
+        // transition={pageTransition}
         style={backgroundVariants.my_tasks}
       >
         <Header title="進度管理" />

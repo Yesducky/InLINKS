@@ -401,54 +401,125 @@ def assign_items_to_task(task_id):
 @require_permission('items.write')
 def remove_item_from_task(task_id, item_id):
     """
-    DELETE: Remove an item from a task
+    DELETE: Remove an item from a task with blockchain integration
     """
     try:
+        # Validate task and item existence
         task = Task.query.get_or_404(task_id)
         item = Item.query.get_or_404(item_id)
         user_id = get_jwt_identity()
         
+        # Initialize blockchain service
+        blockchain_service = BlockchainService()
+
         # Check if item is assigned to this task
         try:
             task_ids = json.loads(item.task_ids) if item.task_ids else []
-            if task_id not in task_ids:
-                return jsonify({'error': 'Item is not assigned to this task'}), 400
-            
-            # Remove task ID from item's task_ids
-            task_ids.remove(task_id)
-            item.task_ids = json.dumps(task_ids)
-            
-            # If no more tasks assigned, mark as available
-            if not task_ids:
-                item.status = 'available'
-            
-            # Log the removal
-            StockLogger.log_remove_item_from_task(user_id, item.id, task_id, item.quantity)
-            
-            # Log to process logs
+        except (json.JSONDecodeError, TypeError):
+            task_ids = []
+
+        if task_id not in task_ids:
+            return jsonify({
+                'error': 'Item is not assigned to this task',
+                'item_id': item_id,
+                'task_id': task_id,
+                'current_task_assignments': task_ids
+            }), 400
+
+        # Store original values for blockchain tracking
+        original_status = item.status
+        original_task_ids = task_ids.copy()
+
+        # Remove task ID from item's task_ids
+        task_ids.remove(task_id)
+        item.task_ids = json.dumps(task_ids)
+
+        # Determine new status based on remaining task assignments
+        if not task_ids:
+            # No more tasks assigned, mark as available
+            item.status = 'available'
+            new_location = None  # Reset location when no tasks assigned
+        else:
+            # Still assigned to other tasks, keep as assigned
+            item.status = 'assigned'
+            new_location = f"Tasks: {', '.join(task_ids)}"
+
+        # Record blockchain transaction for task removal
+        try:
+            blockchain_service.record_item_task_removal(
+                item_id=item.id,
+                task_id=task_id,
+                old_status=original_status,
+                new_status=item.status,
+                old_task_ids=original_task_ids,
+                new_task_ids=task_ids,
+                user_id=user_id
+            )
+        except Exception as blockchain_error:
+            print(f"Blockchain recording failed: {blockchain_error}")
+            # Continue with database operation even if blockchain fails
+
+        # Log the removal in stock logs
+        try:
+            StockLogger.log_remove_item_from_task(user_id, item.id, task_id, float(item.quantity))
+        except Exception as log_error:
+            print(f"Stock logging failed: {log_error}")
+
+        # Log to process logs
+        try:
             material_type = MaterialType.query.get(item.material_type_id)
             ProcessLogger.create_log(
                 user_id=user_id,
                 action_type='UPDATE',
                 entity_type='task',
                 entity_id=task_id,
-                details=f"remove item #{item.id} ({item.quantity} {material_type.material_name if material_type else ''})"
+                details=f"remove item #{item.id} ({item.quantity} {material_type.material_name if material_type else 'units'})"
             )
-            
-            db.session.commit()
-            
-            return jsonify({
-                'message': 'Item removed from task successfully',
-                'item_id': item_id,
-                'task_id': task_id
-            })
-            
-        except json.JSONDecodeError:
-            return jsonify({'error': 'Invalid task_ids format'}), 400
-            
+        except Exception as process_log_error:
+            print(f"Process logging failed: {process_log_error}")
+
+        # Commit database changes
+        db.session.commit()
+
+        # Get updated item info for response
+        material_type = MaterialType.query.get(item.material_type_id)
+
+        return jsonify({
+            'success': True,
+            'message': 'Item removed from task successfully',
+            'item_id': item_id,
+            'task_id': task_id,
+            'item_details': {
+                'id': item.id,
+                'material_type': material_type.material_name if material_type else 'Unknown',
+                'quantity': float(item.quantity),
+                'new_status': item.status,
+                'remaining_task_assignments': task_ids,
+                'total_remaining_assignments': len(task_ids)
+            },
+            'task_details': {
+                'id': task.id,
+                'name': task.task_name
+            }
+        }), 200
+
+    except json.JSONDecodeError:
+        db.session.rollback()
+        return jsonify({
+            'error': 'Invalid task_ids format in item data',
+            'item_id': item_id,
+            'details': 'Item data corruption detected'
+        }), 500
+
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': 'Failed to remove item from task', 'details': str(e)}), 500
+        print(f"Error removing item from task: {e}")
+        return jsonify({
+            'error': 'Failed to remove item from task',
+            'details': str(e),
+            'item_id': item_id,
+            'task_id': task_id
+        }), 500
 
 @task_item_bp.route('/tasks/<string:task_id>/items/summary', methods=['GET'])
 @jwt_required()
