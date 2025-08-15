@@ -142,7 +142,7 @@ const PrintLabelDetail = ({ item, taskId, onClose, onPrintSuccess }) => {
               <div className="flex flex-col items-center space-y-6">
                 <div className="text-center">
                   <p className="mb-2 text-sm font-medium text-gray-500">
-                    QR Code
+                    二維碼
                   </p>
                   <div className="flex justify-center">
                     <QRCodeSVG value={qrValue} size={120} />
@@ -150,9 +150,7 @@ const PrintLabelDetail = ({ item, taskId, onClose, onPrintSuccess }) => {
                 </div>
 
                 <div className="text-center">
-                  <p className="mb-2 text-sm font-medium text-gray-500">
-                    條形碼
-                  </p>
+                  <p className="text-sm font-medium text-gray-500">條形碼</p>
                   <div className="flex justify-center">
                     <Barcode
                       value={barcodeData}
@@ -167,7 +165,7 @@ const PrintLabelDetail = ({ item, taskId, onClose, onPrintSuccess }) => {
           </div>
 
           {/* Download Button */}
-          <div className="border-t pt-4">
+          <div className="mt-4 border-t-2 border-gray-300 pt-4">
             <button
               onClick={generatePDF}
               disabled={printing}

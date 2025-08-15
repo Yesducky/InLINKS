@@ -152,6 +152,7 @@ const Scan = () => {
 
         const taskId = "TSK" + parts[0];
         const itemId = "ITM" + parts[1];
+        setScannedData(taskId + "-" + itemId);
 
         // Fetch task data
         try {
@@ -169,7 +170,7 @@ const Scan = () => {
         }
 
         // Fetch item data (continue regardless of task result)
-        const itemResponse = await api.getItem(itemId);
+        const itemResponse = await api.scanItem(itemId);
 
         if (itemResponse.ok) {
           const itemResult = await itemResponse.json();
@@ -184,9 +185,10 @@ const Scan = () => {
 
         // Clear task data to hide task-related UI
         setTaskData(null);
+        setScannedData(itemId);
 
         // Fetch item data only
-        const itemResponse = await api.getItem(itemId);
+        const itemResponse = await api.scanItem(itemId);
 
         if (itemResponse.ok) {
           const itemResult = await itemResponse.json();
@@ -333,21 +335,23 @@ const Scan = () => {
 
             {/* Loading State */}
             {loading && (
-              <div className="glassmorphism rounded-lg p-8 text-center shadow-lg">
+              <div className="glassmorphism h-full rounded-lg p-8 text-center shadow-lg">
                 <LoadingSpinner
                   variant="circular"
                   size={30}
                   message="載入數據中..."
+                  color={"#000000"}
                 />
               </div>
             )}
 
             {/* Error State */}
             {error && !loading && (
-              <div className="rounded-lg bg-red-50 p-6 text-center shadow-lg">
+              <div className="glassmorphism rounded-lg p-6 text-center shadow-lg">
                 <FetchDataFail
-                  error={error}
+                  error={`404 物件不存在`}
                   onRetry={() => parseAndFetchData(scannedData)}
+                  color_black={true}
                 />
               </div>
             )}
@@ -444,6 +448,10 @@ const Scan = () => {
                     <p className="font-medium">
                       {itemData.quantity} {itemData.material_type_unit}
                     </p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-500">掃描次數</span>
+                    <p className="font-medium">{itemData.scan || 0} 次</p>
                   </div>
                   <div>
                     <span className="text-sm text-gray-500">打印次數</span>

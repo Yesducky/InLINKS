@@ -71,6 +71,7 @@ const Item = () => {
       ]);
 
       const itemData = await itemRes.json();
+      console.log(itemData);
       const materialTypesData = await materialTypesRes.json();
       setItem(itemData);
       setMaterialTypes(materialTypesData || []);

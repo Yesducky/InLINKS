@@ -82,6 +82,35 @@ class ProcessStateType(db.Model):
             'created_at': self.created_at.isoformat()
         }
 
+class ItemStateType(db.Model):
+    __tablename__ = 'item_state_types'
+    id = db.Column(db.String(20), primary_key=True)  # IST001, IST002, etc.
+    state_name = db.Column(db.String(50), nullable=False)  # e.g., available, assigned, used
+    state_name_chinese = db.Column(db.String(50), nullable=False)  # Chinese name for state
+    description = db.Column(db.Text)
+    description_chinese = db.Column(db.Text)  # Chinese description
+    bg_color = db.Column(db.String(20), nullable=True)
+    text_color = db.Column(db.String(20), nullable=True)
+    icon = db.Column(db.String(50), nullable=True)
+    order_index = db.Column(db.Integer, nullable=False, default=0)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=get_hk_time)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'state_name': self.state_name,
+            'state_name_chinese': self.state_name_chinese,
+            'description': self.description,
+            'description_chinese': self.description_chinese,
+            'bg_color': self.bg_color,
+            'text_color': self.text_color,
+            'icon': self.icon,
+            'order_index': self.order_index,
+            'is_active': self.is_active,
+            'created_at': self.created_at.isoformat()
+        }
+
 # Database Models - Stock Collection
 class Lot(db.Model):
     __tablename__ = 'lots'
@@ -114,6 +143,7 @@ class Item(db.Model):
     material_type_id = db.Column(db.String(20), db.ForeignKey('material_types.id'), nullable=False)
     quantity = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(20), nullable=False)  # available, assigned, used
+    state_id = db.Column(db.String(20), db.ForeignKey('item_state_types.id'), nullable=True)  # Link to ItemStateType
     parent_id = db.Column(db.String(20))  # carton or item ID
     child_item_ids = db.Column(db.Text)  # JSON string of child item IDs
     log_ids = db.Column(db.Text)  # JSON string of stock log IDs
@@ -121,8 +151,11 @@ class Item(db.Model):
     label = db.Column(db.String(100), nullable=True)  # e.g. "ITM001-001"
     label_count = db.Column(db.Integer, nullable=True, default=0)  # Number of labels for this item
     created_at = db.Column(db.DateTime, default=get_hk_time)
+    scan = db.Column(db.Integer, nullable=False, default=0)  # Count of times item has been scanned
+    location = db.Column(db.String(100), nullable=True)  # Item location
 
     material_type = db.relationship('MaterialType', backref='items')
+    state = db.relationship('ItemStateType', backref='items')
 
 class StockLog(db.Model):
     __tablename__ = 'stock_logs'

@@ -4,13 +4,14 @@ Task Item routes - Handle item assignment to tasks
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import Item, Task, Lot, MaterialType, StockLog, Project, Carton
+from models import Item, Task, Lot, MaterialType, StockLog, Project, Carton, ItemStateType, get_hk_time
 from utils.db_utils import generate_id
 from utils.stock_logger import StockLogger
 from utils.process_logger import ProcessLogger
 from services.blockchain_service import BlockchainService
 from __init__ import db
 from utils.auth_middleware import require_permission
+from utils.item_utils import get_item_with_children_recursive, get_item_descendants_by_status
 import json
 
 task_item_bp = Blueprint('task_item', __name__)
@@ -54,6 +55,10 @@ def get_task_items(task_id):
                 else:
                     break
             
+            state_data = None
+            if item.state:
+                state_data = item.state.to_dict()
+            
             result.append({
                 'id': item.id,
                 'material_type_id': item.material_type_id,
@@ -61,9 +66,13 @@ def get_task_items(task_id):
                 'material_unit': material_type.material_unit if material_type else 'unit',
                 'quantity': float(item.quantity),
                 'status': item.status,
+                'state_id': item.state_id,
+                'state': state_data,
                 'parent_id': item.parent_id,
                 'lot_info': lot_info,
                 'label_count': item.label_count,
+                'scan': item.scan,
+                'location': item.location,
                 'created_at': item.created_at.isoformat()
             })
         
@@ -83,6 +92,7 @@ def get_task_items(task_id):
 def get_available_items_for_task(task_id):
     """
     GET: Get available items for a task based on project lots and material types
+    Includes child items created through splitting operations
     """
     try:
         task = Task.query.get_or_404(task_id)
@@ -100,32 +110,65 @@ def get_available_items_for_task(task_id):
         if not project_lot_ids:
             return jsonify({
                 'task_id': task_id,
-                'available_items': [],
+                'material_types': [],
                 'total_quantity': 0,
                 'message': 'No lots assigned to this project'
             })
         
-        # Build query for available items
-        query = db.session.query(Item, Carton, Lot, MaterialType).join(
+        # First, get all root items (items directly under cartons) from project lots
+        root_items_query = db.session.query(Item, Carton, Lot, MaterialType).join(
             Carton, Item.parent_id == Carton.id
         ).join(
             Lot, Carton.parent_lot_id == Lot.id
         ).join(
             MaterialType, Item.material_type_id == MaterialType.id
         ).filter(
-            Lot.id.in_(project_lot_ids),
-            Item.status == 'available'
+            Lot.id.in_(project_lot_ids)
         )
         
         # Filter by material type if specified
         if material_type_id:
-            query = query.filter(Item.material_type_id == material_type_id)
-        
-        items = query.all()
-        
-        # Group by material type
+            root_items_query = root_items_query.filter(Item.material_type_id == material_type_id)
+
+        root_items = root_items_query.all()
+
+        # Collect all available items including child items
+        all_available_items = []
+        processed_items = set()  # Track processed items to avoid duplicates
+
+        for root_item, carton, lot, material_type in root_items:
+            # Get all items (root + children) recursively
+            item_hierarchy = get_item_with_children_recursive(root_item.id)
+
+            for item_data in item_hierarchy:
+                # Skip if already processed or not available
+                if item_data['id'] in processed_items or item_data['status'] != 'available':
+                    continue
+
+                # Skip if material type filter doesn't match
+                if material_type_id and item_data['material_type_id'] != material_type_id:
+                    continue
+
+                # Get material type for this item
+                item_material_type = MaterialType.query.get(item_data['material_type_id'])
+                if not item_material_type:
+                    continue
+
+                # Add to available items with lot context
+                all_available_items.append({
+                    'item': item_data,
+                    'lot': lot,
+                    'material_type': item_material_type
+                })
+                processed_items.add(item_data['id'])
+
+        # Group by material type and lot
         material_types = {}
-        for item, carton, lot, material_type in items:
+        for item_info in all_available_items:
+            item_data = item_info['item']
+            lot = item_info['lot']
+            material_type = item_info['material_type']
+
             mt_id = material_type.id
             if mt_id not in material_types:
                 material_types[mt_id] = {
@@ -145,32 +188,53 @@ def get_available_items_for_task(task_id):
                     'total_quantity': 0
                 }
             
-            item_data = {
-                'id': item.id,
-                'quantity': float(item.quantity),
-                'status': item.status,
-                'created_at': item.created_at.isoformat()
+            state_data = None
+            item_obj = Item.query.get(item_data['id'])
+            if item_obj and item_obj.state:
+                state_data = item_obj.state.to_dict()
+            
+            item_summary = {
+                'id': item_data['id'],
+                'quantity': float(item_data['quantity']),
+                'status': item_data['status'],
+                'state_id': item_data.get('state_id'),
+                'state': state_data,
+                'created_at': item_data['created_at'],
+                'parent_id': item_data['parent_id']  # Include parent_id to identify child items
             }
             
-            material_types[mt_id]['lots'][lot_id]['items'].append(item_data)
-            material_types[mt_id]['lots'][lot_id]['total_quantity'] += float(item.quantity)
+            material_types[mt_id]['lots'][lot_id]['items'].append(item_summary)
+            material_types[mt_id]['lots'][lot_id]['total_quantity'] += float(item_data['quantity'])
             material_types[mt_id]['lots'][lot_id]['item_count'] = len(material_types[mt_id]['lots'][lot_id]['items'])
-            material_types[mt_id]['total_quantity'] += float(item.quantity)
-        
-        # Convert to list format
+            material_types[mt_id]['total_quantity'] += float(item_data['quantity'])
+
+        # Convert to list format and sort items within each lot
         result = []
         for mt_data in material_types.values():
+            for lot_data in mt_data['lots'].values():
+                # Sort items by creation date (older first) and quantity (smaller first)
+                lot_data['items'].sort(key=lambda x: (x['created_at'], x['quantity']))
+
             mt_data['lots'] = list(mt_data['lots'].values())
             result.append(mt_data)
         
+        # Sort material types by name
+        result.sort(key=lambda x: x['material_name'])
+
         return jsonify({
             'task_id': task_id,
             'material_types': result,
             'project_id': project.id,
-            'project_name': project.project_name
+            'project_name': project.project_name,
+            'total_items': sum(
+                sum(lot['item_count'] for lot in mt['lots'])
+                for mt in result
+            ),
+            'total_quantity': sum(mt['total_quantity'] for mt in result)
         })
         
     except Exception as e:
+        print(f"Error in get_available_items_for_task: {e}")
         return jsonify({'error': 'Failed to get available items', 'details': str(e)}), 500
 
 @task_item_bp.route('/tasks/<string:task_id>/items/assign', methods=['POST'])
@@ -213,23 +277,17 @@ def assign_items_to_task(task_id):
                 if count <= 0 or item_quantity <= 0:
                     continue
                 
-                # Get available items from this lot with the specified material type and quantity
-                available_items = db.session.query(Item, Carton).join(
-                    Carton, Item.parent_id == Carton.id
-                ).filter(
-                    Carton.parent_lot_id == lot_id,
-                    Item.material_type_id == material_type_id,
-                    Item.status == 'available',
-                    Item.quantity == item_quantity
-                ).order_by(Item.created_at.asc()).limit(count).all()
-                
+                # Get available items using helper function that includes child items
+                available_items = _get_available_items_for_assignment(lot_id, material_type_id, item_quantity)
+
                 if len(available_items) < count:
                     return jsonify({
                         'error': f'Not enough items available. Requested: {count}, Available: {len(available_items)}'
                     }), 400
                 
                 # Assign the requested items
-                for item, carton in available_items:
+                for i in range(count):
+                    item = available_items[i]
                     item.status = 'assigned'
                     
                     # Add task ID to item's task_ids
@@ -269,19 +327,12 @@ def assign_items_to_task(task_id):
                 if requested_quantity <= 0:
                     continue
                 
-                # Get available items from this lot with the specified material type
-                # Order by quantity ascending (shorter materials first)
-                available_items = db.session.query(Item, Carton).join(
-                    Carton, Item.parent_id == Carton.id
-                ).filter(
-                    Carton.parent_lot_id == lot_id,
-                    Item.material_type_id == material_type_id,
-                    Item.status == 'available'
-                ).order_by(Item.quantity.asc(), Item.created_at.asc()).all()
-                
+                # Get available items using helper function that includes child items
+                available_items = _get_available_items_for_assignment(lot_id, material_type_id)
+
                 remaining_quantity = requested_quantity
                 
-                for item, carton in available_items:
+                for item in available_items:
                     if remaining_quantity <= 0:
                         break
                     
@@ -483,6 +534,9 @@ def remove_item_from_task(task_id, item_id):
 
         # Get updated item info for response
         material_type = MaterialType.query.get(item.material_type_id)
+        state_data = None
+        if item.state:
+            state_data = item.state.to_dict()
 
         return jsonify({
             'success': True,
@@ -494,6 +548,8 @@ def remove_item_from_task(task_id, item_id):
                 'material_type': material_type.material_name if material_type else 'Unknown',
                 'quantity': float(item.quantity),
                 'new_status': item.status,
+                'state_id': item.state_id,
+                'state': state_data,
                 'remaining_task_assignments': task_ids,
                 'total_remaining_assignments': len(task_ids)
             },
@@ -586,3 +642,153 @@ def get_task_items_summary(task_id):
         })
     except Exception as e:
         return jsonify({'error': 'Failed to get task items summary', 'details': str(e)}), 500
+
+@task_item_bp.route('/tasks/<string:task_id>/scan_verify/items/<string:item_id>', methods=['GET'])
+@jwt_required()
+@require_permission('items.read')
+def scan_verify_item_by_task(task_id, item_id):
+    """
+    GET: Verify scanned item by task ID and item ID
+    This endpoint verifies that an item is assigned to a specific task and returns item details
+    """
+    try:
+        # Validate task existence
+        task = Task.query.get_or_404(task_id)
+        print(item_id)
+
+        # Validate item existence
+        item = Item.query.get_or_404(item_id)
+        print(item_id)
+
+        # Check if item is assigned to this task
+        try:
+            task_ids = json.loads(item.task_ids) if item.task_ids else []
+        except (json.JSONDecodeError, TypeError):
+            task_ids = []
+
+        if task_id not in task_ids:
+            return jsonify({
+                'error': 'Item is not assigned to this task',
+                'item_id': item_id,
+                'task_id': task_id,
+                'is_verified': False,
+                'assigned_tasks': task_ids
+            }), 200
+
+        #check if the item is printed
+        if item.label_count <= 0:
+            return jsonify({
+                'error': 'Item has not been printed yet',
+                'item_id': item_id,
+                'task_id': task_id,
+                'is_verified': False
+            }), 200
+
+        # Record scan event on blockchain
+        user_id = get_jwt_identity()
+        blockchain_service = BlockchainService()
+        try:
+            blockchain_service.record_item_scan(item_id, user_id, item.scan + 1)
+        except Exception as blockchain_error:
+            print(f"Blockchain scan recording failed: {blockchain_error}")
+
+        # Increment scan count
+        item.scan += 1
+        db.session.commit()
+
+        # Get material type information
+        material_type = MaterialType.query.get(item.material_type_id)
+
+        # Get state information
+        state_data = None
+        if item.state:
+            state_data = item.state.to_dict()
+
+        # Build comprehensive response
+        response = {
+            'is_verified': True,
+            'message': 'Item successfully verified for task',
+            'task_details': {
+                'id': task.id,
+                'name': task.task_name,
+                'description': task.description,
+                'state_id': task.state_id,
+                'assignee_id': task.assignee_id
+            },
+            'item_details': {
+                'id': item.id,
+                'label_count': item.label_count,
+                'material_type_name': material_type.material_name if material_type else None,
+                'material_type_unit': material_type.material_unit if material_type else None,
+                'scan_count': item.scan,
+                'location': item.location,
+                'status': item.status,
+                'state_id': item.state_id,
+                'state': state_data,
+                'assigned_tasks': task_ids,
+            },
+            'verification_timestamp': get_hk_time().isoformat()
+        }
+
+        return jsonify(response), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error in scan_verify_item_by_task: {e}")
+
+
+        return jsonify({
+            'error': 'Failed to verify scanned item',
+            'details': str(e),
+            'item_id': item_id,
+            'task_id': task_id,
+            'is_verified': False
+        }), 200
+
+def _get_available_items_for_assignment(lot_id, material_type_id, item_quantity=None):
+        """
+        Helper function to get all available items (including children) for assignment
+        """
+        # Get all root items from this lot with the specified material type
+        root_items_query = db.session.query(Item, Carton, Lot).join(
+            Carton, Item.parent_id == Carton.id
+        ).join(
+            Lot, Carton.parent_lot_id == Lot.id
+        ).filter(
+            Lot.id == lot_id,
+            Item.material_type_id == material_type_id
+        )
+
+        root_items = root_items_query.all()
+
+        # Collect all available items including child items
+        all_available_items = []
+        processed_items = set()
+
+        for root_item, carton, lot in root_items:
+            # Get all items (root + children) recursively
+            item_hierarchy = get_item_with_children_recursive(root_item.id)
+
+            for item_data in item_hierarchy:
+                # Skip if already processed or not available
+                if item_data['id'] in processed_items or item_data['status'] != 'available':
+                    continue
+
+                # Skip if material type doesn't match
+                if item_data['material_type_id'] != material_type_id:
+                    continue
+
+                # Skip if specific quantity requested and doesn't match
+                if item_quantity is not None and float(item_data['quantity']) != item_quantity:
+                    continue
+
+                # Get the actual Item object
+                item_obj = Item.query.get(item_data['id'])
+                if item_obj:
+                    all_available_items.append(item_obj)
+                    processed_items.add(item_data['id'])
+
+        # Sort by creation date (older first) and quantity (smaller first)
+        all_available_items.sort(key=lambda x: (x.created_at, x.quantity))
+
+        return all_available_items

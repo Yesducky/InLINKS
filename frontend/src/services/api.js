@@ -137,6 +137,9 @@ const api = {
     del(`/api/tasks/${taskId}/items/${itemId}/remove`, true), // remove an item from a task
   getItemsSummaryByTaskId: (taskId) =>
     get(`/api/tasks/${taskId}/items/summary`, true), // get items summary by task id
+  scanItem: (itemId) => get(`/api/items/${itemId}/scan`, true), // scan an item by id
+  scanItemVerify: (itemId, taskId) =>
+    get(`/api/tasks/${taskId}/scan_verify/items/${itemId}`, true), // verify scanned item by id and task id
 
   //stock logs: keep track any modification of items/ cartons/ lots
   getStockLog: (params) => get(`/api/get_stock_logs?${params}`, true),

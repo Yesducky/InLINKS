@@ -2,7 +2,7 @@
 Database utility functions for ID generation and data initialization
 """
 
-from models import db, User, UserType, Permission, UserTypePermission, MaterialType, WorkflowType, ProcessStateType
+from models import db, User, UserType, Permission, UserTypePermission, MaterialType, WorkflowType, ProcessStateType, ItemStateType
 
 def generate_id(prefix, model_class):
     """Generate sequential IDs with prefix and appropriate digit formatting"""
@@ -278,6 +278,45 @@ def init_default_data():
                 order_index=pst_data['order_index']
             )
             db.session.add(process_state_type)
+
+    # Create item state types
+    item_state_types_data = [
+        {'state_name': 'Available', 'state_name_chinese': '可用', 'description': 'Ready for use', 'description_chinese': '準備好使用', 'bg_color': '#E8F5E8', 'text_color': '#4CAF50', 'icon': 'CheckCircleIcon', 'order_index': 1},
+        {'state_name': 'Reserved', 'state_name_chinese': '已預留', 'description': 'Allocated to task, not yet assigned', 'description_chinese': '已分配給任務，尚未分配', 'bg_color': '#FFF3E0', 'text_color': '#FF9800', 'icon': 'BookmarkIcon', 'order_index': 2},
+        {'state_name': 'Assigned to Worker', 'state_name_chinese': '分配給工人', 'description': 'Given to specific worker', 'description_chinese': '已分配給特定工人', 'bg_color': '#E3F2FD', 'text_color': '#2196F3', 'icon': 'PersonIcon', 'order_index': 3},
+        {'state_name': 'In Transit', 'state_name_chinese': '運輸中', 'description': 'Being transported', 'description_chinese': '正在運輸', 'bg_color': '#F3E5F5', 'text_color': '#9C27B0', 'icon': 'LocalShippingIcon', 'order_index': 4},
+        {'state_name': 'In Progress', 'state_name_chinese': '進行中', 'description': 'Actively being used/installed', 'description_chinese': '正在積極使用/安裝', 'bg_color': '#E0F7FA', 'text_color': '#00BCD4', 'icon': 'PlayArrowIcon', 'order_index': 5},
+        {'state_name': 'Partially Used', 'state_name_chinese': '部分使用', 'description': 'Partially consumed (remains trackable)', 'description_chinese': '部分消耗（仍可追踪）', 'bg_color': '#FFFDE7', 'text_color': '#FFC107', 'icon': 'IncompleteCircleIcon', 'order_index': 6},
+        {'state_name': 'Waiting Inspection', 'state_name_chinese': '等待檢查', 'description': 'Returned, needs quality check', 'description_chinese': '已退回，需要質量檢查', 'bg_color': '#FFEBEE', 'text_color': '#F44336', 'icon': 'ScheduleIcon', 'order_index': 7},
+        {'state_name': 'Waiting T&C', 'state_name_chinese': '等待測試和調試', 'description': 'Needs contractual/compliance validation', 'description_chinese': '需要合同/合規驗證', 'bg_color': '#FFF3E0', 'text_color': '#FF9800', 'icon': 'PendingIcon', 'order_index': 8},
+        {'state_name': 'T&C Pass', 'state_name_chinese': '測試通過', 'description': 'Passed compliance check', 'description_chinese': '已通過合規檢查', 'bg_color': '#E8F5E8', 'text_color': '#4CAF50', 'icon': 'VerifiedIcon', 'order_index': 9},
+        {'state_name': 'T&C Fail', 'state_name_chinese': '測試失敗', 'description': 'Failed compliance/standards', 'description_chinese': '未通過合規/標準', 'bg_color': '#FFEBEE', 'text_color': '#F44336', 'icon': 'ErrorIcon', 'order_index': 10},
+        {'state_name': 'Returned to Vendor', 'state_name_chinese': '退回供應商', 'description': 'Sent back to supplier', 'description_chinese': '已退回給供應商', 'bg_color': '#F3E5F5', 'text_color': '#9C27B0', 'icon': 'AssignmentReturnIcon', 'order_index': 11},
+        {'state_name': 'Quarantined', 'state_name_chinese': '隔離', 'description': 'Isolated pending investigation', 'description_chinese': '隔離等待調查', 'bg_color': '#FFEBEE', 'text_color': '#F44336', 'icon': 'BlockIcon', 'order_index': 12},
+        {'state_name': 'Damaged', 'state_name_chinese': '損壞', 'description': 'Physically compromised', 'description_chinese': '物理損壞', 'bg_color': '#FFEBEE', 'text_color': '#F44336', 'icon': 'ReportProblemIcon', 'order_index': 13},
+        {'state_name': 'Lost', 'state_name_chinese': '遺失', 'description': 'Unaccounted for/missing', 'description_chinese': '帳目不符/遺失', 'bg_color': '#F5F5F5', 'text_color': '#9E9E9E', 'icon': 'HelpOutlineIcon', 'order_index': 14},
+        {'state_name': 'Repair/Maintenance', 'state_name_chinese': '維修/保養', 'description': 'Being fixed for reuse', 'description_chinese': '正在維修以便重複使用', 'bg_color': '#FFF3E0', 'text_color': '#FF9800', 'icon': 'BuildIcon', 'order_index': 15},
+        {'state_name': 'Scrapped/Disposed', 'state_name_chinese': '報廢/處理', 'description': 'Discarded permanently', 'description_chinese': '永久丟棄', 'bg_color': '#F5F5F5', 'text_color': '#9E9E9E', 'icon': 'DeleteForeverIcon', 'order_index': 16},
+        {'state_name': 'Completed', 'state_name_chinese': '已完成', 'description': 'Fully used/installed/finalized', 'description_chinese': '完全使用/安裝/完成', 'bg_color': '#E8F5E8', 'text_color': '#4CAF50', 'icon': 'CheckCircleIcon', 'order_index': 17},
+        {'state_name': 'Archived', 'state_name_chinese': '已歸檔', 'description': 'Closed record for historical tracking', 'description_chinese': '歷史追踪的封閉記錄', 'bg_color': '#F5F5F5', 'text_color': '#9E9E9E', 'icon': 'ArchiveIcon', 'order_index': 18}
+    ]
+    
+    for i, ist_data in enumerate(item_state_types_data, 1):
+        if not ItemStateType.query.filter_by(
+            state_name=ist_data['state_name']
+        ).first():
+            item_state_type = ItemStateType(
+                id=f'IST{i:03d}',
+                state_name=ist_data['state_name'],
+                state_name_chinese=ist_data['state_name_chinese'],
+                description=ist_data['description'],
+                description_chinese=ist_data['description_chinese'],
+                bg_color=ist_data['bg_color'],
+                text_color=ist_data['text_color'],
+                icon=ist_data['icon'],
+                order_index=ist_data['order_index']
+            )
+            db.session.add(item_state_type)
 
     # Create default projects as sample
     # from datetime import datetime, timedelta

@@ -11,6 +11,7 @@ const FetchDataFail = ({
   },
   showRetryButton = true,
   className = "",
+  color_black = false,
 }) => {
   const pageVariants = {
     initial: { opacity: 0 },
@@ -61,10 +62,14 @@ const FetchDataFail = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.3 }}
       >
-        <h3 className="mb-4 text-lg font-semibold text-white text-shadow-md">
+        <h3
+          className={`mb-4 text-lg font-semibold ${color_black ? `text-gray-800` : `text-white`} text-shadow-md`}
+        >
           資料載入失敗
         </h3>
-        <p className={`text-normal mb-20 text-gray-100 text-shadow-md`}>
+        <p
+          className={`text-normal mb-20 ${color_black ? `text-gray-500` : `text-gray-100`} text-shadow-md`}
+        >
           Error code: {error}
         </p>
         <br />

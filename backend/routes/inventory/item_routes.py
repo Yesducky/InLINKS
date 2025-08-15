@@ -4,13 +4,14 @@ Item routes - Handle all item-related operations
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import Item, Carton, BlockchainTransaction
+from models import Item, Carton, BlockchainTransaction, Lot, ItemStateType
 from utils.db_utils import generate_id
 from utils.item_utils import get_item_with_children_recursive
 from utils.stock_logger import StockLogger
 from services.blockchain_service import BlockchainService
 from __init__ import db
 from utils.auth_middleware import require_permission
+from services.blockchain_service import BlockchainService
 
 item_bp = Blueprint('item', __name__)
 
@@ -28,17 +29,24 @@ def items():
         result = []
 
         for i in items:
+            state_data = None
+            if i.state:
+                state_data = i.state.to_dict()
+            
             item_data = {
                 'id': i.id,
                 'material_type_id': i.material_type_id,
                 'quantity': i.quantity,
                 'status': i.status,
+                'state_id': i.state_id,
+                'state': state_data,
                 'parent_id': i.parent_id,
                 'parent_type': None,
                 'lot_id': None,
                 'child_item_ids': i.child_item_ids,
                 'log_ids': i.log_ids,
                 'task_ids': i.task_ids,
+                'location': i.location,
                 'created_at': i.created_at.isoformat()
             }
 
@@ -89,10 +97,12 @@ def items():
             material_type_id=data['material_type_id'],
             quantity=data['quantity'],
             status=data.get('status', 'available'),
+            state_id=data.get('state_id'),
             parent_id=data.get('parent_id'),
             child_item_ids=data.get('child_item_ids', '[]'),
             log_ids=data.get('log_ids', '[]'),
-            task_ids=data.get('task_ids', '[]')
+            task_ids=data.get('task_ids', '[]'),
+            location=data.get('location')
         )
 
         try:
@@ -173,16 +183,20 @@ def item_detail(item_id):
             'child_item_ids': item.child_item_ids,
             'log_ids': item.log_ids,
             'task_ids': item.task_ids,
+            'location': item.location,
+            'state_id': item.state_id,
         }
 
         new_data = {
             'material_type_id': data.get('material_type_id', item.material_type_id),
             'quantity': data.get('quantity', item.quantity),
             'status': data.get('status', item.status),
+            'state_id': data.get('state_id', item.state_id),
             'parent_id': data.get('parent_id', item.parent_id),
             'child_item_ids': data.get('child_item_ids', item.child_item_ids),
             'log_ids': data.get('log_ids', item.log_ids),
-            'task_ids': data.get('task_ids', item.task_ids)
+            'task_ids': data.get('task_ids', item.task_ids),
+            'location': data.get('location', item.location)
         }
 
         # Validate required fields
@@ -204,10 +218,12 @@ def item_detail(item_id):
         item.material_type_id = new_data['material_type_id']
         item.quantity = new_data['quantity']
         item.status = new_data['status']
+        item.state_id = new_data['state_id']
         item.parent_id = new_data['parent_id']
         item.child_item_ids = new_data['child_item_ids']
         item.log_ids = new_data['log_ids']
         item.task_ids = new_data['task_ids']
+        item.location = new_data['location']
 
         try:
             # Log the update (compare old_data to new_data)
@@ -387,3 +403,48 @@ def get_items_under_lot(lot_id):
 
     except Exception as e:
         return jsonify({'error': 'Failed to retrieve items under lot', 'details': str(e)}), 500
+
+@item_bp.route('/items/<item_id>/scan', methods=['GET'])
+@jwt_required()
+@require_permission('items.read')
+def scan_item(item_id):
+    """
+    Increment scan count for an item and record the event on the blockchain
+    Return the item object in the same format as /items/<item_id> GET
+    """
+    item = Item.query.get(item_id)
+    if not item:
+        return jsonify({'error': 'Item not found'}), 404
+    # item.scan += 1
+    # db.session.commit()
+    # Record scan event on blockchain
+    user_id = get_jwt_identity()
+    blockchain_service = BlockchainService()
+    blockchain_service.record_item_scan(item_id, user_id, item.scan)
+
+    # Build response as in item_detail GET
+    item_tree = get_item_with_children_recursive(item_id)
+    if not item_tree:
+        return jsonify({'error': 'Item not found'}), 404
+    main_item = item_tree[0]
+    factory_lot_number = None
+    parent_id = main_item.get('parent_id')
+    while parent_id:
+        carton = Carton.query.get(parent_id)
+        if carton:
+            lot = Lot.query.get(carton.parent_lot_id)
+            if lot:
+                factory_lot_number = lot.factory_lot_number
+            break
+        parent_item = Item.query.get(parent_id)
+        if parent_item:
+            parent_id = parent_item.parent_id
+        else:
+            break
+    response = dict(main_item)
+    response['factory_lot_number'] = factory_lot_number
+    response['label_count'] = item.label_count
+    response['material_type_name'] = item.material_type.material_name if item.material_type else None
+    response['material_type_unit'] = item.material_type.material_unit if item.material_type else None
+    response['scan'] = item.scan
+    return jsonify(response), 200

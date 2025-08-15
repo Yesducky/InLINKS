@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Close } from "@mui/icons-material";
+import { Close, Print } from "@mui/icons-material";
 import PrintLabelDetail from "./PrintLabelDetail.jsx";
+import ScanLabel from "./ScanLabel.jsx";
 import api from "../services/api.js";
+import { QrCodeIcon } from "../componenets/CustomIcons.jsx";
 
 const PrintLabel = ({ task, onClose }) => {
   const [items, setItems] = useState([]);
@@ -10,6 +12,7 @@ const PrintLabel = ({ task, onClose }) => {
   const [showPrinted, setShowPrinted] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [showPrintDetail, setShowPrintDetail] = useState(false);
+  const [showScanLabel, setShowScanLabel] = useState(false);
 
   useEffect(() => {
     if (task?.id) {
@@ -46,6 +49,14 @@ const PrintLabel = ({ task, onClose }) => {
 
   const handlePrintAll = async () => {
     if (filteredItems.length === 0) return;
+    //window confirm
+    if (
+      !window.confirm(
+        `確定要生成 ${filteredItems.length} 個物品的合併標籤 PDF 嗎？ ${showPrinted ? "（包括已打印的物品）" : "（僅未打印的物品）"}`,
+      )
+    ) {
+      return;
+    }
 
     try {
       setLoading(true);
@@ -92,6 +103,11 @@ const PrintLabel = ({ task, onClose }) => {
   };
 
   const handlePrintSuccess = () => {
+    // Refresh items after printing
+    fetchTaskItems();
+  };
+
+  const handleScanSuccess = () => {
     // Refresh items after printing
     fetchTaskItems();
   };
@@ -166,7 +182,7 @@ const PrintLabel = ({ task, onClose }) => {
             {/* Header */}
             <div>
               <h1 className="mb-2 text-2xl font-bold text-gray-900">
-                打印標籤
+                標籤狀態
               </h1>
               <p className="text-sm text-gray-500">
                 {task.task_name} - {task.id}
@@ -232,8 +248,16 @@ const PrintLabel = ({ task, onClose }) => {
                       <div>
                         <span className="text-gray-500">打印</span>
                         <p
+                          className={`text-center font-medium ${(item.label_count || 0) === 0 ? "text-red-600" : "text-green-600"}`}
+                        >
+                          ⬤
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">掃描</span>{" "}
+                        <p
                           className={`text-center font-medium ${
-                            (item.label_count || 0) === 0
+                            (item?.scan || 0) === 0
                               ? "text-red-600"
                               : "text-green-600"
                           }`}
@@ -241,12 +265,6 @@ const PrintLabel = ({ task, onClose }) => {
                           {/*{(item.label_count || 0) === 0*/}
                           {/*  ? "未打印"*/}
                           {/*  : `已打印 (${item.label_count})`}*/}⬤
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">掃描</span>
-                        <p className={`text-center font-medium text-green-600`}>
-                          ⬤
                         </p>
                       </div>
                     </div>
@@ -264,13 +282,21 @@ const PrintLabel = ({ task, onClose }) => {
         </div>
       </motion.div>
 
-      <div className={`fixed bottom-3 left-3`}>
+      <div className="fixed bottom-3 left-3 flex items-center gap-2">
         <button
           onClick={handlePrintAll}
           disabled={loading || filteredItems.length === 0}
-          className="bg-blue rounded-full px-4 py-4 text-sm font-medium text-white shadow-2xl transition-colors hover:bg-green-200 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+          className="bg-blue rounded-full px-4 py-4 text-sm font-medium text-white shadow-2xl transition-colors hover:bg-green-200 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
         >
-          打印全部
+          <Print fontSize="large" />
+        </button>
+      </div>
+      <div className="fixed right-3 bottom-3 flex items-center gap-2">
+        <button
+          onClick={() => setShowScanLabel(true)}
+          className="flex w-fit rounded-full bg-gray-900 px-4 py-4 text-sm font-medium text-white shadow-2xl transition-colors hover:bg-gray-800"
+        >
+          <QrCodeIcon className={`w-10`} />
         </button>
       </div>
 
@@ -285,6 +311,13 @@ const PrintLabel = ({ task, onClose }) => {
               setSelectedItem(null);
             }}
             onPrintSuccess={handlePrintSuccess}
+          />
+        )}
+        {showScanLabel && (
+          <ScanLabel
+            taskId={task.id}
+            onClose={() => setShowScanLabel(false)}
+            onScanSuccess={handleScanSuccess}
           />
         )}
       </AnimatePresence>

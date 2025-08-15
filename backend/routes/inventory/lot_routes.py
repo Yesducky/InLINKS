@@ -4,7 +4,7 @@ Lot management routes
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import Lot, Item, MaterialType, Carton, StockLog
+from models import Lot, Item, MaterialType, Carton, StockLog, ItemStateType
 from utils.db_utils import generate_id
 from utils.item_utils import get_item_with_children_recursive
 from utils.stock_logger import StockLogger
@@ -298,6 +298,11 @@ def add_lot():
         carton_ids = []
         all_item_ids = []
         blockchain_service = BlockchainService()
+        
+        # Get the default item state (available state)
+        default_state = ItemStateType.query.filter_by(state_name='Available').first()
+        default_state_id = default_state.id if default_state else None
+        
         for carton_idx in range(carton_count):
             carton_id = generate_id('CTN', Carton)
             item_ids = []
@@ -308,6 +313,7 @@ def add_lot():
                     material_type_id=material_type_id,
                     quantity=item_quantity,
                     status='available',
+                    state_id=default_state_id,
                     parent_id=carton_id,
                     child_item_ids='[]',
                     log_ids='[]',

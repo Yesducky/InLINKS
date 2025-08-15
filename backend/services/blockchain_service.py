@@ -12,8 +12,19 @@ class BlockchainService:
         self.current_block_number = 0
         self.MAX_TRANSACTIONS_PER_BLOCK = 10  # Maximum transactions per block
 
-    def calculate_transaction_hash(self, transaction_data):
-        """Calculate SHA256 hash of transaction data"""
+    def calculate_transaction_hash(self, transaction_data, transaction_id=None, timestamp=None):
+        """Calculate SHA256 hash of transaction data with unique identifiers"""
+        # Add timestamp to ensure uniqueness
+        if timestamp is None:
+            timestamp = datetime.now().isoformat()
+
+        # Add transaction ID if provided
+        if transaction_id:
+            transaction_data['transaction_id'] = transaction_id
+
+        # Add timestamp to transaction data to ensure uniqueness
+        transaction_data['timestamp'] = timestamp
+
         transaction_string = json.dumps(transaction_data, sort_keys=True, separators=(',', ':'))
         return hashlib.sha256(transaction_string.encode()).hexdigest()
     
@@ -205,6 +216,9 @@ class BlockchainService:
     
     def record_item_creation(self, item_id, quantity, user_id):
         """Record item creation on blockchain"""
+        transaction_id = generate_id('BCT', BlockchainTransaction)
+        timestamp = datetime.now().isoformat()
+
         transaction_data = {
             'item_id': item_id,
             'transaction_type': 'CREATE',
@@ -217,10 +231,10 @@ class BlockchainService:
             'user_id': user_id
         }
         print(f"Recording item creation: {transaction_data}")
-        transaction_hash = self.calculate_transaction_hash(transaction_data)
+        transaction_hash = self.calculate_transaction_hash(transaction_data, transaction_id, timestamp)
 
         transaction = BlockchainTransaction(
-            id=generate_id('BCT', BlockchainTransaction),
+            id=transaction_id,
             transaction_hash=transaction_hash,
             item_id=item_id,
             user_id=user_id,
@@ -344,6 +358,9 @@ class BlockchainService:
         """Record item assignment to task on blockchain"""
         item = Item.query.get(item_id)
         
+        transaction_id = generate_id('BCT', BlockchainTransaction)
+        timestamp = datetime.now().isoformat()
+
         transaction_data = {
             'item_id': item_id,
             'task_id': task_id,
@@ -352,8 +369,8 @@ class BlockchainService:
         print(f"Recording item assignment: {transaction_data}")
 
         transaction = BlockchainTransaction(
-            id=generate_id('BCT', BlockchainTransaction),
-            transaction_hash=self.calculate_transaction_hash(transaction_data),
+            id=transaction_id,
+            transaction_hash=self.calculate_transaction_hash(transaction_data, transaction_id, timestamp),
             item_id=item_id,
             user_id=user_id,
             transaction_type='ASSIGN',
@@ -533,3 +550,48 @@ class BlockchainService:
             import traceback
             traceback.print_exc()
             return None
+
+    def record_item_scan(self, item_id, user_id, scan_count, timestamp=None):
+        """
+        Record a scan event for an item on the blockchain
+        """
+        if timestamp is None:
+            timestamp = datetime.now()
+
+        # Get the current item to populate quantity and status fields
+        item = Item.query.get(item_id)
+        if not item:
+            raise ValueError(f"Item {item_id} not found")
+
+        transaction_id = generate_id('BCT', BlockchainTransaction)
+        transaction_data = {
+            'action': 'SCAN',
+            'item_id': item_id,
+            'user_id': user_id,
+            'scan_count': scan_count,
+            'transaction_type': 'SCAN'
+        }
+        transaction_hash = self.calculate_transaction_hash(transaction_data, transaction_id, timestamp.isoformat())
+
+        transaction = BlockchainTransaction(
+            id=transaction_id,
+            transaction_hash=transaction_hash,
+            item_id=item_id,
+            user_id=user_id,
+            transaction_type='SCAN',
+            old_quantity=item.quantity,
+            new_quantity=item.quantity,  # Quantity doesn't change on scan
+            old_status=item.status,
+            new_status=item.status,  # Status doesn't change on scan
+            old_location=None,  # Could be enhanced to track location
+            new_location=None,  # Could be enhanced to track location
+            transaction_data=json.dumps(transaction_data),
+            timestamp=timestamp
+        )
+
+        # Add transaction to current block and create proper item state
+        current_block = self.add_transaction_to_block(transaction)
+        db.session.commit()
+
+        print(f"Scan transaction {transaction.id} added to block {current_block.id}")
+        return transaction_hash

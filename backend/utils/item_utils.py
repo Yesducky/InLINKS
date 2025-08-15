@@ -3,7 +3,7 @@ Item utility functions for recursive operations
 """
 
 import json
-from models import Item
+from models import Item, ItemStateType
 
 
 def get_item_with_children_recursive(item_id):
@@ -20,15 +20,22 @@ def get_item_with_children_recursive(item_id):
     """
     def get_item_details(item):
         """Convert Item model to dictionary"""
+        state_data = None
+        if item.state:
+            state_data = item.state.to_dict()
+        
         return {
             'id': item.id,
             'material_type_id': item.material_type_id,
             'quantity': float(item.quantity),
             'status': item.status,
+            'state_id': item.state_id,
+            'state': state_data,
             'parent_id': item.parent_id,
             'child_item_ids': item.child_item_ids,
             'log_ids': item.log_ids,
             'task_ids': item.task_ids,
+            'location': item.location,
             'created_at': item.created_at.isoformat()
         }
 
@@ -122,14 +129,21 @@ def get_item_hierarchy_tree(item_id):
 
         visited_ids.add(item.id)
 
+        state_data = None
+        if item.state:
+            state_data = item.state.to_dict()
+            
         item_dict = {
             'id': item.id,
             'material_type_id': item.material_type_id,
             'quantity': float(item.quantity),
             'status': item.status,
+            'state_id': item.state_id,
+            'state': state_data,
             'parent_id': item.parent_id,
             'log_ids': item.log_ids,
             'task_ids': item.task_ids,
+            'location': item.location,
             'created_at': item.created_at.isoformat(),
             'children': []
         }
