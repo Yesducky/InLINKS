@@ -367,6 +367,7 @@ class BlockchainItemState(db.Model):
     
     current_quantity = db.Column(db.Float, nullable=False)
     current_status = db.Column(db.String(20), nullable=False)
+    current_state_id = db.Column(db.String(20), db.ForeignKey('item_state_types.id'), nullable=True)
     current_location = db.Column(db.String(100))
     
     is_active = db.Column(db.Boolean, default=True)
@@ -375,3 +376,4 @@ class BlockchainItemState(db.Model):
     # Relationships
     item = db.relationship('Item', backref='blockchain_states')
     transaction = db.relationship('BlockchainTransaction', backref='item_states')
+    current_state = db.relationship('ItemStateType', backref='blockchain_item_states')

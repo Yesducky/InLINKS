@@ -288,7 +288,11 @@ def assign_items_to_task(task_id):
                 # Assign the requested items
                 for i in range(count):
                     item = available_items[i]
-                    item.status = 'assigned'
+                    
+                    # Get Reserved state
+                    reserved_state = ItemStateType.query.filter_by(state_name='Reserved').first()
+                    if reserved_state:
+                        item.state_id = reserved_state.id
                     
                     # Add task ID to item's task_ids
                     try:
@@ -302,14 +306,15 @@ def assign_items_to_task(task_id):
                     # Record blockchain transaction for assignment
                     blockchain_service.record_item_assignment(item.id, task_id, user_id)
                     
-                    # Log the assignment
+                    # Log the assignment with state information
+                    state_name = reserved_state.state_name if reserved_state else 'Reserved'
                     StockLogger.log_assign_item_to_task(user_id, item.id, task_id, float(item.quantity))
                     
                     # Log to process logs
                     material_type = MaterialType.query.get(item.material_type_id)
                     ProcessLogger.log_add_item_to_task(
                         user_id, task_id, item.id, float(item.quantity), 
-                        material_type.material_name if material_type else ""
+                        f"{material_type.material_name if material_type else ''} (State: {state_name})"
                     )
                     
                     assigned_items.append({
@@ -340,7 +345,9 @@ def assign_items_to_task(task_id):
                     
                     if item_quantity <= remaining_quantity:
                         # Use entire item
-                        item.status = 'assigned'
+                        reserved_state = ItemStateType.query.filter_by(state_name='Reserved').first()
+                        if reserved_state:
+                            item.state_id = reserved_state.id
                         
                         # Add task ID to item's task_ids
                         try:
@@ -354,14 +361,15 @@ def assign_items_to_task(task_id):
                         # Record blockchain transaction for assignment
                         blockchain_service.record_item_assignment(item.id, task_id, user_id)
                         
-                        # Log the assignment
+                        # Log the assignment with state information
+                        state_name = reserved_state.state_name if reserved_state else 'Reserved'
                         StockLogger.log_assign_item_to_task(user_id, item.id, task_id, item_quantity)
                         
                         # Log to process logs
                         material_type = MaterialType.query.get(item.material_type_id)
                         ProcessLogger.log_add_item_to_task(
                             user_id, task_id, item.id, item_quantity, 
-                            material_type.material_name if material_type else ""
+                            f"{material_type.material_name if material_type else ''} (State: {state_name})"
                         )
                         
                         assigned_items.append({
@@ -383,11 +391,13 @@ def assign_items_to_task(task_id):
                         item.status = 'available'  # Keep parent available
                         
                         # Create child item
+                        reserved_state = ItemStateType.query.filter_by(state_name='Reserved').first()
                         child_item = Item(
                             id=child_item_id,
                             material_type_id=item.material_type_id,
                             quantity=child_quantity,
                             status='assigned',
+                            state_id=reserved_state.id if reserved_state else None,
                             parent_id=item.id,
                             task_ids=json.dumps([task_id])
                         )
@@ -414,7 +424,8 @@ def assign_items_to_task(task_id):
                         # Record blockchain transaction for child item assignment
                         blockchain_service.record_item_assignment(child_item_id, task_id, user_id)
 
-                        # Log the creation and assignment
+                        # Log the creation and assignment with state information
+                        state_name = reserved_state.state_name if reserved_state else 'Reserved'
                         StockLogger.log_create(user_id, 'item', child_item_id)
                         StockLogger.log_assign_item_to_task(user_id, child_item_id, task_id, child_quantity)
                         
@@ -422,7 +433,7 @@ def assign_items_to_task(task_id):
                         material_type = MaterialType.query.get(child_item.material_type_id)
                         ProcessLogger.log_add_item_to_task(
                             user_id, task_id, child_item_id, child_quantity, 
-                            material_type.material_name if material_type else ""
+                            f"{material_type.material_name if material_type else ''} (State: {state_name})"
                         )
                         
                         assigned_items.append({
@@ -485,14 +496,18 @@ def remove_item_from_task(task_id, item_id):
         task_ids.remove(task_id)
         item.task_ids = json.dumps(task_ids)
 
-        # Determine new status based on remaining task assignments
+        # Determine new state based on remaining task assignments
         if not task_ids:
-            # No more tasks assigned, mark as available
-            item.status = 'available'
+            # No more tasks assigned, set to Available state
+            available_state = ItemStateType.query.filter_by(state_name='Available').first()
+            if available_state:
+                item.state_id = available_state.id
             new_location = None  # Reset location when no tasks assigned
         else:
-            # Still assigned to other tasks, keep as assigned
-            item.status = 'assigned'
+            # Still assigned to other tasks, keep Reserved state
+            reserved_state = ItemStateType.query.filter_by(state_name='Reserved').first()
+            if reserved_state:
+                item.state_id = reserved_state.id
             new_location = f"Tasks: {', '.join(task_ids)}"
 
         # Record blockchain transaction for task removal
@@ -504,7 +519,9 @@ def remove_item_from_task(task_id, item_id):
                 new_status=item.status,
                 old_task_ids=original_task_ids,
                 new_task_ids=task_ids,
-                user_id=user_id
+                user_id=user_id,
+                old_state_id=getattr(item, 'state_id', None),
+                new_state_id=item.state_id
             )
         except Exception as blockchain_error:
             print(f"Blockchain recording failed: {blockchain_error}")
@@ -519,12 +536,17 @@ def remove_item_from_task(task_id, item_id):
         # Log to process logs
         try:
             material_type = MaterialType.query.get(item.material_type_id)
+            state_info = None
+            if item.state_id:
+                state = ItemStateType.query.get(item.state_id)
+                state_info = state.state_name if state else 'Unknown'
+            
             ProcessLogger.create_log(
                 user_id=user_id,
                 action_type='UPDATE',
                 entity_type='task',
                 entity_id=task_id,
-                details=f"remove item #{item.id} ({item.quantity} {material_type.material_name if material_type else 'units'})"
+                details=f"remove item #{item.id} ({item.quantity} {material_type.material_name if material_type else 'units'}) - State: {state_info or 'Available'}"
             )
         except Exception as process_log_error:
             print(f"Process logging failed: {process_log_error}")

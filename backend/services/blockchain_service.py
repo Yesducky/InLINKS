@@ -150,7 +150,13 @@ class BlockchainService:
 
     def _update_item_state(self, transaction):
         """Update or create blockchain item state record"""
-        from models import BlockchainItemState
+        from models import BlockchainItemState, Item
+
+        # Get the item to determine current state
+        item = Item.query.get(transaction.item_id)
+        current_state_id = None
+        if item and item.state_id:
+            current_state_id = item.state_id
 
         # Deactivate previous state record for this item
         previous_states = BlockchainItemState.query.filter_by(
@@ -168,6 +174,7 @@ class BlockchainService:
             transaction_id=transaction.id,
             current_quantity=transaction.new_quantity or 0,
             current_status=transaction.new_status or 'unknown',
+            current_state_id=current_state_id,
             current_location=transaction.new_location,
             is_active=True
         )
@@ -219,6 +226,10 @@ class BlockchainService:
         transaction_id = generate_id('BCT', BlockchainTransaction)
         timestamp = datetime.now().isoformat()
 
+        # Get or create the 'available' state from ItemStateType
+        from models import ItemStateType
+        available_state = ItemStateType.query.filter_by(state_name='available').first()
+
         transaction_data = {
             'item_id': item_id,
             'transaction_type': 'CREATE',
@@ -226,6 +237,12 @@ class BlockchainService:
             'new_quantity': quantity,
             'old_status': None,
             'new_status': 'available',
+            'old_state_id': None,
+            'new_state_id': available_state.id if available_state else None,
+            'old_state_name': None,
+            'new_state_name': available_state.state_name if available_state else 'available',
+            'old_state_name_chinese': None,
+            'new_state_name_chinese': available_state.state_name_chinese if available_state else '可用',
             'old_location': None,
             'new_location': None,
             'user_id': user_id
@@ -246,6 +263,11 @@ class BlockchainService:
             transaction_data=json.dumps(transaction_data)
         )
         
+        # Set the initial state for the item
+        item = Item.query.get(item_id)
+        if item and available_state:
+            item.state_id = available_state.id
+
         # Use proper block management
         current_block = self.add_transaction_to_block(transaction)
         db.session.commit()
@@ -361,10 +383,40 @@ class BlockchainService:
         transaction_id = generate_id('BCT', BlockchainTransaction)
         timestamp = datetime.now().isoformat()
 
+        # Get state information using ItemStateType
+        old_state = None
+        new_state = None
+        old_status = None
+        new_status = None
+        
+        if item:
+            old_status = item.status
+            new_status = 'assigned'
+            
+            # Get current state from ItemStateType
+            from models import ItemStateType
+            if item.state_id:
+                old_state = ItemStateType.query.get(item.state_id)
+            
+            # Find the appropriate new state for 'assigned' status
+            assigned_state = ItemStateType.query.filter_by(state_name='assigned').first()
+            if not assigned_state:
+                # Fallback to creating or finding a reserved state
+                assigned_state = ItemStateType.query.filter_by(state_name='reserved').first()
+
+            if assigned_state:
+                new_state = assigned_state
+
         transaction_data = {
             'item_id': item_id,
             'task_id': task_id,
-            'user_id': user_id
+            'user_id': user_id,
+            'old_state_id': old_state.id if old_state else None,
+            'new_state_id': new_state.id if new_state else None,
+            'old_state_name': old_state.state_name if old_state else None,
+            'new_state_name': new_state.state_name if new_state else 'assigned',
+            'old_state_name_chinese': old_state.state_name_chinese if old_state else None,
+            'new_state_name_chinese': new_state.state_name_chinese if new_state else '已分配'
         }
         print(f"Recording item assignment: {transaction_data}")
 
@@ -376,25 +428,50 @@ class BlockchainService:
             transaction_type='ASSIGN',
             old_quantity=item.quantity if item else 0,
             new_quantity=item.quantity if item else 0,
-            old_status='available',
-            new_status='assigned',
+            old_status=old_status or 'available',
+            new_status=new_status or 'assigned',
             new_location=f"task-{task_id}",
             transaction_data=json.dumps(transaction_data)
         )
         
+        # Update item's state_id if we found a new state
+        if item and new_state:
+            item.state_id = new_state.id
+
         current_block = self.add_transaction_to_block(transaction)
         db.session.commit()
 
         print(f"Assignment transaction {transaction.id} added to block {current_block.id}")
         return transaction
     
-    def record_item_task_removal(self, item_id, task_id, old_status, new_status, old_task_ids, new_task_ids, user_id):
+    def record_item_task_removal(self, item_id, task_id, old_status, new_status, old_task_ids, new_task_ids, user_id, old_state_id=None, new_state_id=None):
         """Record item task removal transaction on blockchain"""
         try:
             item = Item.query.get(item_id)
             if not item:
                 raise ValueError(f"Item {item_id} not found")
 
+            # Get state information using ItemStateType
+            from models import ItemStateType
+
+            # If state IDs are not provided, determine them automatically
+            if old_state_id is None and item.state_id:
+                old_state_id = item.state_id
+
+            if new_state_id is None:
+                # Determine new state based on remaining task assignments
+                if not new_task_ids:
+                    # No more tasks, should be available
+                    available_state = ItemStateType.query.filter_by(state_name='available').first()
+                    new_state_id = available_state.id if available_state else None
+                else:
+                    # Still assigned to other tasks, keep assigned state
+                    assigned_state = ItemStateType.query.filter_by(state_name='assigned').first()
+                    new_state_id = assigned_state.id if assigned_state else None
+
+            old_state = ItemStateType.query.get(old_state_id) if old_state_id else None
+            new_state = ItemStateType.query.get(new_state_id) if new_state_id else None
+            
             transaction_data = {
                 'item_id': item_id,
                 'task_id': task_id,
@@ -404,7 +481,13 @@ class BlockchainService:
                 'old_task_ids': old_task_ids,
                 'new_task_ids': new_task_ids,
                 'user_id': user_id,
-                'quantity': float(item.quantity)
+                'quantity': float(item.quantity),
+                'old_state_id': old_state_id,
+                'new_state_id': new_state_id,
+                'old_state_name': old_state.state_name if old_state else None,
+                'new_state_name': new_state.state_name if new_state else new_status,
+                'old_state_name_chinese': old_state.state_name_chinese if old_state else None,
+                'new_state_name_chinese': new_state.state_name_chinese if new_state else ('可用' if new_status == 'available' else '已分配')
             }
 
             print(f"Recording item task removal: {transaction_data}")
@@ -428,6 +511,10 @@ class BlockchainService:
                 transaction_data=json.dumps(transaction_data)
             )
 
+            # Update item's state_id
+            if item and new_state_id:
+                item.state_id = new_state_id
+
             # Add transaction to current block
             current_block = self.add_transaction_to_block(transaction)
 
@@ -438,6 +525,7 @@ class BlockchainService:
                 transaction_id=transaction.id,
                 current_quantity=float(item.quantity),
                 current_status=new_status,
+                current_state_id=new_state_id,
                 current_location=new_location,
                 is_active=True
             )
@@ -478,6 +566,31 @@ class BlockchainService:
     
     def get_item_current_state(self, item_id):
         """Get current blockchain state for an item"""
+        from models import BlockchainItemState, ItemStateType
+        
+        # Use BlockchainItemState for the most accurate current state
+        current_state = BlockchainItemState.query.filter_by(
+            item_id=item_id,
+            is_active=True
+        ).first()
+        
+        if current_state:
+            state_name = None
+            if current_state.current_state_id:
+                state = ItemStateType.query.get(current_state.current_state_id)
+                state_name = state.state_name if state else None
+                
+            return {
+                'item_id': item_id,
+                'current_quantity': current_state.current_quantity,
+                'current_status': current_state.current_status,
+                'current_state_id': current_state.current_state_id,
+                'current_state_name': state_name,
+                'current_location': current_state.current_location,
+                'last_updated': current_state.created_at.isoformat()
+            }
+        
+        # Fallback to latest transaction if no BlockchainItemState found
         latest_tx = BlockchainTransaction.query.filter_by(item_id=item_id)\
             .order_by(BlockchainTransaction.timestamp.desc()).first()
         
@@ -488,6 +601,8 @@ class BlockchainService:
             'item_id': item_id,
             'current_quantity': latest_tx.new_quantity,
             'current_status': latest_tx.new_status,
+            'current_state_id': None,
+            'current_state_name': None,
             'current_location': latest_tx.new_location,
             'last_transaction_hash': latest_tx.transaction_hash,
             'last_updated': latest_tx.timestamp.isoformat()
@@ -517,12 +632,22 @@ class BlockchainService:
             # Get the block information
             block = BlockchainBlock.query.get(transaction.block_id)
 
+
+            # Get state information
+            state_name = None
+            if item_state.current_state_id:
+                from models import ItemStateType
+                state = ItemStateType.query.get(item_state.current_state_id)
+                state_name = state.state_name if state else None
+
             return {
                 'item_id': item_id,
                 'block_id': transaction.block_id,
                 'block_number': block.block_number if block else None,
                 'quantity': item_state.current_quantity,
                 'status': item_state.current_status,
+                'state_id': item_state.current_state_id,
+                'state_name': state_name,
                 'location': item_state.current_location,
                 'transaction': {
                     'id': transaction.id,
@@ -569,8 +694,10 @@ class BlockchainService:
             'item_id': item_id,
             'user_id': user_id,
             'scan_count': scan_count,
+            'timestamp': timestamp.isoformat(),
             'transaction_type': 'SCAN'
         }
+
         transaction_hash = self.calculate_transaction_hash(transaction_data, transaction_id, timestamp.isoformat())
 
         transaction = BlockchainTransaction(
@@ -579,19 +706,124 @@ class BlockchainService:
             item_id=item_id,
             user_id=user_id,
             transaction_type='SCAN',
-            old_quantity=item.quantity,
-            new_quantity=item.quantity,  # Quantity doesn't change on scan
+            old_quantity=float(item.quantity),
+            new_quantity=float(item.quantity),  # Quantity doesn't change on scan
             old_status=item.status,
             new_status=item.status,  # Status doesn't change on scan
-            old_location=None,  # Could be enhanced to track location
-            new_location=None,  # Could be enhanced to track location
-            transaction_data=json.dumps(transaction_data),
-            timestamp=timestamp
+            old_location=item.location,
+            new_location=item.location,  # Location doesn't change on scan
+            transaction_data=json.dumps(transaction_data)
         )
 
-        # Add transaction to current block and create proper item state
         current_block = self.add_transaction_to_block(transaction)
         db.session.commit()
 
         print(f"Scan transaction {transaction.id} added to block {current_block.id}")
-        return transaction_hash
+        return transaction
+
+    def record_label_print(self, item_id, user_id, label_count, task_id=None, label_data=None):
+        """
+        Record a label print event for an item on the blockchain
+        """
+        # Get the current item to populate quantity and status fields
+        item = Item.query.get(item_id)
+        if not item:
+            raise ValueError(f"Item {item_id} not found")
+
+        transaction_id = generate_id('BCT', BlockchainTransaction)
+        timestamp = datetime.now()
+
+        transaction_data = {
+            'action': 'PRINT_LABEL',
+            'item_id': item_id,
+            'user_id': user_id,
+            'label_count': label_count,
+            'task_id': task_id,
+            'label_data': label_data or item.label or item.id,
+            'timestamp': timestamp.isoformat(),
+            'transaction_type': 'PRINT_LABEL',
+            'previous_label_count': (item.label_count or 0) - 1,  # Before increment
+            'new_label_count': label_count
+        }
+
+        transaction_hash = self.calculate_transaction_hash(transaction_data, transaction_id, timestamp.isoformat())
+
+        transaction = BlockchainTransaction(
+            id=transaction_id,
+            transaction_hash=transaction_hash,
+            item_id=item_id,
+            user_id=user_id,
+            transaction_type='PRINT_LABEL',
+            old_quantity=float(item.quantity),
+            new_quantity=float(item.quantity),  # Quantity doesn't change on print
+            old_status=item.status,
+            new_status=item.status,  # Status doesn't change on print
+            old_location=item.location,
+            new_location=item.location,  # Location doesn't change on print
+            transaction_data=json.dumps(transaction_data)
+        )
+
+        current_block = self.add_transaction_to_block(transaction)
+        db.session.commit()
+
+        print(f"Label print transaction {transaction.id} added to block {current_block.id}")
+        return transaction
+
+    def record_bulk_label_print(self, items_data, user_id, task_id=None):
+        """
+        Record a bulk label print event for multiple items on the blockchain
+        """
+        transactions = []
+
+        for item_info in items_data:
+            item_id = item_info['item_id']
+            label_count = item_info['label_count']
+            label_data = item_info.get('label_data')
+
+            # Get the current item
+            item = Item.query.get(item_id)
+            if not item:
+                print(f"Warning: Item {item_id} not found, skipping blockchain record")
+                continue
+
+            transaction_id = generate_id('BCT', BlockchainTransaction)
+            timestamp = datetime.now()
+
+            transaction_data = {
+                'action': 'BULK_PRINT_LABEL',
+                'item_id': item_id,
+                'user_id': user_id,
+                'label_count': label_count,
+                'task_id': task_id,
+                'label_data': label_data or item.label or item.id,
+                'timestamp': timestamp.isoformat(),
+                'transaction_type': 'BULK_PRINT_LABEL',
+                'previous_label_count': item_info.get('previous_label_count', 0),
+                'new_label_count': label_count,
+                'bulk_operation': True
+            }
+
+            transaction_hash = self.calculate_transaction_hash(transaction_data, transaction_id, timestamp.isoformat())
+
+            transaction = BlockchainTransaction(
+                id=transaction_id,
+                transaction_hash=transaction_hash,
+                item_id=item_id,
+                user_id=user_id,
+                transaction_type='BULK_PRINT_LABEL',
+                old_quantity=float(item.quantity),
+                new_quantity=float(item.quantity),  # Quantity doesn't change on print
+                old_status=item.status,
+                new_status=item.status,  # Status doesn't change on print
+                old_location=item.location,
+                new_location=item.location,  # Location doesn't change on print
+                transaction_data=json.dumps(transaction_data)
+            )
+
+            current_block = self.add_transaction_to_block(transaction)
+            transactions.append(transaction)
+
+        db.session.commit()
+
+        print(f"Bulk label print: {len(transactions)} transactions recorded")
+        return transactions

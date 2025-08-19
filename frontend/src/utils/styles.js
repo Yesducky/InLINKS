@@ -23,7 +23,7 @@ export const backgroundStyles = createBackgroundStyles();
 export const backgroundVariants = {
   login: createBackgroundStyles(bg_5),
   inventory: createBackgroundStyles(bg_6),
-  projects: createBackgroundStyles(bg_5),
+  projects: createBackgroundStyles(bg_2),
   my_tasks: createBackgroundStyles(bg_3),
   dashboard: createBackgroundStyles(bg_7),
   user_management: createBackgroundStyles(bg_1),

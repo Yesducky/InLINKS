@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import Task, Item, MaterialType
+from services.blockchain_service import BlockchainService
 from __init__ import db
 import io
 import qrcode
@@ -21,7 +22,8 @@ def print_item_label(item_id):
     try:
         item = Item.query.get_or_404(item_id)
         material_type = item.material_type
-        
+        user_id = get_jwt_identity()
+
         # Get task info from request
         data = request.get_json() or {}
         task_id = data.get('task_id', 'UNKNOWN')
@@ -29,12 +31,29 @@ def print_item_label(item_id):
         # Generate barcode data (used for both barcode and QR code)
         barcode_data = item.label or f"{task_id.replace('TSK', '')}-{item.id.replace('ITM', '')}"
         
+        # Store previous label count for blockchain record
+        previous_label_count = item.label_count or 0
+
         # Increment label count
         if item.label_count is None:
             item.label_count = 1
         else:
             item.label_count += 1
         
+        # Record print event on blockchain
+        blockchain_service = BlockchainService()
+        try:
+            blockchain_service.record_label_print(
+                item_id=item.id,
+                user_id=user_id,
+                label_count=item.label_count,
+                task_id=task_id if task_id != 'UNKNOWN' else None,
+                label_data=barcode_data
+            )
+        except Exception as blockchain_error:
+            print(f"Blockchain recording failed: {blockchain_error}")
+            # Continue with printing even if blockchain fails
+
         db.session.commit()
         
         # Create PDF in memory
@@ -114,6 +133,7 @@ def print_all_task_items(task_id):
     try:
         # Verify task exists
         task = Task.query.get_or_404(task_id)
+        user_id = get_jwt_identity()
 
         # Get filter parameter from request
         data = request.get_json() or {}
@@ -134,6 +154,8 @@ def print_all_task_items(task_id):
                 task_items.append(item)
 
         items_data = []
+        blockchain_items_data = []
+
         for item in task_items:
             material_type = item.material_type
 
@@ -142,6 +164,9 @@ def print_all_task_items(task_id):
                 continue
 
             barcode_data = item.label or f"{task_id.replace('TSK', '')}-{item.id.replace('ITM', '')}"
+
+            # Store previous label count for blockchain record
+            previous_label_count = item.label_count or 0
 
             # Increment label count for each item
             if item.label_count is None:
@@ -155,9 +180,29 @@ def print_all_task_items(task_id):
                 'barcode_data': barcode_data
             })
 
+            # Prepare data for blockchain recording
+            blockchain_items_data.append({
+                'item_id': item.id,
+                'label_count': item.label_count,
+                'label_data': barcode_data,
+                'previous_label_count': previous_label_count
+            })
+
         if not items_data:
             return jsonify({'error': 'No items found matching criteria'}), 404
         
+        # Record bulk print event on blockchain
+        blockchain_service = BlockchainService()
+        try:
+            blockchain_service.record_bulk_label_print(
+                items_data=blockchain_items_data,
+                user_id=user_id,
+                task_id=task_id
+            )
+        except Exception as blockchain_error:
+            print(f"Blockchain bulk recording failed: {blockchain_error}")
+            # Continue with printing even if blockchain fails
+
         db.session.commit()
         
         # Create PDF with filtered items
