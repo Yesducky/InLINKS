@@ -27,8 +27,14 @@ const PrintLabel = ({ task, onClose }) => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log(data);
         setItems(data.items || []);
+        //if item are all printed set showPrinted to true
+        if (data.items && data.items.length > 0) {
+          const allPrinted = data.items.every(
+            (item) => (item.label_count || 0) > 0,
+          );
+          setShowPrinted(allPrinted);
+        }
       }
     } catch (error) {
       console.error("Error fetching task items:", error);

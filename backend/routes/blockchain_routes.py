@@ -49,7 +49,7 @@ def get_item_blockchain_history(item_id):
             'material_type': item.material_type.material_name if item.material_type else 'Unknown',
             'label': item.label,
             'current_quantity': item.quantity,
-            'current_status': item.status
+            'current_state': item.state.to_dict() if item.state else None,
         }
         
         return jsonify({
@@ -91,7 +91,7 @@ def verify_item_integrity(item_id):
             'item_id': item_id,
             'database_quantity': item.quantity,
             'blockchain_quantity': blockchain_state.get('current_quantity', 0) if blockchain_state else item.quantity,
-            'database_status': item.status,
+            'database_state': item.state.to_dict() if item.state else None,
             'blockchain_status': blockchain_state.get('current_status', item.status) if blockchain_state else item.status,
             'is_consistent': True,
             'last_verified': datetime.now().isoformat()

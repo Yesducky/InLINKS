@@ -10,6 +10,7 @@ const MyTaskDetail = ({ task, onClose }) => {
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
   const [showPrintLabel, setShowPrintLabel] = useState(false);
+  const [allLabelsScanned, setAllLabelsScanned] = useState(false);
 
   const user = JSON.parse(localStorage.getItem("user")) || {};
 
@@ -30,13 +31,28 @@ const MyTaskDetail = ({ task, onClose }) => {
         );
       } else {
         const error = await response.json();
-        alert(error.error || "Failed to start task");
       }
     } catch (error) {
       console.error("Error starting task:", error);
-      alert("Error starting task");
     } finally {
       setStarting(false);
+    }
+  };
+
+  const handleCompleteTask = async () => {
+    if (!task?.id) return;
+
+    try {
+      const response = await api.waitTCTask(task.id);
+
+      if (response.ok) {
+        // Update task in parent component or refresh
+        onClose();
+      } else {
+        const error = await response.json();
+      }
+    } catch (error) {
+      console.error("Error completing task:", error);
     }
   };
 
@@ -63,6 +79,7 @@ const MyTaskDetail = ({ task, onClose }) => {
   useEffect(() => {
     if (task?.id) {
       fetchTaskItems();
+      checkItemsAllScannedByTaskId();
     }
   }, [task?.id]);
 
@@ -74,11 +91,26 @@ const MyTaskDetail = ({ task, onClose }) => {
       if (response.ok) {
         const data = await response.json();
         setItems(data.items || []);
-        console.log(task);
       }
     } catch (error) {
       console.error("Error fetching task items:", error);
       setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const checkItemsAllScannedByTaskId = async () => {
+    try {
+      setLoading(true);
+      const response = await api.checkItemsAllScannedByTaskId(task.id);
+      if (response.ok) {
+        const data = await response.json();
+        setAllLabelsScanned(data.all_scanned);
+      }
+    } catch (error) {
+      console.error("Error checking items scanned status:", error);
+      setAllLabelsScanned(false);
     } finally {
       setLoading(false);
     }
@@ -331,10 +363,14 @@ const MyTaskDetail = ({ task, onClose }) => {
                     )}
                   </button>
                 )}
-              {/* scan button */}
+              {/* Complete Task Button */}
               {task?.state?.state_name === "in_progress" &&
                 task?.assignee_id === user.id && (
-                  <button className="w-full rounded-lg bg-red-600 px-4 py-3 font-medium text-white shadow-md transition-all duration-300 hover:bg-red-700 hover:shadow-lg disabled:cursor-not-allowed disabled:bg-gray-400">
+                  <button
+                    className="w-full rounded-lg bg-red-600 px-4 py-3 font-medium text-white shadow-md transition-all duration-300 hover:bg-red-700 hover:shadow-lg disabled:cursor-not-allowed disabled:bg-gray-400"
+                    disabled={!allLabelsScanned}
+                    onClick={handleCompleteTask}
+                  >
                     完成任務
                   </button>
                 )}
@@ -346,7 +382,13 @@ const MyTaskDetail = ({ task, onClose }) => {
       {/* Print Label Modal */}
       <AnimatePresence>
         {showPrintLabel && task && (
-          <PrintLabel task={task} onClose={() => setShowPrintLabel(false)} />
+          <PrintLabel
+            task={task}
+            onClose={() => {
+              setShowPrintLabel(false);
+              checkItemsAllScannedByTaskId();
+            }}
+          />
         )}
       </AnimatePresence>
     </motion.div>

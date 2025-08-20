@@ -7,6 +7,7 @@ import {
   LocationOn as LocationIcon,
   Numbers as NumbersIcon,
   Info as InfoIcon,
+  DoneAll,
 } from "@mui/icons-material";
 import LoadingSpinner from "./LoadingSpinner.jsx";
 import api from "../services/api.js";
@@ -177,15 +178,24 @@ const ItemStateViewer = ({ transactionId, itemId, blockId, open, onClose }) => {
                       <div className="space-y-3">
                         {/* Status */}
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-600">
+                          <span className="flex items-center gap-1 text-sm font-medium text-gray-600">
+                            <DoneAll className="h-4 w-4" />
                             狀態
                           </span>
                           <span
-                            className={`inline-flex items-center rounded-full border px-3 py-1 text-sm font-medium ${getStatusColor(
-                              stateData.status,
-                            )}`}
+                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium`}
+                            style={{
+                              backgroundColor: stateData.current_state.bg_color,
+                              color: stateData.current_state.text_color,
+                            }}
                           >
-                            {stateData.status || "N/A"}
+                            {/*{iconMap[subTaskInfo.state?.icon] &&*/}
+                            {/*  React.createElement(iconMap[subTaskInfo.state.icon], {*/}
+                            {/*    className: "h-4 w-4",*/}
+                            {/*  })}*/}
+                            {/*&nbsp;*/}
+                            {stateData?.current_state?.state_name_chinese ||
+                              "N/A"}
                           </span>
                         </div>
 

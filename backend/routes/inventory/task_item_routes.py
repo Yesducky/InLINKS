@@ -293,6 +293,9 @@ def assign_items_to_task(task_id):
                     reserved_state = ItemStateType.query.filter_by(state_name='Reserved').first()
                     if reserved_state:
                         item.state_id = reserved_state.id
+
+                    # status
+                    item.status = 'assigned'
                     
                     # Add task ID to item's task_ids
                     try:
@@ -490,7 +493,9 @@ def remove_item_from_task(task_id, item_id):
 
         # Store original values for blockchain tracking
         original_status = item.status
+        print(original_status)
         original_task_ids = task_ids.copy()
+        original_state_id = item.state_id
 
         # Remove task ID from item's task_ids
         task_ids.remove(task_id)
@@ -515,12 +520,10 @@ def remove_item_from_task(task_id, item_id):
             blockchain_service.record_item_task_removal(
                 item_id=item.id,
                 task_id=task_id,
-                old_status=original_status,
-                new_status=item.status,
                 old_task_ids=original_task_ids,
                 new_task_ids=task_ids,
                 user_id=user_id,
-                old_state_id=getattr(item, 'state_id', None),
+                old_state_id=original_state_id,
                 new_state_id=item.state_id
             )
         except Exception as blockchain_error:
@@ -766,6 +769,56 @@ def scan_verify_item_by_task(task_id, item_id):
             'task_id': task_id,
             'is_verified': False
         }), 200
+
+@task_item_bp.route('/tasks/<string:task_id>/items/scanned-status', methods=['GET'])
+@jwt_required()
+@require_permission('items.read')
+def check_task_items_scanned(task_id):
+    """
+    GET: Check if all items assigned to the task have been scanned at least once (item.scan > 0)
+    Returns summary counts and lists of scanned/not scanned items.
+    """
+    try:
+        task = Task.query.get_or_404(task_id)
+
+        # Get all items assigned to this task
+        items = Item.query.filter(
+            Item.task_ids.contains(task_id)
+        ).all()
+
+        total_items = len(items)
+        scanned_items = []
+        not_scanned_items = []
+
+        for it in items:
+            entry = {
+                'id': it.id,
+                'quantity': float(it.quantity),
+                'scan': int(it.scan),
+                'status': it.status,
+                'state_id': it.state_id,
+                'label_count': it.label_count,
+                'location': it.location,
+            }
+            if (it.scan or 0) > 0:
+                scanned_items.append(entry)
+            else:
+                not_scanned_items.append(entry)
+
+        result = {
+            'task_id': task_id,
+            'task_name': task.task_name,
+            'total_assigned_items': total_items,
+            'scanned_items': len(scanned_items),
+            'not_scanned_items': len(not_scanned_items),
+            'all_scanned': total_items > 0 and len(not_scanned_items) == 0,
+            'items_not_scanned': not_scanned_items,
+            'items_scanned': scanned_items,
+        }
+
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({'error': 'Failed to check scanned status', 'details': str(e)}), 500
 
 def _get_available_items_for_assignment(lot_id, material_type_id, item_quantity=None):
         """

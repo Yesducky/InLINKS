@@ -137,6 +137,8 @@ const api = {
     del(`/api/tasks/${taskId}/items/${itemId}/remove`, true), // remove an item from a task
   getItemsSummaryByTaskId: (taskId) =>
     get(`/api/tasks/${taskId}/items/summary`, true), // get items summary by task id
+  checkItemsAllScannedByTaskId: (taskId) =>
+    get(`/api/tasks/${taskId}/items/scanned-status`, true), // check if all items are scanned by task id
   scanItem: (itemId) => get(`/api/items/${itemId}/scan`, true), // scan an item by id
   scanItemVerify: (itemId, taskId) =>
     get(`/api/tasks/${taskId}/scan_verify/items/${itemId}`, true), // verify scanned item by id and task id
@@ -163,6 +165,7 @@ const api = {
   putTask: (id, data) => put(`/api/tasks/${id}`, data, true), // update a task by id
   getTasksByUserId: (id) => get(`/api/tasks/by_user/${id}`, true), // get all tasks by user id
   startTask: (id) => post(`/api/tasks/${id}/start`, {}, true), // start a task by id
+  waitTCTask: (id) => post(`/api/tasks/${id}/waiting-tc`, {}, true), // wait for task completion by id
 
   //subtasks
   postSubtask: (data) => post("/api/subtasks", data, true), // create a new subtask

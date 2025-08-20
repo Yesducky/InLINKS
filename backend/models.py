@@ -346,8 +346,8 @@ class BlockchainTransaction(db.Model):
     transaction_type = db.Column(db.String(20), nullable=False)  # CREATE, SPLIT, ASSIGN, UPDATE, TRANSFER
     old_quantity = db.Column(db.Float)
     new_quantity = db.Column(db.Float)
-    old_status = db.Column(db.String(20))
-    new_status = db.Column(db.String(20))
+    old_state_id = db.Column(db.String(20), db.ForeignKey('item_state_types.id'), nullable=True)
+    new_state_id = db.Column(db.String(20), db.ForeignKey('item_state_types.id'), nullable=True)
     old_location = db.Column(db.String(100))
     new_location = db.Column(db.String(100))
     
@@ -358,6 +358,8 @@ class BlockchainTransaction(db.Model):
     block = db.relationship('BlockchainBlock', backref='transactions')
     item = db.relationship('Item', backref='blockchain_transactions')
     user = db.relationship('User', backref='blockchain_transactions')
+    old_state = db.relationship('ItemStateType', foreign_keys=[old_state_id], backref='old_transactions')
+    new_state = db.relationship('ItemStateType', foreign_keys=[new_state_id], backref='new_transactions')
 
 class BlockchainItemState(db.Model):
     __tablename__ = 'blockchain_item_states'
@@ -366,7 +368,6 @@ class BlockchainItemState(db.Model):
     transaction_id = db.Column(db.String(20), db.ForeignKey('blockchain_transactions.id'), nullable=False)
     
     current_quantity = db.Column(db.Float, nullable=False)
-    current_status = db.Column(db.String(20), nullable=False)
     current_state_id = db.Column(db.String(20), db.ForeignKey('item_state_types.id'), nullable=True)
     current_location = db.Column(db.String(100))
     

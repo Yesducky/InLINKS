@@ -1,10 +1,12 @@
 import datetime
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import Task, SubTask, ProcessStateType
+from models import Task, SubTask, ProcessStateType, Item, ItemStateType
 from utils.db_utils import generate_id
 from utils.process_logger import ProcessLogger
+from services.blockchain_service import BlockchainService
 from __init__ import db
+import json
 
 task_bp = Blueprint('task', __name__)
 
@@ -231,7 +233,8 @@ def assign_items_to_task():
 @jwt_required()
 def start_task(task_id):
     """
-    POST: Start a task - set state to 'pulling_cable' and set start_date
+    POST: Start a task - set state to 'in_progress' and set start_date
+    Updates all assigned items to 'In Progress' state (IST005) via blockchain
     Only allowed if current state is 'assigned_worker'
     """
     try:
@@ -246,18 +249,42 @@ def start_task(task_id):
         if not task.state or task.state.state_name != 'assigned_worker':
             return jsonify({'error': 'Only tasks in assigned_worker state can be started'}), 400
 
-
-        pulling_cable_state = ProcessStateType.query.filter_by(
-            state_type='task', 
+        # Get the in_progress state for tasks
+        in_progress_state = ProcessStateType.query.filter_by(
+            state_type='task',
             state_name='in_progress'
         ).first()
         
-        if not pulling_cable_state:
-            return jsonify({'error': 'pulling_cable state not found'}), 500
-        
+        if not in_progress_state:
+            return jsonify({'error': 'in_progress state not found'}), 500
+
+        # Get the 'In Progress' state for items (IST005)
+        item_in_progress_state = ItemStateType.query.filter_by(
+            state_name='In Progress'
+        ).first()
+
+        if not item_in_progress_state:
+            return jsonify({'error': 'Item In Progress state (IST005) not found'}), 500
+
+        # Initialize blockchain service
+        blockchain_service = BlockchainService()
+
+        # Get all items assigned to this task
+        task_items = Item.query.filter(
+            Item.task_ids.contains(task_id)
+        ).all()
+
+        # Extract item IDs for blockchain processing
+        item_ids = [item.id for item in task_items]
+
+        # Update item states via blockchain service
+        updated_items, blockchain_errors = blockchain_service.record_task_state_changes(
+            task_id, item_ids, current_user_id, 'In Progress'
+        )
+
         # Update task state and start_date
         old_state = task.state.state_name if task.state else None
-        task.state_id = pulling_cable_state.id
+        task.state_id = in_progress_state.id
         task.start_date = datetime.datetime.now()
         
         # Log the state change
@@ -280,14 +307,122 @@ def start_task(task_id):
         
         db.session.commit()
         
-        return jsonify({
+        response = {
             'message': 'Task started successfully',
             'task_id': task_id,
-            'new_state': 'pulling_cable',
-            'start_date': task.start_date.isoformat()
-        })
-        
+            'new_state': 'in_progress',
+            'start_date': task.start_date.isoformat(),
+            'updated_items_count': len(updated_items),
+            'updated_items': updated_items
+        }
+
+        if blockchain_errors:
+            response['blockchain_errors'] = blockchain_errors
+            response['warning'] = f'{len(blockchain_errors)} items had blockchain recording errors'
+
+        return jsonify(response)
+
     except Exception as e:
         db.session.rollback()
         print(e)
         return jsonify({'error': 'Failed to start task', 'details': str(e)}), 500
+
+
+
+@task_bp.route('/tasks/<string:task_id>/waiting-tc', methods=['POST'])
+@jwt_required()
+def set_task_waiting_tc(task_id):
+    """
+    POST: Set task to 'waiting T&C' state
+    Updates all assigned items to 'Waiting T&C' state via blockchain
+    Can be called from 'in_progress' or other valid states
+    """
+    try:
+        task = Task.query.get_or_404(task_id)
+        current_user_id = get_jwt_identity()
+
+        # Check if task is assigned to the current user
+        if task.assignee_id != current_user_id:
+            return jsonify({'error': 'You can only modify tasks assigned to you'}), 403
+
+        # Check current state - allow from in_progress or assigned_worker
+        valid_states = ['in_progress', 'assigned_worker']
+        if not task.state or task.state.state_name not in valid_states:
+            return jsonify({'error': f'Tasks can only be set to waiting T&C from states: {", ".join(valid_states)}'}), 400
+
+        # Get the waiting T&C state for tasks
+        waiting_tc_state = ProcessStateType.query.filter_by(
+            state_type='task',
+            state_name='waiting T&C'
+        ).first()
+
+        if not waiting_tc_state:
+            return jsonify({'error': 'waiting T&C state not found'}), 500
+
+        # Get the 'Waiting T&C' state for items
+        item_waiting_tc_state = ItemStateType.query.filter_by(
+            state_name='Waiting T&C'
+        ).first()
+
+        if not item_waiting_tc_state:
+            return jsonify({'error': 'Item Waiting T&C state not found'}), 500
+
+        # Initialize blockchain service
+        blockchain_service = BlockchainService()
+
+        # Get all items assigned to this task
+        task_items = Item.query.filter(
+            Item.task_ids.contains(task_id)
+        ).all()
+
+        # Extract item IDs for blockchain processing
+        item_ids = [item.id for item in task_items]
+
+        # Update item states via blockchain service
+        updated_items, blockchain_errors = blockchain_service.record_task_state_changes(
+            task_id, item_ids, current_user_id, 'Waiting T&C'
+        )
+
+        # Update task state
+        old_state = task.state.state_name if task.state else None
+        task.state_id = waiting_tc_state.id
+
+        # Log the state change
+        ProcessLogger.log_update(
+            user_id=current_user_id,
+            entity_type='task',
+            entity_id=task_id,
+            old_obj={'state_name': old_state},
+            new_data={'state_name': 'waiting T&C'},
+            entity_name=task.task_name
+        )
+
+        # Log task state change action
+        ProcessLogger.log_create(
+            user_id=current_user_id,
+            entity_type='task_waiting_tc',
+            entity_id=task_id,
+            entity_name=task.task_name,
+        )
+
+        db.session.commit()
+
+        response = {
+            'message': 'Task set to waiting T&C successfully',
+            'task_id': task_id,
+            'old_state': old_state,
+            'new_state': 'waiting T&C',
+            'updated_items_count': len(updated_items),
+            'updated_items': updated_items
+        }
+
+        if blockchain_errors:
+            response['blockchain_errors'] = blockchain_errors
+            response['warning'] = f'{len(blockchain_errors)} items had blockchain recording errors'
+
+        return jsonify(response)
+
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return jsonify({'error': 'Failed to set task to waiting T&C', 'details': str(e)}), 500

@@ -513,6 +513,7 @@ const MyTask = () => {
             onClose={() => {
               setShowTaskDetail(false);
               setSelectedTask(null);
+              fetchTasks();
             }}
           />
         )}

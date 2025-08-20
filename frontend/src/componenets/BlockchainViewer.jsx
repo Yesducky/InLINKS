@@ -11,10 +11,12 @@ import {
   ExpandMore,
   Inventory as InventoryIcon,
   Visibility as ViewStateIcon,
+  QrCode as QrCodeIcon,
 } from "@mui/icons-material";
 import LoadingSpinner from "./LoadingSpinner.jsx";
 import ItemStateViewer from "./ItemStateViewer.jsx";
 import api from "../services/api.js";
+import { iconMap } from "./CustomIcons.jsx";
 
 const BlockchainViewer = ({ itemId, open, onClose }) => {
   const [blockchainData, setBlockchainData] = useState(null);
@@ -50,7 +52,6 @@ const BlockchainViewer = ({ itemId, open, onClose }) => {
   };
 
   useEffect(() => {
-    console.log(open);
     if (itemId && open) {
       fetchBlockchainHistory();
     }
@@ -87,21 +88,12 @@ const BlockchainViewer = ({ itemId, open, onClose }) => {
         return <AssignmentIcon {...iconProps} style={{ color: "#8b5cf6" }} />;
       case "TRANSFER":
         return <CheckCircleIcon {...iconProps} style={{ color: "#ec4899" }} />;
+      case "SCAN":
+        return <QrCodeIcon {...iconProps} style={{ color: "#f97316" }} />;
+      case "TASK_STATE_CHANGE":
+        return <AssignmentIcon {...iconProps} style={{ color: "#6b7280 " }} />;
       default:
         return <AccessTimeIcon {...iconProps} style={{ color: "#6b7280" }} />;
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case "available":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "assigned":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "used":
-        return "bg-red-100 text-red-800 border-red-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
@@ -117,18 +109,20 @@ const BlockchainViewer = ({ itemId, open, onClose }) => {
       });
     }
 
-    if (transaction.old_status !== transaction.new_status) {
+    if (
+      transaction.old_state?.state_name !== transaction.new_state?.state_name
+    ) {
       changes.push({
         label: "狀態",
-        old: transaction.old_status || "未設定",
-        new: transaction.new_status,
-        type: "status",
+        old: transaction.old_state?.state_name_chinese || "未設定",
+        new: transaction.new_state?.state_name_chinese,
+        type: "state",
       });
     }
 
     if (transaction.old_location !== transaction.new_location) {
       changes.push({
-        label: "位置",
+        label: "任務",
         old: transaction.old_location || "未設定",
         new: transaction.new_location || "未設定",
         type: "location",
@@ -242,11 +236,19 @@ const BlockchainViewer = ({ itemId, open, onClose }) => {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <span
-                        className={`inline-flex items-center rounded-full border px-3 py-1 text-sm font-medium ${getStatusColor(
-                          blockchainData.item.current_status,
-                        )}`}
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium`}
+                        style={{
+                          backgroundColor:
+                            blockchainData.item.current_state.bg_color,
+                          color: blockchainData.item.current_state.text_color,
+                        }}
                       >
-                        {blockchainData.item.current_status}
+                        {/*{iconMap[subTaskInfo.state?.icon] &&*/}
+                        {/*  React.createElement(iconMap[subTaskInfo.state.icon], {*/}
+                        {/*    className: "h-4 w-4",*/}
+                        {/*  })}*/}
+                        {/*&nbsp;*/}
+                        {blockchainData.item.current_state.state_name_chinese}
                       </span>
                       {blockchainData.item.current_quantity && (
                         <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-sm font-medium text-blue-800">
@@ -282,7 +284,7 @@ const BlockchainViewer = ({ itemId, open, onClose }) => {
                             {/* Timeline Line and Circle */}
                             <div className="mr-4 flex flex-shrink-0 flex-col items-center">
                               {/* Circle with Icon */}
-                              <div className="z-10 flex h-10 w-10 items-center justify-center rounded-full border-2 border-blue-500 bg-white shadow-sm">
+                              <div className="border-blue z-10 my-1 flex h-10 w-10 items-center justify-center rounded-full border-2 bg-white shadow-sm">
                                 {getTransactionIcon(
                                   transaction.transaction_type,
                                 )}
@@ -290,7 +292,7 @@ const BlockchainViewer = ({ itemId, open, onClose }) => {
                               {/* Vertical Line - extends through expanded content */}
                               {!isLast && (
                                 <div
-                                  className={`my-2 w-0.5 bg-gray-300 ${isExpanded ? "min-h-[8rem] flex-1" : "h-12"}`}
+                                  className={`my-0.5 w-0.5 bg-gray-300 ${isExpanded ? "min-h-[8rem] flex-1" : "h-13"}`}
                                 ></div>
                               )}
                             </div>
