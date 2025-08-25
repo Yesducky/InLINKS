@@ -46,17 +46,17 @@ const ItemOverview = () => {
   const [visibleCount, setVisibleCount] = useState(10);
 
   // Animation variants
-  const pageVariants = {
-    initial: { opacity: 0 },
-    in: { opacity: 1 },
-    out: { opacity: 0 },
-  };
-
-  const pageTransition = {
-    type: "tween",
-    ease: "easeInOut",
-    duration: 0.3,
-  };
+  // const pageVariants = {
+  //   initial: { opacity: 0 },
+  //   in: { opacity: 1 },
+  //   out: { opacity: 0 },
+  // };
+  //
+  // const pageTransition = {
+  //   type: "tween",
+  //   ease: "easeInOut",
+  //   duration: 0.3,
+  // };
 
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -80,6 +80,7 @@ const ItemOverview = () => {
 
         if (itemsResponse.ok && materialTypesResponse.ok) {
           const itemsData = await itemsResponse.json();
+          console.log(itemsData);
           const materialTypesData = await materialTypesResponse.json();
 
           // Set carton info if carton response is successful
@@ -95,16 +96,16 @@ const ItemOverview = () => {
           setCartonStat(itemsData.statistics || {});
 
           // Calculate stats for carton items
-          const totalItems = items.length;
-          const availableItems = items.filter(
-            (item) => item.status === "available",
+          const totalItems = itemsData.length;
+          const availableItems = itemsData.filter(
+            (item) => item.state.state_name === "Available",
           ).length;
-          const assignedItems = items.filter(
-            (item) => item.status === "assigned",
+          const assignedItems = itemsData.filter(
+            (item) =>
+              item.status === "Reserved" ||
+              item.status === "Assigned to Worker",
           ).length;
-          const usedItems = items.filter(
-            (item) => item.status === "used",
-          ).length;
+          const usedItems = totalItems - availableItems - assignedItems;
 
           setStats({
             totalItems,
@@ -132,14 +133,15 @@ const ItemOverview = () => {
           // Calculate stats
           const totalItems = itemsData.length;
           const availableItems = itemsData.filter(
-            (item) => item.status === "available",
+            (item) => item.state.state_name === "Available",
           ).length;
+          console.log(itemsData);
           const assignedItems = itemsData.filter(
-            (item) => item.status === "assigned",
+            (item) =>
+              item.state.state_name === "Reserved" ||
+              item.state.state_name === "Assigned to Worker",
           ).length;
-          const usedItems = itemsData.filter(
-            (item) => item.status === "used",
-          ).length;
+          const usedItems = totalItems - availableItems - assignedItems;
 
           setStats({
             totalItems,
@@ -169,44 +171,44 @@ const ItemOverview = () => {
     });
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "available":
-        return "bg-green-100 text-green-800";
-      case "assigned":
-        return "bg-yellow-100 text-yellow-800";
-      case "used":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "available":
-        return <CheckCircle className="h-4 w-4" />;
-      case "assigned":
-        return <Warning className="h-4 w-4" />;
-      case "used":
-        return <ItemIcon className="h-4 w-4" />;
-      default:
-        return <ItemIcon className="h-4 w-4" />;
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case "available":
-        return "可用";
-      case "assigned":
-        return "已分配";
-      case "used":
-        return "已使用";
-      default:
-        return "未知";
-    }
-  };
+  // const getStatusColor = (status) => {
+  //   switch (status) {
+  //     case "available":
+  //       return "bg-green-100 text-green-800";
+  //     case "assigned":
+  //       return "bg-yellow-100 text-yellow-800";
+  //     case "used":
+  //       return "bg-red-100 text-red-800";
+  //     default:
+  //       return "bg-gray-100 text-gray-800";
+  //   }
+  // };
+  //
+  // const getStatusIcon = (status) => {
+  //   switch (status) {
+  //     case "available":
+  //       return <CheckCircle className="h-4 w-4" />;
+  //     case "assigned":
+  //       return <Warning className="h-4 w-4" />;
+  //     case "used":
+  //       return <ItemIcon className="h-4 w-4" />;
+  //     default:
+  //       return <ItemIcon className="h-4 w-4" />;
+  //   }
+  // };
+  //
+  // const getStatusText = (status) => {
+  //   switch (status) {
+  //     case "available":
+  //       return "可用";
+  //     case "assigned":
+  //       return "已分配";
+  //     case "used":
+  //       return "已使用";
+  //     default:
+  //       return "未知";
+  //   }
+  // };
 
   const getMaterialTypeName = (materialTypeId) => {
     const materialType = materialTypes.find(
@@ -233,8 +235,19 @@ const ItemOverview = () => {
         item.material_name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     let matchesStatus = true;
-    if (selectedStatus !== "all") {
-      matchesStatus = item.status === selectedStatus;
+    if (selectedStatus === "available") {
+      matchesStatus = item.state.state_name === "Available";
+    }
+    if (selectedStatus === "assigned") {
+      matchesStatus =
+        item.state.state_name === "Assigned to Worker" ||
+        item.state.state_name === "Reserved";
+    }
+    if (selectedStatus === "used") {
+      matchesStatus =
+        item.state.state_name !== "Assigned to Worker" &&
+        item.state.state_name !== "Available" &&
+        item.state.state_name !== "Reserved";
     }
 
     return matchesSearch && matchesStatus;
@@ -569,12 +582,13 @@ const ItemOverview = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span
-                              className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(
-                                item.status,
-                              )}`}
+                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium`}
+                              style={{
+                                backgroundColor: item.state.bg_color,
+                                color: item.state.text_color,
+                              }}
                             >
-                              {getStatusIcon(item.status)}
-                              {getStatusText(item.status)}
+                              {item.state.state_name_chinese}
                             </span>
                           </td>
                           <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
@@ -606,7 +620,7 @@ const ItemOverview = () => {
                       transition={{ delay: index * 0.05, duration: 0.2 }}
                       onClick={() => navigate(`/item/${item.id}`)}
                     >
-                      <div className="flex items-start justify-between">
+                      <div className="flex">
                         <div className="flex items-center gap-3">
                           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
                             <ItemIcon className="text-blue h-5 w-5" />
@@ -621,14 +635,23 @@ const ItemOverview = () => {
                             </h4>
                           </div>
                         </div>
-                        <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(
-                            item.status,
-                          )}`}
-                        >
-                          {getStatusIcon(item.status)}
-                          {getStatusText(item.status)}
-                        </span>
+                        {/*<span*/}
+                        {/*  className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(*/}
+                        {/*    item.status,*/}
+                        {/*  )}`}*/}
+                        {/*>*/}
+                        {/*  {getStatusIcon(item.status)}*/}
+                        {/*  {getStatusText(item.status)}*/}
+                        {/*</span>*/}
+                      </div>
+                      <div
+                        className={`mt-4 inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium`}
+                        style={{
+                          backgroundColor: item.state.bg_color,
+                          color: item.state.text_color,
+                        }}
+                      >
+                        {item.state.state_name_chinese}
                       </div>
 
                       <div className="mt-4 grid grid-cols-2 gap-4">

@@ -55,6 +55,7 @@ const LotOverview = () => {
 
       if (response.ok) {
         const data = await response.json();
+        console.log(data);
 
         if (materialTypeId) {
           // Response for specific material type
@@ -311,9 +312,7 @@ const LotOverview = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-3 py-1 text-sm font-semibold text-yellow-800">
                             <AssignmentTurnedIn className="h-3 w-3" />
-                            {lot.total_quantity -
-                              lot.available_quantity -
-                              (lot.used_quantity || 0) || 0}{" "}
+                            {lot.assigned_quantity || 0}{" "}
                             {lot.material_unit || materialType?.unit || ""}
                           </span>
                         </td>
@@ -403,9 +402,7 @@ const LotOverview = () => {
                       <div className="text-center">
                         <div className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-800">
                           <AssignmentTurnedIn className="h-3 w-3" />
-                          {lot.total_quantity -
-                            lot.available_quantity -
-                            (lot.used_quantity || 0) || 0}
+                          {lot.assigned_quantity || 0}
                         </div>
                         <div className="mt-1 text-xs text-gray-500">已分配</div>
                       </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Header from "../componenets/Header.jsx";
 import LoadingSpinner from "../componenets/LoadingSpinner.jsx";
 import FetchDataFail from "../componenets/FetchDataFail.jsx";
@@ -10,10 +10,11 @@ import {
   Error as CameraOff,
   QrCodeScanner,
   Timeline as BlockchainIcon,
+  CheckCircle,
+  HighlightOff, // added fail icon
 } from "@mui/icons-material";
 import api from "../services/api.js";
 import BlockchainViewer from "../componenets/BlockchainViewer.jsx";
-import { AnimatePresence } from "framer-motion";
 import { backgroundVariants } from "../utils/styles.js";
 
 const Scan = () => {
@@ -26,6 +27,8 @@ const Scan = () => {
   const [error, setError] = useState("");
   const [cameraError, setCameraError] = useState("");
   const [showBlockchain, setShowBlockchain] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false); // success animation state
+  const [showFailure, setShowFailure] = useState(false); // failure animation state
   const videoRef = useRef(null);
   const codeReaderRef = useRef(null);
   const streamRef = useRef(null);
@@ -61,6 +64,20 @@ const Scan = () => {
       stopScanning();
     };
   }, []);
+
+  useEffect(() => {
+    if (showSuccess) {
+      const timer = setTimeout(() => setShowSuccess(false), 1500); // hide after 1 second
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccess]);
+
+  useEffect(() => {
+    if (showFailure) {
+      const timer = setTimeout(() => setShowFailure(false), 1500); // hide after 1 second
+      return () => clearTimeout(timer);
+    }
+  }, [showFailure]);
 
   const startScanning = async () => {
     try {
@@ -176,6 +193,7 @@ const Scan = () => {
           const itemResult = await itemResponse.json();
           console.log(itemResult);
           setItemData(itemResult);
+          setShowSuccess(true); // trigger success animation
         } else {
           throw new Error(`物品 ${itemId} 不存在`);
         }
@@ -194,6 +212,7 @@ const Scan = () => {
           const itemResult = await itemResponse.json();
           console.log(itemResult);
           setItemData(itemResult);
+          setShowSuccess(true); // trigger success animation
         } else {
           throw new Error(`物品 ${itemId} 不存在`);
         }
@@ -201,6 +220,7 @@ const Scan = () => {
     } catch (error) {
       console.error("Error fetching data:", error);
       setError(error.message || "獲取數據失敗");
+      setShowFailure(true); // trigger failure animation
     } finally {
       setLoading(false);
     }
@@ -507,6 +527,58 @@ const Scan = () => {
             </button>
           </form>
         </div>
+
+        {/* Success Animation Overlay */}
+        <AnimatePresence>
+          {showSuccess && (
+            <motion.div
+              className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div
+                initial={{ scale: 0.4, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.4, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                className="flex flex-col items-center justify-center rounded-2xl border border-green-200 bg-white/90 px-12 py-10 shadow-2xl backdrop-blur-md"
+              >
+                <CheckCircle
+                  className="text-green-500"
+                  sx={{ fontSize: 140 }}
+                />
+                <p className="mt-4 text-3xl font-extrabold tracking-wide text-green-600">
+                  掃描成功
+                </p>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        {/* Failure Animation Overlay */}
+        <AnimatePresence>
+          {showFailure && (
+            <motion.div
+              className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div
+                initial={{ scale: 0.4, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.4, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                className="flex flex-col items-center justify-center rounded-2xl border border-red-200 bg-white/90 px-12 py-10 shadow-2xl backdrop-blur-md"
+              >
+                <HighlightOff className="text-red-500" sx={{ fontSize: 140 }} />
+                <p className="mt-4 text-3xl font-extrabold tracking-wide text-red-600">
+                  掃描失敗
+                </p>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
   );

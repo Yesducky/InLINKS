@@ -713,7 +713,7 @@ def scan_verify_item_by_task(task_id, item_id):
         user_id = get_jwt_identity()
         blockchain_service = BlockchainService()
         try:
-            blockchain_service.record_item_scan(item_id, user_id, item.scan + 1)
+            blockchain_service.record_item_scan_verify(item_id, user_id, item.scan + 1)
         except Exception as blockchain_error:
             print(f"Blockchain scan recording failed: {blockchain_error}")
 

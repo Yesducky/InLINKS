@@ -60,6 +60,7 @@ const InventoryOverview = () => {
         const materialTypeQuantitiesData =
           await materialTypeQuantitiesRes.json();
         const lotsData = await lotsRes.json();
+        console.log(materialTypeQuantitiesData);
 
         setMaterialTypeQuantities(
           materialTypeQuantitiesData.material_type_quantities || [],

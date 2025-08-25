@@ -157,14 +157,20 @@ def carton_items(carton_id):
 
     # Calculate statistics
     total_items = len(all_items_with_children)
-    available_items = len([item for item in all_items_with_children if item['status'] == 'available'])
-    used_items = len([item for item in all_items_with_children if item['status'] == 'used'])
-    assigned_items = len([item for item in all_items_with_children if item['status'] == 'assigned'])
+    available_items = len([item for item in all_items_with_children
+                         if item.get('state') and item['state'].get('state_name') == 'Available'])
+    assigned_items = len([item for item in all_items_with_children
+                        if item.get('state') and item['state'].get('state_name') in ['Assigned to Worker', 'Assigned to task', 'Reserved']])
+    used_items = len([item for item in all_items_with_children
+                    if item.get('state') and item['state'].get('state_name') != 'Available'])
 
+    # Calculate quantities including all child items
     total_quantity = sum(item['quantity'] for item in all_items_with_children)
-    available_quantity = sum(item['quantity'] for item in all_items_with_children if item['status'] == 'available')
-    used_quantity = sum(item['quantity'] for item in all_items_with_children if item['status'] == 'used')
-    assigned_quantity = sum(item['quantity'] for item in all_items_with_children if item['status'] == 'assigned')
+    available_quantity = sum(item['quantity'] for item in all_items_with_children
+                           if item.get('state') and item['state'].get('state_name') == 'Available')
+    assigned_quantity = sum(item['quantity'] for item in all_items_with_children
+                          if item.get('state') and item['state'].get('state_name') in ['Assigned to Worker', 'Assigned to task', 'Reserved'])
+    used_quantity = total_quantity - available_quantity - assigned_quantity
 
     # Get factory lot number from parent lot
     factory_lot_number = None
@@ -252,15 +258,20 @@ def cartons_by_lot(lot_id):
 
             # Calculate item statistics including all child items
             total_items = len(all_items_with_children)
-            available_items = len([item for item in all_items_with_children if item['status'] == 'available'])
-            used_items = len([item for item in all_items_with_children if item['status'] == 'used'])
-            assigned_items = len([item for item in all_items_with_children if item['status'] == 'assigned'])
+            available_items = len([item for item in all_items_with_children
+                                 if item.get('state') and item['state'].get('state_name') == 'Available'])
+            assigned_items = len([item for item in all_items_with_children
+                                if item.get('state') and item['state'].get('state_name') in ['Assigned to Worker', 'Assigned to task', 'Reserved']])
+            used_items = len([item for item in all_items_with_children
+                            if item.get('state') and item['state'].get('state_name') != 'Available'])
 
             # Calculate quantity statistics including all child items
             total_quantity = sum(item['quantity'] for item in all_items_with_children)
-            available_quantity = sum(item['quantity'] for item in all_items_with_children if item['status'] == 'available')
-            used_quantity = sum(item['quantity'] for item in all_items_with_children if item['status'] == 'used')
-            assigned_quantity = sum(item['quantity'] for item in all_items_with_children if item['status'] == 'assigned')
+            available_quantity = sum(item['quantity'] for item in all_items_with_children
+                                   if item.get('state') and item['state'].get('state_name') == 'Available')
+            assigned_quantity = sum(item['quantity'] for item in all_items_with_children
+                                  if item.get('state') and item['state'].get('state_name') in ['Assigned to Worker', 'Assigned to task', 'Reserved'])
+            used_quantity = total_quantity - available_quantity - assigned_quantity
 
             # Parse log IDs from JSON string
             try:

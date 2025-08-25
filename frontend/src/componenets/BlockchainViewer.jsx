@@ -16,7 +16,6 @@ import {
 import LoadingSpinner from "./LoadingSpinner.jsx";
 import ItemStateViewer from "./ItemStateViewer.jsx";
 import api from "../services/api.js";
-import { iconMap } from "./CustomIcons.jsx";
 
 const BlockchainViewer = ({ itemId, open, onClose }) => {
   const [blockchainData, setBlockchainData] = useState(null);
@@ -90,6 +89,8 @@ const BlockchainViewer = ({ itemId, open, onClose }) => {
         return <CheckCircleIcon {...iconProps} style={{ color: "#ec4899" }} />;
       case "SCAN":
         return <QrCodeIcon {...iconProps} style={{ color: "#f97316" }} />;
+      case "SCAN VERIFY":
+        return <QrCodeIcon {...iconProps} style={{ color: "#ec4899" }} />;
       case "TASK_STATE_CHANGE":
         return <AssignmentIcon {...iconProps} style={{ color: "#6b7280 " }} />;
       default:
@@ -403,7 +404,7 @@ const BlockchainViewer = ({ itemId, open, onClose }) => {
                                               className="flex w-full items-center gap-2 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-sm font-medium text-purple-700 transition-colors hover:bg-purple-100"
                                             >
                                               <ViewStateIcon className="h-4 w-4" />
-                                              查看此時點物品狀態
+                                              查看物品狀態
                                             </button>
                                           </div>
                                         </div>

@@ -40,15 +40,22 @@ def lots():
 
             # Calculate totals including all child items
             total_items = len(all_items_with_children)
-            available_items = len([item for item in all_items_with_children if item['status'] == 'available'])
-            used_items = len([item for item in all_items_with_children if item['status'] == 'used'])
-            assigned_items = len([item for item in all_items_with_children if item['status'] == 'assigned'])
+
+            # Use state.state_name instead of status for filtering
+            available_items = len([item for item in all_items_with_children
+                                 if item.get('state') and item['state'].get('state_name') == 'Available'])
+            assigned_items = len([item for item in all_items_with_children
+                                if item.get('state') and item['state'].get('state_name') in ['Assigned to Worker', 'Assigned to task', 'Reserved']])
+            used_items = total_items - available_items - assigned_items
 
             # Calculate quantities including all child items
             total_quantity = sum(item['quantity'] for item in all_items_with_children)
-            available_quantity = sum(item['quantity'] for item in all_items_with_children if item['status'] == 'available')
-            used_quantity = sum(item['quantity'] for item in all_items_with_children if item['status'] == 'used')
-            assigned_quantity = sum(item['quantity'] for item in all_items_with_children if item['status'] == 'assigned')
+            available_quantity = sum(item['quantity'] for item in all_items_with_children
+                                   if item.get('state') and item['state'].get('state_name') == 'Available')
+            assigned_quantity = sum(item['quantity'] for item in all_items_with_children
+                                  if item.get('state') and item['state'].get('state_name') in ['Assigned to Worker', 'Assigned to task', 'Reserved'])
+            used_quantity = total_quantity - available_quantity - assigned_quantity
+
 
             result.append({
                 'id': l.id,
@@ -120,15 +127,23 @@ def lot_detail(lot_id):
 
         # Calculate totals including all child items
         total_items = len(all_items_with_children)
-        available_items = len([item for item in all_items_with_children if item['status'] == 'available'])
-        used_items = len([item for item in all_items_with_children if item['status'] == 'used'])
-        assigned_items = len([item for item in all_items_with_children if item['status'] == 'assigned'])
+
+        # Use state.state_name instead of status for filtering
+        available_items = len([item for item in all_items_with_children
+                             if item.get('state') and item['state'].get('state_name') == 'Available'])
+        used_items = len([item for item in all_items_with_children
+                        if item.get('state') and item['state'].get('state_name') in ['Used', 'Completed']])
+        assigned_items = len([item for item in all_items_with_children
+                            if item.get('state') and item['state'].get('state_name') in ['Assigned to Worker', 'Assigned to task', 'Reserved']])
 
         # Calculate quantities including all child items
         total_quantity = sum(item['quantity'] for item in all_items_with_children)
-        available_quantity = sum(item['quantity'] for item in all_items_with_children if item['status'] == 'available')
-        used_quantity = sum(item['quantity'] for item in all_items_with_children if item['status'] == 'used')
-        assigned_quantity = sum(item['quantity'] for item in all_items_with_children if item['status'] == 'assigned')
+        available_quantity = sum(item['quantity'] for item in all_items_with_children
+                               if item.get('state') and item['state'].get('state_name') == 'Available')
+        used_quantity = sum(item['quantity'] for item in all_items_with_children
+                          if item.get('state') and item['state'].get('state_name') in ['Used', 'Completed'])
+        assigned_quantity = sum(item['quantity'] for item in all_items_with_children
+                              if item.get('state') and item['state'].get('state_name') in ['Assigned to Worker', 'Assigned to task', 'Reserved'])
 
         return jsonify({
             'id': lot.id,
@@ -225,15 +240,22 @@ def lots_by_material_type(material_type_id):
 
             # Calculate totals including all child items
             total_items = len(all_items_with_children)
-            available_items = len([item for item in all_items_with_children if item['status'] == 'available'])
-            used_items = len([item for item in all_items_with_children if item['status'] == 'used'])
-            assigned_items = len([item for item in all_items_with_children if item['status'] == 'assigned'])
+
+            # Use state.state_name instead of status for filtering
+            available_items = len([item for item in all_items_with_children
+                                 if item.get('state') and item['state'].get('state_name') == 'Available'])
+            assigned_items = len([item for item in all_items_with_children
+                                if item.get('state') and item['state'].get('state_name') in ['Assigned to Worker', 'Assigned to task', 'Reserved']])
+            used_items = total_items - available_items - assigned_items
+
 
             # Calculate quantities including all child items
             total_quantity = sum(item['quantity'] for item in all_items_with_children)
-            available_quantity = sum(item['quantity'] for item in all_items_with_children if item['status'] == 'available')
-            used_quantity = sum(item['quantity'] for item in all_items_with_children if item['status'] == 'used')
-            assigned_quantity = sum(item['quantity'] for item in all_items_with_children if item['status'] == 'assigned')
+            available_quantity = sum(item['quantity'] for item in all_items_with_children
+                                   if item.get('state') and item['state'].get('state_name') == 'Available')
+            assigned_quantity = sum(item['quantity'] for item in all_items_with_children
+                                  if item.get('state') and item['state'].get('state_name') in ['Assigned to Worker', 'Assigned to task', 'Reserved'])
+            used_quantity = total_quantity - available_quantity - assigned_quantity
 
             result.append({
                 'id': lot.id,
@@ -395,15 +417,21 @@ def get_unassigned_lots():
 
             # Calculate totals including all child items
             total_items = len(all_items_with_children)
-            available_items = len([item for item in all_items_with_children if item['status'] == 'available'])
-            used_items = len([item for item in all_items_with_children if item['status'] == 'used'])
-            assigned_items = len([item for item in all_items_with_children if item['status'] == 'assigned'])
+
+            # Use state.state_name instead of status for filtering
+            available_items = len([item for item in all_items_with_children
+                                 if item.get('state') and item['state'].get('state_name') == 'Available'])
+            assigned_items = len([item for item in all_items_with_children
+                                if item.get('state') and item['state'].get('state_name') in ['Assigned to Worker', 'Assigned to task', 'Reserved']])
+            used_items = total_items - available_items - assigned_items
 
             # Calculate quantities including all child items
             total_quantity = sum(item['quantity'] for item in all_items_with_children)
-            available_quantity = sum(item['quantity'] for item in all_items_with_children if item['status'] == 'available')
-            used_quantity = sum(item['quantity'] for item in all_items_with_children if item['status'] == 'used')
-            assigned_quantity = sum(item['quantity'] for item in all_items_with_children if item['status'] == 'assigned')
+            available_quantity = sum(item['quantity'] for item in all_items_with_children
+                                   if item.get('state') and item['state'].get('state_name') == 'Available')
+            assigned_quantity = sum(item['quantity'] for item in all_items_with_children
+                                  if item.get('state') and item['state'].get('state_name') in ['Assigned to Worker', 'Assigned to task', 'Reserved'])
+            used_quantity = total_quantity - available_quantity - assigned_quantity
 
             result.append({
                 'id': l.id,

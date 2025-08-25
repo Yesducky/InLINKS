@@ -10,15 +10,15 @@ import { motion } from "framer-motion";
 import api from "../services/api.js"; // Import the api module
 import { backgroundVariants } from "../utils/styles.js";
 
-const statusOptions = [
-  {
-    value: "available",
-    label: "可用",
-    icon: <CheckCircle className="h-4 w-4" />,
-  },
-  { value: "assigned", label: "已分配", icon: <Warning className="h-4 w-4" /> },
-  { value: "used", label: "已使用", icon: <Inventory2 className="h-4 w-4" /> },
-];
+// const statusOptions = [
+//   {
+//     value: "available",
+//     label: "可用",
+//     icon: <CheckCircle className="h-4 w-4" />,
+//   },
+//   { value: "assigned", label: "已分配", icon: <Warning className="h-4 w-4" /> },
+//   { value: "used", label: "已使用", icon: <Inventory2 className="h-4 w-4" /> },
+// ];
 
 const Item = () => {
   const { itemId } = useParams();
@@ -216,41 +216,54 @@ const Item = () => {
                 </div>
               )}
             </div>
+            {/*<div>*/}
+            {/*  <div className="mb-1 text-sm text-gray-500">狀態</div>*/}
+            {/*  {editMode ? (*/}
+            {/*    <select*/}
+            {/*      name="status"*/}
+            {/*      className="w-full rounded border border-gray-300 px-3 py-2 text-gray-900"*/}
+            {/*      value={form.status}*/}
+            {/*      onChange={handleChange}*/}
+            {/*    >*/}
+            {/*      {statusOptions.map((opt) => (*/}
+            {/*        <option key={opt.value} value={opt.value}>*/}
+            {/*          {opt.label}*/}
+            {/*        </option>*/}
+            {/*      ))}*/}
+            {/*    </select>*/}
+            {/*  ) : (*/}
+            {/*    <span*/}
+            {/*      className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${*/}
+            {/*        item.status === "available"*/}
+            {/*          ? "bg-green-100 text-green-800"*/}
+            {/*          : item.status === "assigned"*/}
+            {/*            ? "bg-yellow-100 text-yellow-800"*/}
+            {/*            : item.status === "used"*/}
+            {/*              ? "bg-red-100 text-red-800"*/}
+            {/*              : "bg-gray-100 text-gray-800"*/}
+            {/*      }`}*/}
+            {/*    >*/}
+            {/*      {statusOptions.find((opt) => opt.value === item.status)?.icon}*/}
+            {/*      {*/}
+            {/*        statusOptions.find((opt) => opt.value === item.status)*/}
+            {/*          ?.label*/}
+            {/*      }*/}
+            {/*    </span>*/}
+            {/*  )}*/}
+            {/*</div>*/}
             <div>
               <div className="mb-1 text-sm text-gray-500">狀態</div>
-              {editMode ? (
-                <select
-                  name="status"
-                  className="w-full rounded border border-gray-300 px-3 py-2 text-gray-900"
-                  value={form.status}
-                  onChange={handleChange}
-                >
-                  {statusOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <span
-                  className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${
-                    item.status === "available"
-                      ? "bg-green-100 text-green-800"
-                      : item.status === "assigned"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : item.status === "used"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-gray-100 text-gray-800"
-                  }`}
-                >
-                  {statusOptions.find((opt) => opt.value === item.status)?.icon}
-                  {
-                    statusOptions.find((opt) => opt.value === item.status)
-                      ?.label
-                  }
-                </span>
-              )}
+              <span
+                className={`mt-1 inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium`}
+                style={{
+                  backgroundColor: item.state.bg_color,
+                  color: item.state.text_color,
+                }}
+              >
+                {item.state.state_name_chinese}
+              </span>
             </div>
+
             <div>
               <div className="mb-1 text-sm text-gray-500">建立時間</div>
               {editMode && userType === "UT001" ? (

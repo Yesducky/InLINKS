@@ -4,7 +4,7 @@ Material management routes
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import Lot, Carton, Item, StockLog, MaterialType
+from models import Lot, Carton, Item, StockLog, MaterialType, ItemStateType
 from utils.db_utils import generate_id
 from __init__ import db
 import json
@@ -26,20 +26,25 @@ def material_type_quantities():
             Item.material_type_id,
             MaterialType.material_name,
             MaterialType.material_unit,
-            Item.status,
+            ItemStateType.state_name,
+            ItemStateType.id.label('state_id'),
             func.sum(Item.quantity).label('total_quantity'),
             func.count(Item.id).label('item_count')
         ).join(
             MaterialType, Item.material_type_id == MaterialType.id
+        ).join(
+            ItemStateType, Item.state_id == ItemStateType.id
         ).group_by(
             Item.material_type_id,
             MaterialType.material_name,
             MaterialType.material_unit,
-            Item.status
+            ItemStateType.state_name,
+            ItemStateType.id
         ).all()
 
         # Group results by material type
         material_types = {}
+        print('quantities', quantities)
         for qty in quantities:
             material_id = qty.material_type_id
 
@@ -62,15 +67,15 @@ def material_type_quantities():
             quantity = float(qty.total_quantity) if qty.total_quantity else 0
             item_count = qty.item_count
 
-            if qty.status == 'available':
+            if qty.state_name == 'Available':
                 material_types[material_id]['available_quantity'] = quantity
                 material_types[material_id]['available_items'] = item_count
-            elif qty.status == 'used':
-                material_types[material_id]['used_quantity'] = quantity
-                material_types[material_id]['used_items'] = item_count
-            elif qty.status == 'assigned':
+            elif qty.state_name in ['Assigned to Worker', 'Assigned to task', 'Reserved']:
                 material_types[material_id]['assigned_quantity'] = quantity
                 material_types[material_id]['assigned_items'] = item_count
+            else:
+                material_types[material_id]['used_quantity'] = quantity
+                material_types[material_id]['used_items'] = item_count
 
             # Add to totals
             material_types[material_id]['total_quantity'] += quantity
@@ -84,4 +89,5 @@ def material_type_quantities():
         })
 
     except Exception as e:
+        print(e)
         return jsonify({'error': f'Failed to get material type quantities: {str(e)}'}), 500

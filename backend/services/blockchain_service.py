@@ -1,7 +1,9 @@
 import hashlib
 import json
 from datetime import datetime
-from models import BlockchainBlock, BlockchainTransaction, BlockchainItemState, Item, User
+from models import BlockchainBlock, BlockchainTransaction, BlockchainItemState, Item, User, ItemStateType
+import traceback
+
 from __init__ import db
 from utils.db_utils import generate_id
 
@@ -10,7 +12,7 @@ class BlockchainService:
     
     def __init__(self):
         self.current_block_number = 0
-        self.MAX_TRANSACTIONS_PER_BLOCK = 10  # Maximum transactions per block
+        self.MAX_TRANSACTIONS_PER_BLOCK = 1  # Maximum transactions per block
 
     def calculate_transaction_hash(self, transaction_data, transaction_id=None, timestamp=None):
         """Calculate SHA256 hash of transaction data with unique identifiers"""
@@ -150,7 +152,6 @@ class BlockchainService:
 
     def _update_item_state(self, transaction):
         """Update or create blockchain item state record"""
-        from models import BlockchainItemState, Item
 
         # Get the item to determine current state
         item = Item.query.get(transaction.item_id)
@@ -226,7 +227,6 @@ class BlockchainService:
         timestamp = datetime.now().isoformat()
 
         # Get or create the 'available' state from ItemStateType
-        from models import ItemStateType
         available_state = ItemStateType.query.filter_by(state_name='available').first()
 
         transaction_data = {
@@ -382,7 +382,6 @@ class BlockchainService:
         
         if item:
             # Get current state from ItemStateType
-            from models import ItemStateType
             if item.state_id:
                 old_state = ItemStateType.query.get(item.state_id)
             
@@ -435,8 +434,6 @@ class BlockchainService:
             if not item:
                 raise ValueError(f"Item {item_id} not found")
 
-            # Get state information using ItemStateType
-            from models import ItemStateType
 
             # If state IDs are not provided, determine them automatically
             if old_state_id is None and item.state_id:
@@ -527,8 +524,6 @@ class BlockchainService:
     
     def get_item_current_state(self, item_id):
         """Get current blockchain state for an item"""
-        from models import BlockchainItemState, ItemStateType
-        
         # Use BlockchainItemState for the most accurate current state
         current_state = BlockchainItemState.query.filter_by(
             item_id=item_id,
@@ -597,7 +592,6 @@ class BlockchainService:
             # Get state information
             state_name = None
             if item_state.current_state_id:
-                from models import ItemStateType
                 state = ItemStateType.query.get(item_state.current_state_id)
                 state_name = state.state_name if state else None
 
@@ -633,9 +627,54 @@ class BlockchainService:
 
         except Exception as e:
             print(f"Error getting item state for transaction: {e}")
-            import traceback
+
             traceback.print_exc()
             return None
+
+    def record_item_scan_verify(self, item_id, user_id, scan_count, timestamp=None):
+        """
+        Record a scan event for an item on the blockchain
+        """
+        if timestamp is None:
+            timestamp = datetime.now()
+
+        # Get the current item to populate quantity and state fields
+        item = Item.query.get(item_id)
+        if not item:
+            raise ValueError(f"Item {item_id} not found")
+
+        transaction_id = generate_id('BCT', BlockchainTransaction)
+        transaction_data = {
+            'action': 'SCAN VERIFY',
+            'item_id': item_id,
+            'user_id': user_id,
+            'scan_count': scan_count,
+            'timestamp': timestamp.isoformat(),
+            'transaction_type': 'SCAN VERIFY'
+        }
+
+        transaction_hash = self.calculate_transaction_hash(transaction_data, transaction_id, timestamp.isoformat())
+
+        transaction = BlockchainTransaction(
+            id=transaction_id,
+            transaction_hash=transaction_hash,
+            item_id=item_id,
+            user_id=user_id,
+            transaction_type='SCAN VERIFY',
+            old_quantity=float(item.quantity),
+            new_quantity=float(item.quantity),  # Quantity doesn't change on scan
+            old_state_id=item.state_id,
+            new_state_id=item.state_id,  # State doesn't change on scan
+            old_location=item.location,
+            new_location=item.location,  # Location doesn't change on scan
+            transaction_data=json.dumps(transaction_data)
+        )
+
+        current_block = self.add_transaction_to_block(transaction)
+        db.session.commit()
+
+        print(f"Scan transaction {transaction.id} added to block {current_block.id}")
+        return transaction
 
     def record_item_scan(self, item_id, user_id, scan_count, timestamp=None):
         """
@@ -696,7 +735,6 @@ class BlockchainService:
         Returns:
             tuple: (updated_items, blockchain_errors)
         """
-        from models import Item, ItemStateType, BlockchainTransaction
 
         # Get the target state for items
         target_item_state = ItemStateType.query.filter_by(state_name=target_state).first()
@@ -742,7 +780,7 @@ class BlockchainService:
                 tx_id = generate_id("BCT", BlockchainTransaction)
 
                 tx_data = {
-                    "transaction_type": "TASK_STATE_CHANGE",
+                    "transaction_type": "TASK STATE CHANGE",
                     "item_id": item.id,
                     "task_id": task_id,
                     "user_id": user_id,
@@ -767,7 +805,7 @@ class BlockchainService:
                     transaction_hash=tx_hash,
                     item_id=item.id,
                     user_id=user_id,
-                    transaction_type="TASK_STATE_CHANGE",
+                    transaction_type="TASK STATE CHANGE",
                     old_quantity=float(item.quantity),
                     new_quantity=float(item.quantity),
                     old_state_id=old_state_id,
