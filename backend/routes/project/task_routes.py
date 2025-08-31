@@ -182,13 +182,7 @@ def get_tasks_by_user(user_id):
             'task_name': t.task_name,
             'description': t.description,
             'state_id': t.state_id,
-            'state': {
-                'id': t.state.id,
-                'state_name': t.state.state_name,
-                'bg_color': t.state.bg_color,
-                'text_color': t.state.text_color,
-                'icon': t.state.icon
-            } if t.state else None,
+            'state': t.state.to_dict() if t.state else None,
             'start_date': t.start_date.isoformat() if t.start_date else None,
             'due_date': t.due_date.isoformat() if t.due_date else None,
             'completed_at': t.completed_at.isoformat() if t.completed_at else None,
@@ -426,3 +420,103 @@ def set_task_waiting_tc(task_id):
         db.session.rollback()
         print(e)
         return jsonify({'error': 'Failed to set task to waiting T&C', 'details': str(e)}), 500
+
+@task_bp.route('/tasks/<string:task_id>/complete', methods=['POST'])
+@jwt_required()
+def complete_task(task_id):
+    """
+    POST: Complete a task - set state to 'completed' and set completed_at
+    Updates all assigned items to 'Completed' state via blockchain
+    Can be called from 'waiting T&C' or other valid states
+    """
+    try:
+        task = Task.query.get_or_404(task_id)
+        current_user_id = get_jwt_identity()
+
+        # Check if task is assigned to the current user
+        if task.assignee_id != current_user_id:
+            return jsonify({'error': 'You can only complete tasks assigned to you'}), 403
+
+        # Check current state - allow from waiting T&C, in_progress, or assigned_worker
+        valid_states = ['waiting T&C', 'in_progress', 'assigned_worker']
+        if not task.state or task.state.state_name not in valid_states:
+            return jsonify({'error': f'Tasks can only be completed from states: {", ".join(valid_states)}'}), 400
+
+        # Get the completed state for tasks
+        completed_state = ProcessStateType.query.filter_by(
+            state_type='task',
+            state_name='completed'
+        ).first()
+
+        if not completed_state:
+            return jsonify({'error': 'completed state not found'}), 500
+
+        # Get the 'Completed' state for items
+        item_completed_state = ItemStateType.query.filter_by(
+            state_name='Completed'
+        ).first()
+
+        if not item_completed_state:
+            return jsonify({'error': 'Item Completed state not found'}), 500
+
+        # Initialize blockchain service
+        blockchain_service = BlockchainService()
+
+        # Get all items assigned to this task
+        task_items = Item.query.filter(
+            Item.task_ids.contains(task_id)
+        ).all()
+
+        # Extract item IDs for blockchain processing
+        item_ids = [item.id for item in task_items]
+
+        # Update item states via blockchain service
+        updated_items, blockchain_errors = blockchain_service.record_task_state_changes(
+            task_id, item_ids, current_user_id, 'Completed'
+        )
+
+        # Update task state and completed_at
+        old_state = task.state.state_name if task.state else None
+        task.state_id = completed_state.id
+        task.completed_at = datetime.datetime.now()
+
+        # Log the state change
+        ProcessLogger.log_update(
+            user_id=current_user_id,
+            entity_type='task',
+            entity_id=task_id,
+            old_obj={'state_name': old_state, 'completed_at': None},
+            new_data={'state_name': 'completed', 'completed_at': task.completed_at.isoformat()},
+            entity_name=task.task_name
+        )
+
+        # Log task completion action
+        ProcessLogger.log_create(
+            user_id=current_user_id,
+            entity_type='task_completed',
+            entity_id=task_id,
+            entity_name=task.task_name,
+        )
+
+        db.session.commit()
+
+        response = {
+            'message': 'Task completed successfully',
+            'task_id': task_id,
+            'old_state': old_state,
+            'new_state': 'completed',
+            'completed_at': task.completed_at.isoformat(),
+            'updated_items_count': len(updated_items),
+            'updated_items': updated_items
+        }
+
+        if blockchain_errors:
+            response['blockchain_errors'] = blockchain_errors
+            response['warning'] = f'{len(blockchain_errors)} items had blockchain recording errors'
+
+        return jsonify(response)
+
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return jsonify({'error': 'Failed to complete task', 'details': str(e)}), 500

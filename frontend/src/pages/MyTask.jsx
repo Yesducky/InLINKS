@@ -128,6 +128,7 @@ const MyTask = () => {
 
       if (response.ok) {
         const tasksData = await response.json();
+        console.log(tasksData);
         const tasks = Array.isArray(tasksData) ? tasksData : [];
         setTasks(tasks);
       } else {
@@ -364,7 +365,7 @@ const MyTask = () => {
                   transition={{ delay: index * 0.05 }}
                   layout
                 >
-                  {state.state_name}
+                  {state.state_name_chinese}
                 </motion.button>
               ))}
             </div>
@@ -430,7 +431,7 @@ const MyTask = () => {
                         className: "h-4 w-4",
                       })}{" "}
                     &nbsp;
-                    {task.state?.state_name}
+                    {task.state?.state_name_chinese || "未知狀態"}
                   </span>
                 </div>
 

@@ -133,8 +133,16 @@ const PrintLabelDetail = ({ item, taskId, onClose, onPrintSuccess }) => {
                   </p>
                 </div>
                 <div>
-                  <span className="text-sm text-gray-500">標籤</span>
-                  <p className="font-medium">{barcodeData}</p>
+                  <span className="text-sm text-gray-500">狀態</span>
+                  <p
+                    className={`w-fit px-2 py-1 text-center text-sm font-medium`}
+                    style={{
+                      backgroundColor: item.state.bg_color,
+                      color: item.state.text_color,
+                    }}
+                  >
+                    {item.state.state_name_chinese}
+                  </p>
                 </div>
               </div>
 

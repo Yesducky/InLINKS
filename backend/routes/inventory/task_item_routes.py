@@ -668,10 +668,11 @@ def get_task_items_summary(task_id):
     except Exception as e:
         return jsonify({'error': 'Failed to get task items summary', 'details': str(e)}), 500
 
-@task_item_bp.route('/tasks/<string:task_id>/scan_verify/items/<string:item_id>', methods=['GET'])
+#for assigned worker state to add scan by 1
+@task_item_bp.route('/tasks/<string:task_id>/scan_verify/items/<string:item_id>/<string:scan_type>', methods=['GET'])
 @jwt_required()
 @require_permission('items.read')
-def scan_verify_item_by_task(task_id, item_id):
+def scan_verify_item_by_task(task_id, item_id, scan_type):
     """
     GET: Verify scanned item by task ID and item ID
     This endpoint verifies that an item is assigned to a specific task and returns item details
@@ -679,11 +680,9 @@ def scan_verify_item_by_task(task_id, item_id):
     try:
         # Validate task existence
         task = Task.query.get_or_404(task_id)
-        print(item_id)
 
         # Validate item existence
         item = Item.query.get_or_404(item_id)
-        print(item_id)
 
         # Check if item is assigned to this task
         try:
@@ -709,25 +708,43 @@ def scan_verify_item_by_task(task_id, item_id):
                 'is_verified': False
             }), 200
 
-        # Record scan event on blockchain
+        print(scan_type)
         user_id = get_jwt_identity()
         blockchain_service = BlockchainService()
-        try:
-            blockchain_service.record_item_scan_verify(item_id, user_id, item.scan + 1)
-        except Exception as blockchain_error:
-            print(f"Blockchain scan recording failed: {blockchain_error}")
 
-        # Increment scan count
-        item.scan += 1
-        db.session.commit()
+        if scan_type == 'in_progress':
+            # Record scan event on blockchain
+            try:
+                blockchain_service.record_item_scan_verify(item_id, user_id, item.scan + 1, "WORKER")
+            except Exception as blockchain_error:
+                print(f"Blockchain scan recording failed: {blockchain_error}")
 
-        # Get material type information
-        material_type = MaterialType.query.get(item.material_type_id)
+            # Increment scan count
+            item.scan += 1
+            db.session.commit()
 
-        # Get state information
-        state_data = None
-        if item.state:
-            state_data = item.state.to_dict()
+
+        elif scan_type == 'waiting T&C':
+            # For waiting T&C scan type, change item state to 'T&C Pass' and record scan event on blockchain
+            tc_pass_state = ItemStateType.query.filter_by(state_name='T&C Pass').first()
+            if tc_pass_state:
+                item.state_id = tc_pass_state.id
+            try:
+                blockchain_service.record_item_scan_verify(item_id, user_id, item.scan, "T&C")
+            except Exception as blockchain_error:
+                print(f"Blockchain scan recording failed: {blockchain_error}")
+            db.session.commit()
+
+
+        else:
+            return jsonify({
+                'error': 'Invalid scan type. Must be "in_progress" or "waiting T&C"',
+                'item_id': item_id,
+                'task_id': task_id,
+                'is_verified': False
+            }), 400
+
+
 
         # Build comprehensive response
         response = {
@@ -743,13 +760,10 @@ def scan_verify_item_by_task(task_id, item_id):
             'item_details': {
                 'id': item.id,
                 'label_count': item.label_count,
-                'material_type_name': material_type.material_name if material_type else None,
-                'material_type_unit': material_type.material_unit if material_type else None,
                 'scan_count': item.scan,
                 'location': item.location,
                 'status': item.status,
                 'state_id': item.state_id,
-                'state': state_data,
                 'assigned_tasks': task_ids,
             },
             'verification_timestamp': get_hk_time().isoformat()
@@ -770,6 +784,7 @@ def scan_verify_item_by_task(task_id, item_id):
             'is_verified': False
         }), 200
 
+# Check if all items assigned to a task have been scanned at least once
 @task_item_bp.route('/tasks/<string:task_id>/items/scanned-status', methods=['GET'])
 @jwt_required()
 @require_permission('items.read')
@@ -819,6 +834,73 @@ def check_task_items_scanned(task_id):
         return jsonify(result), 200
     except Exception as e:
         return jsonify({'error': 'Failed to check scanned status', 'details': str(e)}), 500
+
+# Check if all items assigned to a task have T&C Pass state
+@task_item_bp.route('/tasks/<string:task_id>/items/tc-status', methods=['GET'])
+@jwt_required()
+@require_permission('items.read')
+def check_task_items_tc_status(task_id):
+    """
+    GET: Check if all items assigned to the task have "T&C Pass" state
+    Returns summary counts and lists of T&C passed/not passed items.
+    """
+    try:
+        task = Task.query.get_or_404(task_id)
+
+        # Get all items assigned to this task
+        items = Item.query.filter(
+            Item.task_ids.contains(task_id)
+        ).all()
+
+        # Get the T&C Pass state ID
+        tc_pass_state = ItemStateType.query.filter_by(state_name='T&C Pass').first()
+        tc_pass_state_id = tc_pass_state.id if tc_pass_state else None
+
+        total_items = len(items)
+        tc_passed_items = []
+        tc_not_passed_items = []
+
+        for it in items:
+            # Get state information
+            state_data = None
+            state_name = None
+            if it.state:
+                state_data = it.state.to_dict()
+                state_name = it.state.state_name
+
+            entry = {
+                'id': it.id,
+                'quantity': float(it.quantity),
+                'scan': int(it.scan),
+                'status': it.status,
+                'state_id': it.state_id,
+                'state': state_data,
+                'state_name': state_name,
+                'label_count': it.label_count,
+                'location': it.location,
+            }
+
+            # Check if item has T&C Pass state
+            if it.state_id == tc_pass_state_id:
+                tc_passed_items.append(entry)
+            else:
+                tc_not_passed_items.append(entry)
+
+        result = {
+            'task_id': task_id,
+            'task_name': task.task_name,
+            'total_assigned_items': total_items,
+            'tc_passed_items': len(tc_passed_items),
+            'tc_not_passed_items': len(tc_not_passed_items),
+            'all_tc_passed': total_items > 0 and len(tc_not_passed_items) == 0,
+            'items_not_tc_passed': tc_not_passed_items,
+            'items_tc_passed': tc_passed_items,
+            'tc_pass_state_id': tc_pass_state_id
+        }
+
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({'error': 'Failed to check T&C status', 'details': str(e)}), 500
 
 def _get_available_items_for_assignment(lot_id, material_type_id, item_quantity=None):
         """

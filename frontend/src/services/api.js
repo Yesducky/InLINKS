@@ -139,9 +139,11 @@ const api = {
     get(`/api/tasks/${taskId}/items/summary`, true), // get items summary by task id
   checkItemsAllScannedByTaskId: (taskId) =>
     get(`/api/tasks/${taskId}/items/scanned-status`, true), // check if all items are scanned by task id
+  checkItemsAllTCPassedByTaskId: (taskId) =>
+    get(`/api/tasks/${taskId}/items/tc-status`, true), // check if all items passed TC by task id
   scanItem: (itemId) => get(`/api/items/${itemId}/scan`, true), // scan an item by id
-  scanItemVerify: (itemId, taskId) =>
-    get(`/api/tasks/${taskId}/scan_verify/items/${itemId}`, true), // verify scanned item by id and task id
+  scanItemVerify: (itemId, taskId, scan_type) =>
+    get(`/api/tasks/${taskId}/scan_verify/items/${itemId}/${scan_type}`, true), // verify scanned item by id and task id
 
   //stock logs: keep track any modification of items/ cartons/ lots
   getStockLog: (params) => get(`/api/get_stock_logs?${params}`, true),
@@ -166,6 +168,7 @@ const api = {
   getTasksByUserId: (id) => get(`/api/tasks/by_user/${id}`, true), // get all tasks by user id
   startTask: (id) => post(`/api/tasks/${id}/start`, {}, true), // start a task by id
   waitTCTask: (id) => post(`/api/tasks/${id}/waiting-tc`, {}, true), // wait for task completion by id
+  completeTask: (id) => post(`/api/tasks/${id}/complete`, {}, true), // complete a task by id
 
   //subtasks
   postSubtask: (data) => post("/api/subtasks", data, true), // create a new subtask

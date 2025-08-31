@@ -9,7 +9,7 @@ import {
 import { BrowserMultiFormatReader } from "@zxing/library";
 import api from "../services/api.js";
 
-const ScanLabel = ({ taskId, onClose, onScanSuccess }) => {
+const ScanLabel = ({ taskId, onClose, onScanSuccess, scanType }) => {
   const videoRef = useRef(null);
   const codeReaderRef = useRef(null);
   const streamRef = useRef(null);
@@ -140,7 +140,7 @@ const ScanLabel = ({ taskId, onClose, onScanSuccess }) => {
 
     try {
       setVerifying(true);
-      const resp = await api.scanItemVerify(itemId, taskId);
+      const resp = await api.scanItemVerify(itemId, taskId, scanType);
       if (resp.ok) {
         // try to read message/json if any
         const data = await resp.json();

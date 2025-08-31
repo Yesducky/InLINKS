@@ -53,17 +53,6 @@ def get_process_logs(entity_type, entity_id):
 def get_process_state_types_by_type(state_type):
     states = ProcessStateType.query.filter_by(state_type=state_type).all()
     return jsonify([
-        {
-            'id': s.id,
-            'state_name': s.state_name,
-            'state_type': s.state_type,
-            'description': s.description,
-            'bg_color': s.bg_color,
-            'text_color': s.text_color,
-            'icon': s.icon,
-            'order_index': s.order_index,
-            'is_active': s.is_active,
-            'created_at': s.created_at.isoformat() if s.created_at else None
-        }
+        s.to_dict()
         for s in states
     ])

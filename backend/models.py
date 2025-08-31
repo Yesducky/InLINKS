@@ -59,6 +59,7 @@ class ProcessStateType(db.Model):
     __tablename__ = 'process_state_types'
     id = db.Column(db.String(20), primary_key=True)  # PST001, PST002, etc.
     state_name = db.Column(db.String(50), nullable=False)  # e.g., planning, active, completed
+    state_name_chinese = db.Column(db.String(50), nullable=False)  # Chinese name for state
     state_type = db.Column(db.String(20), nullable=False)  # project, workorder, task, subtask
     description = db.Column(db.Text)
     bg_color = db.Column(db.String(20), nullable=True)
@@ -72,6 +73,7 @@ class ProcessStateType(db.Model):
         return {
             'id': self.id,
             'state_name': self.state_name,
+            'state_name_chinese': self.state_name_chinese,
             'state_type': self.state_type,
             'description': self.description,
             'bg_color': self.bg_color,

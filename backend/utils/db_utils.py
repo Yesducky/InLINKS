@@ -239,27 +239,27 @@ def init_default_data():
     # Create process state types
     process_state_types_data = [
         # Project states
-        {'state_name': 'pending', 'state_type': 'project', 'description': 'Project is in pending phase', 'bg_color': '#FFF3E0', 'text_color': '#FFA500', 'icon': 'PendingIcon', 'order_index': 1},
-        {'state_name': 'active', 'state_type': 'project', 'description': 'Project is actively being worked on', 'bg_color': '#E0F7FA', 'text_color': '#008000', 'icon': 'ActiveIcon', 'order_index': 2},
-        {'state_name': 'completed', 'state_type': 'project', 'description': 'Project has been completed', 'bg_color': '#E3F2FD', 'text_color': '#0000FF', 'icon': 'CompletedIcon', 'order_index': 4},
+        {'state_name': 'pending', 'state_name_chinese': '待處理', 'state_type': 'project', 'description': 'Project is in pending phase', 'bg_color': '#FFF3E0', 'text_color': '#FFA500', 'icon': 'PendingIcon', 'order_index': 1},
+        {'state_name': 'active', 'state_name_chinese': '進行中', 'state_type': 'project', 'description': 'Project is actively being worked on', 'bg_color': '#E0F7FA', 'text_color': '#008000', 'icon': 'ActiveIcon', 'order_index': 2},
+        {'state_name': 'completed', 'state_name_chinese': '已完成', 'state_type': 'project', 'description': 'Project has been completed', 'bg_color': '#E3F2FD', 'text_color': '#0000FF', 'icon': 'CompletedIcon', 'order_index': 4},
 
         # Work Order states
-        {'state_name': 'pending', 'state_type': 'work_order', 'description': 'Work order is pending assignment', 'bg_color': '#FFF3E0', 'text_color': '#FFA500', 'icon': 'PendingIcon', 'order_index': 1},
-        {'state_name': 'active', 'state_type': 'work_order', 'description': 'Work order is under review', 'bg_color': '#FFFFF0', 'text_color': '#FFFF00', 'icon': 'ActiveIcon', 'order_index': 3},
-        {'state_name': 'completed', 'state_type': 'work_order', 'description': 'Work order has been completed', 'bg_color': '#E3F2FD', 'text_color': '#0000FF', 'icon': 'CompletedIcon', 'order_index': 4},
+        {'state_name': 'pending', 'state_name_chinese': '待處理', 'state_type': 'work_order', 'description': 'Work order is pending assignment', 'bg_color': '#FFF3E0', 'text_color': '#FFA500', 'icon': 'PendingIcon', 'order_index': 1},
+        {'state_name': 'active', 'state_name_chinese': '進行中', 'state_type': 'work_order', 'description': 'Work order is under review', 'bg_color': '#FFFFF0', 'text_color': '#FFFF00', 'icon': 'ActiveIcon', 'order_index': 3},
+        {'state_name': 'completed', 'state_name_chinese': '已完成', 'state_type': 'work_order', 'description': 'Work order has been completed', 'bg_color': '#E3F2FD', 'text_color': '#0000FF', 'icon': 'CompletedIcon', 'order_index': 4},
 
         # Task states
-        {'state_name': 'pending', 'state_type': 'task', 'description': 'Task is pending assignment', 'bg_color': '#FFF3E0', 'text_color': '#FFA500', 'icon': 'PendingIcon', 'order_index': 1},
-        {'state_name': 'assigned_worker', 'state_type': 'task', 'description': 'Task has been assigned to a worker', 'bg_color': '#FFFFF0', 'text_color': '#FFFF00', 'icon': 'AssignedWorkerIcon', 'order_index': 2},
-        {'state_name': 'in_progress', 'state_type': 'task', 'description': 'Task is currently being worked on', 'bg_color': '#E0F7FA', 'text_color': '#008000', 'icon': 'ActiveIcon', 'order_index': 3},
-        {'state_name': 'waiting T&C', 'state_type': 'task', 'description': 'Task is waiting for testing and commissioning', 'bg_color': '#FFFDE7', 'text_color': '#FF9800', 'icon': 'WaitingIcon', 'order_index': 4},
-        {'state_name': 'completed', 'state_type': 'task', 'description': 'Task has been completed', 'bg_color': '#E3F2FD', 'text_color': '#0000FF', 'icon': 'CompletedIcon', 'order_index': 5},
+        {'state_name': 'pending', 'state_name_chinese': '待處理', 'state_type': 'task', 'description': 'Task is pending assignment', 'bg_color': '#FFF3E0', 'text_color': '#FFA500', 'icon': 'PendingIcon', 'order_index': 1},
+        {'state_name': 'assigned_worker', 'state_name_chinese': '已分配工人', 'state_type': 'task', 'description': 'Task has been assigned to a worker', 'bg_color': '#FFFFF0', 'text_color': '#FFFF00', 'icon': 'AssignedWorkerIcon', 'order_index': 2},
+        {'state_name': 'in_progress', 'state_name_chinese': '進行中', 'state_type': 'task', 'description': 'Task is currently being worked on', 'bg_color': '#E0F7FA', 'text_color': '#008000', 'icon': 'ActiveIcon', 'order_index': 3},
+        {'state_name': 'waiting T&C', 'state_name_chinese': '等待核驗', 'state_type': 'task', 'description': 'Task is waiting for testing and commissioning', 'bg_color': '#FFFDE7', 'text_color': '#FF9800', 'icon': 'WaitingIcon', 'order_index': 4},
+        {'state_name': 'completed', 'state_name_chinese': '已完成', 'state_type': 'task', 'description': 'Task has been completed', 'bg_color': '#E3F2FD', 'text_color': '#0000FF', 'icon': 'CompletedIcon', 'order_index': 5},
 
         # SubTask states
-        {'state_name': 'pending', 'state_type': 'subtask', 'description': 'Subtask is pending assignment', 'bg_color': '#FFF3E0', 'text_color': '#FFA500', 'icon': 'PendingIcon', 'order_index': 1},
-        {'state_name': 'assigned_worker', 'state_type': 'subtask', 'description': 'Subtask has been assigned to a worker', 'bg_color': '#FFFFF0', 'text_color': '#FFFF00', 'icon': 'AssignedWorkerIcon', 'order_index': 2},
-        {'state_name': 'in_progress', 'state_type': 'subtask', 'description': 'Subtask is currently being worked on', 'bg_color': '#E0F7FA', 'text_color': '#008000', 'icon': 'ActiveIcon', 'order_index': 3},
-        {'state_name': 'completed', 'state_type': 'subtask', 'description': 'Subtask has been completed', 'bg_color': '#E3F2FD', 'text_color': '#0000FF', 'icon': 'CompletedIcon', 'order_index': 4}
+        {'state_name': 'pending', 'state_name_chinese': '待處理', 'state_type': 'subtask', 'description': 'Subtask is pending assignment', 'bg_color': '#FFF3E0', 'text_color': '#FFA500', 'icon': 'PendingIcon', 'order_index': 1},
+        {'state_name': 'assigned_worker', 'state_name_chinese': '已分配工人', 'state_type': 'subtask', 'description': 'Subtask has been assigned to a worker', 'bg_color': '#FFFFF0', 'text_color': '#FFFF00', 'icon': 'AssignedWorkerIcon', 'order_index': 2},
+        {'state_name': 'in_progress', 'state_name_chinese': '進行中', 'state_type': 'subtask', 'description': 'Subtask is currently being worked on', 'bg_color': '#E0F7FA', 'text_color': '#008000', 'icon': 'ActiveIcon', 'order_index': 3},
+        {'state_name': 'completed', 'state_name_chinese': '已完成', 'state_type': 'subtask', 'description': 'Subtask has been completed', 'bg_color': '#E3F2FD', 'text_color': '#0000FF', 'icon': 'CompletedIcon', 'order_index': 4}
     ]
     
     for i, pst_data in enumerate(process_state_types_data, 1):
@@ -270,6 +270,7 @@ def init_default_data():
             process_state_type = ProcessStateType(
                 id=f'PST{i:03d}',
                 state_name=pst_data['state_name'],
+                state_name_chinese=pst_data['state_name_chinese'],
                 state_type=pst_data['state_type'],
                 description=pst_data['description'],
                 bg_color=pst_data['bg_color'],
@@ -288,9 +289,9 @@ def init_default_data():
         {'state_name': 'In Progress', 'state_name_chinese': '進行中', 'description': 'Actively being used/installed', 'description_chinese': '正在積極使用/安裝', 'bg_color': '#E0F7FA', 'text_color': '#00BCD4', 'icon': 'PlayArrowIcon', 'order_index': 5},
         {'state_name': 'Partially Used', 'state_name_chinese': '部分使用', 'description': 'Partially consumed (remains trackable)', 'description_chinese': '部分消耗（仍可追踪）', 'bg_color': '#FFFDE7', 'text_color': '#FFC107', 'icon': 'IncompleteCircleIcon', 'order_index': 6},
         {'state_name': 'Waiting Inspection', 'state_name_chinese': '等待檢查', 'description': 'Returned, needs quality check', 'description_chinese': '已退回，需要質量檢查', 'bg_color': '#FFEBEE', 'text_color': '#F44336', 'icon': 'ScheduleIcon', 'order_index': 7},
-        {'state_name': 'Waiting T&C', 'state_name_chinese': '等待測試和調試', 'description': 'Needs contractual/compliance validation', 'description_chinese': '需要合同/合規驗證', 'bg_color': '#FFF3E0', 'text_color': '#FF9800', 'icon': 'PendingIcon', 'order_index': 8},
-        {'state_name': 'T&C Pass', 'state_name_chinese': '測試通過', 'description': 'Passed compliance check', 'description_chinese': '已通過合規檢查', 'bg_color': '#E8F5E8', 'text_color': '#4CAF50', 'icon': 'VerifiedIcon', 'order_index': 9},
-        {'state_name': 'T&C Fail', 'state_name_chinese': '測試失敗', 'description': 'Failed compliance/standards', 'description_chinese': '未通過合規/標準', 'bg_color': '#FFEBEE', 'text_color': '#F44336', 'icon': 'ErrorIcon', 'order_index': 10},
+        {'state_name': 'Waiting T&C', 'state_name_chinese': '等待核驗', 'description': 'Needs contractual/compliance validation', 'description_chinese': '需要合同/合規驗證', 'bg_color': '#FFF3E0', 'text_color': '#FF9800', 'icon': 'PendingIcon', 'order_index': 8},
+        {'state_name': 'T&C Pass', 'state_name_chinese': '核驗通過', 'description': 'Passed compliance check', 'description_chinese': '已通過合規檢查', 'bg_color': '#E8F5E8', 'text_color': '#4CAF50', 'icon': 'VerifiedIcon', 'order_index': 9},
+        {'state_name': 'T&C Fail', 'state_name_chinese': '核驗失敗', 'description': 'Failed compliance/standards', 'description_chinese': '未通過合規/標準', 'bg_color': '#FFEBEE', 'text_color': '#F44336', 'icon': 'ErrorIcon', 'order_index': 10},
         {'state_name': 'Returned to Vendor', 'state_name_chinese': '退回供應商', 'description': 'Sent back to supplier', 'description_chinese': '已退回給供應商', 'bg_color': '#F3E5F5', 'text_color': '#9C27B0', 'icon': 'AssignmentReturnIcon', 'order_index': 11},
         {'state_name': 'Quarantined', 'state_name_chinese': '隔離', 'description': 'Isolated pending investigation', 'description_chinese': '隔離等待調查', 'bg_color': '#FFEBEE', 'text_color': '#F44336', 'icon': 'BlockIcon', 'order_index': 12},
         {'state_name': 'Damaged', 'state_name_chinese': '損壞', 'description': 'Physically compromised', 'description_chinese': '物理損壞', 'bg_color': '#FFEBEE', 'text_color': '#F44336', 'icon': 'ReportProblemIcon', 'order_index': 13},

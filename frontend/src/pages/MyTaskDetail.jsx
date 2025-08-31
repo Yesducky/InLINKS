@@ -11,6 +11,7 @@ const MyTaskDetail = ({ task, onClose }) => {
   const [starting, setStarting] = useState(false);
   const [showPrintLabel, setShowPrintLabel] = useState(false);
   const [allLabelsScanned, setAllLabelsScanned] = useState(false);
+  const [allItemsTCPassed, setAllItemsTCPassed] = useState(false);
 
   const user = JSON.parse(localStorage.getItem("user")) || {};
 
@@ -43,7 +44,11 @@ const MyTaskDetail = ({ task, onClose }) => {
     if (!task?.id) return;
 
     try {
-      const response = await api.waitTCTask(task.id);
+      let response;
+      if (task.state?.state_name === "in_progress")
+        response = await api.waitTCTask(task.id);
+      else if (task.state?.state_name === "waiting T&C")
+        response = await api.completeTask(task.id);
 
       if (response.ok) {
         // Update task in parent component or refresh
@@ -79,7 +84,11 @@ const MyTaskDetail = ({ task, onClose }) => {
   useEffect(() => {
     if (task?.id) {
       fetchTaskItems();
-      checkItemsAllScannedByTaskId();
+      if (task.state?.state_name === "in_progress") {
+        checkItemsAllScannedByTaskId();
+      } else if (task.state?.state_name === "waiting T&C") {
+        checkItemsAllTCPassedByTaskId();
+      }
     }
   }, [task?.id]);
 
@@ -111,6 +120,22 @@ const MyTaskDetail = ({ task, onClose }) => {
     } catch (error) {
       console.error("Error checking items scanned status:", error);
       setAllLabelsScanned(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const checkItemsAllTCPassedByTaskId = async () => {
+    try {
+      setLoading(true);
+      const response = await api.checkItemsAllTCPassedByTaskId(task.id);
+      if (response.ok) {
+        const data = await response.json();
+        setAllItemsTCPassed(data.all_tc_passed);
+      }
+    } catch (error) {
+      console.error("Error checking items TC passed status:", error);
+      setAllItemsTCPassed(false);
     } finally {
       setLoading(false);
     }
@@ -184,26 +209,27 @@ const MyTaskDetail = ({ task, onClose }) => {
               <h1 className="mb-2 text-2xl font-bold text-gray-900">
                 {task.task_name}
               </h1>
-              <p className="text-sm text-gray-500">{task.id}</p>
+              <p className="flex w-full items-center justify-between text-sm text-gray-500">
+                {task.id}
+                <span
+                  className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium"
+                  style={{
+                    backgroundColor: task.state?.bg_color,
+                    color: task.state?.text_color,
+                  }}
+                >
+                  {iconMap[task.state?.icon] &&
+                    React.createElement(iconMap[task.state.icon], {
+                      className: "h-4 w-4",
+                    })}{" "}
+                  &nbsp;&nbsp;
+                  {task.state?.state_name_chinese}
+                </span>
+              </p>
             </div>
 
             {/* Status Badge */}
-            <div>
-              <span
-                className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium"
-                style={{
-                  backgroundColor: task.state?.bg_color,
-                  color: task.state?.text_color,
-                }}
-              >
-                {iconMap[task.state?.icon] &&
-                  React.createElement(iconMap[task.state.icon], {
-                    className: "h-4 w-4",
-                  })}{" "}
-                &nbsp;&nbsp;
-                {task.state?.state_name}
-              </span>
-            </div>
+            <div></div>
 
             {/* Description */}
             {task.description && (
@@ -371,7 +397,17 @@ const MyTaskDetail = ({ task, onClose }) => {
                     disabled={!allLabelsScanned}
                     onClick={handleCompleteTask}
                   >
-                    完成任務
+                    完成安裝任務
+                  </button>
+                )}
+              {task?.state?.state_name === "waiting T&C" &&
+                task?.assignee_id === user.id && (
+                  <button
+                    className="w-full rounded-lg bg-red-600 px-4 py-3 font-medium text-white shadow-md transition-all duration-300 hover:bg-red-700 hover:shadow-lg disabled:cursor-not-allowed disabled:bg-gray-400"
+                    disabled={!allItemsTCPassed}
+                    onClick={handleCompleteTask}
+                  >
+                    完成檢驗任務
                   </button>
                 )}
             </div>
@@ -386,7 +422,10 @@ const MyTaskDetail = ({ task, onClose }) => {
             task={task}
             onClose={() => {
               setShowPrintLabel(false);
-              checkItemsAllScannedByTaskId();
+              if (task.state?.state_name === "in_progress")
+                checkItemsAllScannedByTaskId();
+              else if (task.state?.state_name === "waiting T&C")
+                checkItemsAllTCPassedByTaskId();
             }}
           />
         )}

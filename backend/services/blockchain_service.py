@@ -631,26 +631,27 @@ class BlockchainService:
             traceback.print_exc()
             return None
 
-    def record_item_scan_verify(self, item_id, user_id, scan_count, timestamp=None):
+    def record_item_scan_verify(self, item_id, user_id, scan_count, scan_type='WORKER'):
         """
         Record a scan event for an item on the blockchain
         """
-        if timestamp is None:
-            timestamp = datetime.now()
+        timestamp = datetime.now()
 
         # Get the current item to populate quantity and state fields
         item = Item.query.get(item_id)
         if not item:
             raise ValueError(f"Item {item_id} not found")
 
+        item_scan_type = scan_type + " SCAN VERIFY"
+
         transaction_id = generate_id('BCT', BlockchainTransaction)
         transaction_data = {
-            'action': 'SCAN VERIFY',
+            'action': item_scan_type,
             'item_id': item_id,
             'user_id': user_id,
             'scan_count': scan_count,
             'timestamp': timestamp.isoformat(),
-            'transaction_type': 'SCAN VERIFY'
+            'transaction_type': item_scan_type
         }
 
         transaction_hash = self.calculate_transaction_hash(transaction_data, transaction_id, timestamp.isoformat())
@@ -660,7 +661,7 @@ class BlockchainService:
             transaction_hash=transaction_hash,
             item_id=item_id,
             user_id=user_id,
-            transaction_type='SCAN VERIFY',
+            transaction_type=item_scan_type,
             old_quantity=float(item.quantity),
             new_quantity=float(item.quantity),  # Quantity doesn't change on scan
             old_state_id=item.state_id,
@@ -676,6 +677,7 @@ class BlockchainService:
         print(f"Scan transaction {transaction.id} added to block {current_block.id}")
         return transaction
 
+    #get blockchain history for an item
     def record_item_scan(self, item_id, user_id, scan_count, timestamp=None):
         """
         Record a scan event for an item on the blockchain
@@ -690,7 +692,7 @@ class BlockchainService:
 
         transaction_id = generate_id('BCT', BlockchainTransaction)
         transaction_data = {
-            'action': 'SCAN',
+            'action': 'BLOCKCHAIN SCAN',
             'item_id': item_id,
             'user_id': user_id,
             'scan_count': scan_count,
@@ -705,7 +707,7 @@ class BlockchainService:
             transaction_hash=transaction_hash,
             item_id=item_id,
             user_id=user_id,
-            transaction_type='SCAN',
+            transaction_type='BLOCKCHAIN SCAN',
             old_quantity=float(item.quantity),
             new_quantity=float(item.quantity),  # Quantity doesn't change on scan
             old_state_id=item.state_id,

@@ -4,7 +4,7 @@ import { Close, Print } from "@mui/icons-material";
 import PrintLabelDetail from "./PrintLabelDetail.jsx";
 import ScanLabel from "./ScanLabel.jsx";
 import api from "../services/api.js";
-import { QrCodeIcon } from "../componenets/CustomIcons.jsx";
+import { iconMap, QrCodeIcon } from "../componenets/CustomIcons.jsx";
 
 const PrintLabel = ({ task, onClose }) => {
   const [items, setItems] = useState([]);
@@ -27,6 +27,7 @@ const PrintLabel = ({ task, onClose }) => {
 
       if (response.ok) {
         const data = await response.json();
+        console.log(data);
         setItems(data.items || []);
         //if item are all printed set showPrinted to true
         if (data.items && data.items.length > 0) {
@@ -190,8 +191,22 @@ const PrintLabel = ({ task, onClose }) => {
               <h1 className="mb-2 text-2xl font-bold text-gray-900">
                 標籤狀態
               </h1>
-              <p className="text-sm text-gray-500">
+              <p className="flex w-full items-center justify-between text-sm text-gray-500">
                 {task.task_name} - {task.id}
+                <span
+                  className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium"
+                  style={{
+                    backgroundColor: task.state?.bg_color,
+                    color: task.state?.text_color,
+                  }}
+                >
+                  {iconMap[task.state?.icon] &&
+                    React.createElement(iconMap[task.state.icon], {
+                      className: "h-4 w-4",
+                    })}{" "}
+                  &nbsp;&nbsp;
+                  {task.state?.state_name_chinese}
+                </span>
               </p>
             </div>
 
@@ -235,7 +250,9 @@ const PrintLabel = ({ task, onClose }) => {
                     onClick={() => handleItemClick(item)}
                     whileTap={{ scale: 0.98 }}
                   >
-                    <div className="grid grid-cols-8 gap-4 text-xs">
+                    <div
+                      className={`grid ${["in_progress", "waiting T&C"].includes(task.state?.state_name) ? "grid-cols-8" : "grid-cols-6"} gap-1 text-xs`}
+                    >
                       <div className={`col-span-2`}>
                         <span className="text-gray-500">類型</span>
                         <p className="font-medium">{item.material_type_name}</p>
@@ -251,28 +268,48 @@ const PrintLabel = ({ task, onClose }) => {
                           {item.material_unit}
                         </p>
                       </div>
-                      <div>
-                        <span className="text-gray-500">打印</span>
-                        <p
-                          className={`text-center font-medium ${(item.label_count || 0) === 0 ? "text-red-600" : "text-green-600"}`}
-                        >
-                          ⬤
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">掃描</span>{" "}
-                        <p
-                          className={`text-center font-medium ${
-                            (item?.scan || 0) === 0
-                              ? "text-red-600"
-                              : "text-green-600"
-                          }`}
-                        >
-                          {/*{(item.label_count || 0) === 0*/}
-                          {/*  ? "未打印"*/}
-                          {/*  : `已打印 (${item.label_count})`}*/}⬤
-                        </p>
-                      </div>
+                      {task.state?.state_name === "in_progress" && (
+                        <>
+                          <div>
+                            <span className="text-gray-500">打印</span>
+                            <p
+                              className={`text-center font-medium ${(item.label_count || 0) === 0 ? "text-red-600" : "text-green-600"}`}
+                            >
+                              ⬤
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">掃描</span>{" "}
+                            <p
+                              className={`text-center font-medium ${
+                                (item?.scan || 0) === 0
+                                  ? "text-red-600"
+                                  : "text-green-600"
+                              }`}
+                            >
+                              {/*{(item.label_count || 0) === 0*/}
+                              {/*  ? "未打印"*/}
+                              {/*  : `已打印 (${item.label_count})`}*/}⬤
+                            </p>
+                          </div>
+                        </>
+                      )}
+                      {task.state?.state_name === "waiting T&C" && (
+                        <>
+                          <div
+                            className={`col-span-2 flex-col items-center justify-center`}
+                          >
+                            <div className="text-center text-gray-500">
+                              已核驗
+                            </div>
+                            <p
+                              className={`text-center font-medium ${item.state.state_name === "T&C Pass" ? "text-green-600" : "text-red-600"}`}
+                            >
+                              ⬤
+                            </p>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </motion.div>
                 ))}
@@ -288,15 +325,17 @@ const PrintLabel = ({ task, onClose }) => {
         </div>
       </motion.div>
 
-      <div className="fixed bottom-3 left-3 flex items-center gap-2">
-        <button
-          onClick={handlePrintAll}
-          disabled={loading || filteredItems.length === 0}
-          className="bg-blue rounded-full px-4 py-4 text-sm font-medium text-white shadow-2xl transition-colors hover:bg-green-200 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
-        >
-          <Print fontSize="large" />
-        </button>
-      </div>
+      {task.state.state_name === "in_progress" && (
+        <div className="fixed bottom-3 left-3 flex items-center gap-2">
+          <button
+            onClick={handlePrintAll}
+            disabled={loading || filteredItems.length === 0}
+            className="bg-blue rounded-full px-4 py-4 text-sm font-medium text-white shadow-2xl transition-colors hover:bg-green-200 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
+          >
+            <Print fontSize="large" />
+          </button>
+        </div>
+      )}
       <div className="fixed right-3 bottom-3 flex items-center gap-2">
         <button
           onClick={() => setShowScanLabel(true)}
@@ -324,6 +363,7 @@ const PrintLabel = ({ task, onClose }) => {
             taskId={task.id}
             onClose={() => setShowScanLabel(false)}
             onScanSuccess={handleScanSuccess}
+            scanType={task.state?.state_name}
           />
         )}
       </AnimatePresence>

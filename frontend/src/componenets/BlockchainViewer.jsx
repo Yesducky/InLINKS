@@ -90,7 +90,11 @@ const BlockchainViewer = ({ itemId, open, onClose }) => {
       case "SCAN":
         return <QrCodeIcon {...iconProps} style={{ color: "#f97316" }} />;
       case "SCAN VERIFY":
+        return <QrCodeIcon {...iconProps} style={{ color: "#f97316" }} />;
+      case "WORKER SCAN VERIFY":
         return <QrCodeIcon {...iconProps} style={{ color: "#ec4899" }} />;
+      case "T&C SCAN VERIFY":
+        return <QrCodeIcon {...iconProps} style={{ color: "#3b82f6" }} />;
       case "TASK_STATE_CHANGE":
         return <AssignmentIcon {...iconProps} style={{ color: "#6b7280 " }} />;
       default:
