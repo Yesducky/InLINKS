@@ -17,14 +17,46 @@ const ScanLabel = ({ taskId, onClose, onScanSuccess, scanType }) => {
   const [scanning, setScanning] = useState(false);
   const [scannedText, setScannedText] = useState("");
   const [verifying, setVerifying] = useState(false);
-  const [result, setResult] = useState(null); // { success: boolean, message: string }
+  const [result, setResult] = useState(null);
   const [cameraError, setCameraError] = useState("");
+  const [cameraPermission, setCameraPermission] = useState(null);
 
   useEffect(() => {
-    startScanning();
+    checkCameraPermission();
     return () => stopScanning();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const checkCameraPermission = async () => {
+    try {
+      // Check if running in Capacitor
+      if (window.Capacitor) {
+        const { Camera } = await import("@capacitor/camera");
+        const permission = await Camera.checkPermissions();
+        if (permission.camera === "granted") {
+          setCameraPermission(true);
+          startScanning();
+        } else {
+          const requestResult = await Camera.requestPermissions();
+          if (requestResult.camera === "granted") {
+            setCameraPermission(true);
+            startScanning();
+          } else {
+            setCameraPermission(false);
+            setCameraError("需要相機權限才能掃描");
+          }
+        }
+      } else {
+        // Web environment
+        setCameraPermission(true);
+        startScanning();
+      }
+    } catch (error) {
+      console.error("Permission check error:", error);
+      setCameraPermission(true);
+      startScanning();
+    }
+  };
 
   const parseItemId = (text) => {
     if (!text) return null;
@@ -70,57 +102,130 @@ const ScanLabel = ({ taskId, onClose, onScanSuccess, scanType }) => {
       setVerifying(false);
       setScanning(true);
 
-      if (!codeReaderRef.current) {
-        codeReaderRef.current = new BrowserMultiFormatReader();
+      // Create new reader instance for each scan session
+      if (codeReaderRef.current) {
+        try {
+          codeReaderRef.current.reset();
+        } catch (e) {
+          console.warn("Error resetting previous reader:", e);
+        }
       }
 
-      // Request camera
-      streamRef.current = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-        audio: false,
-      });
+      codeReaderRef.current = new BrowserMultiFormatReader();
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = streamRef.current;
-        await videoRef.current.play();
-      }
-
-      codeReaderRef.current.decodeFromVideoDevice(
-        undefined,
-        videoRef.current,
-        async (res, err) => {
-          if (res) {
-            const text = res.getText();
-            handleScan(text);
-          }
-          if (err && err.name !== "NotFoundException") {
-            console.error(err);
-          }
+      // Enhanced camera constraints for mobile/Capacitor
+      const constraints = {
+        video: {
+          facingMode: "environment",
+          width: { ideal: 1280, max: 1920 },
+          height: { ideal: 720, max: 1080 },
+          frameRate: { ideal: 30, max: 30 },
         },
-      );
+        audio: false,
+      };
+
+      try {
+        streamRef.current =
+          await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (primaryError) {
+        console.warn("Primary camera access failed:", primaryError);
+        // Fallback with simpler constraints
+        try {
+          streamRef.current = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "environment" },
+            audio: false,
+          });
+        } catch (fallbackError) {
+          console.warn("Fallback camera access failed:", fallbackError);
+          // Final fallback without facingMode
+          streamRef.current = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false,
+          });
+        }
+      }
+
+      if (videoRef.current && streamRef.current) {
+        videoRef.current.srcObject = streamRef.current;
+
+        // Wait for video to be ready
+        await new Promise((resolve, reject) => {
+          const video = videoRef.current;
+          video.onloadedmetadata = resolve;
+          video.onerror = reject;
+          video.load();
+        });
+
+        await videoRef.current.play();
+
+        // Start decoding with timeout and error handling
+        const startDecoding = () => {
+          return codeReaderRef.current.decodeFromVideoDevice(
+            undefined,
+            videoRef.current,
+            async (res, err) => {
+              if (res && scanning) {
+                const text = res.getText();
+                handleScan(text);
+              }
+              if (err && err.name !== "NotFoundException") {
+                console.error("Decode error:", err);
+              }
+            },
+          );
+        };
+
+        // Add a small delay for mobile devices
+        setTimeout(startDecoding, 100);
+      }
     } catch (e) {
       console.error("Camera start error:", e);
-      setCameraError(e?.message || "無法啟動相機");
+      let errorMessage = "無法啟動相機";
+
+      if (e.name === "NotAllowedError") {
+        errorMessage = "相機權限被拒絕，請在設定中允許相機存取";
+      } else if (e.name === "NotFoundError") {
+        errorMessage = "找不到相機裝置";
+      } else if (e.name === "NotReadableError") {
+        errorMessage = "相機正被其他應用程式使用";
+      } else if (e.message) {
+        errorMessage = e.message;
+      }
+
+      setCameraError(errorMessage);
       setScanning(false);
     }
   };
 
   const stopScanning = () => {
+    setScanning(false);
+
     if (codeReaderRef.current) {
       try {
         codeReaderRef.current.reset();
-      } catch (_) {}
+      } catch (e) {
+        console.warn("Error stopping reader:", e);
+      }
     }
+
     if (streamRef.current) {
       try {
-        streamRef.current.getTracks().forEach((t) => t.stop());
-      } catch (_) {}
+        streamRef.current.getTracks().forEach((track) => {
+          track.stop();
+        });
+      } catch (e) {
+        console.warn("Error stopping stream:", e);
+      }
       streamRef.current = null;
     }
+
     if (videoRef.current) {
-      videoRef.current.srcObject = null;
+      try {
+        videoRef.current.srcObject = null;
+      } catch (e) {
+        console.warn("Error clearing video source:", e);
+      }
     }
-    setScanning(false);
   };
 
   const handleScan = async (text) => {
@@ -180,6 +285,7 @@ const ScanLabel = ({ taskId, onClose, onScanSuccess, scanType }) => {
   const retry = () => {
     setResult(null);
     setScannedText("");
+    setCameraError("");
     startScanning();
   };
 
@@ -237,28 +343,52 @@ const ScanLabel = ({ taskId, onClose, onScanSuccess, scanType }) => {
             {/* Camera / Scanner */}
             {!result && (
               <div className={`h-full`}>
+                {cameraError && (
+                  <div className="mb-4 rounded-lg bg-red-50 p-3 text-center text-sm text-red-700">
+                    <ErrorIcon className="mr-1 inline-block h-4 w-4" />
+                    {cameraError}
+                  </div>
+                )}
+
                 <div className="relative">
                   <video
                     ref={videoRef}
                     className="aspect-square w-full rounded-lg bg-black object-cover"
                     playsInline
                     muted
+                    autoPlay
                   />
                   <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                     <div className="h-40 w-40 rounded-lg border-2 border-white/60" />
                   </div>
+
+                  {verifying && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                      <div className="rounded-lg bg-white p-4 text-center">
+                        <div className="mb-2 text-sm">驗證中...</div>
+                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                      </div>
+                    </div>
+                  )}
                 </div>
+
                 <div className="mt-3 flex items-center justify-between">
                   <div className="text-xs text-gray-500">
-                    {scanning ? "正在掃描..." : "相機待命"}
+                    {scanning
+                      ? "正在掃描..."
+                      : cameraError
+                        ? "相機錯誤"
+                        : "相機待命"}
                   </div>
                   <div className="space-x-2">
-                    {!scanning ? (
+                    {!scanning || cameraError ? (
                       <button
-                        onClick={startScanning}
+                        onClick={cameraError ? retry : startScanning}
                         className="bg-blue rounded-full px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                        disabled={cameraPermission === false}
                       >
-                        <Camera className="mr-1 inline-block h-4 w-4" /> 開始
+                        <Camera className="mr-1 inline-block h-4 w-4" />
+                        {cameraError ? "重試" : "開始"}
                       </button>
                     ) : (
                       <button

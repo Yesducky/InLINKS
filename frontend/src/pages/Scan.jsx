@@ -91,33 +91,37 @@ const Scan = () => {
         codeReaderRef.current = new BrowserMultiFormatReader();
       }
 
-      // Get camera devices using navigator.mediaDevices
+      // enumerate and prefer back/environment camera on mobile
       const devices = await navigator.mediaDevices.enumerateDevices();
-      console.log("Available devices:", devices);
-      const videoInputDevices = devices.filter(
-        (device) => device.kind === "videoinput",
-      );
-
+      const videoInputDevices = devices.filter((d) => d.kind === "videoinput");
       let selectedDeviceId;
+      if (videoInputDevices.length) {
+        const backCam = videoInputDevices.find((d) =>
+          d.label.toLowerCase().includes("back"),
+        );
+        selectedDeviceId = backCam
+          ? backCam.deviceId
+          : videoInputDevices[0].deviceId;
+      }
+      // build constraints: exact deviceId or fallback to facingMode
+      const videoConstraints = selectedDeviceId
+        ? { deviceId: { exact: selectedDeviceId } }
+        : { facingMode: { ideal: "environment" } };
       streamRef.current = await navigator.mediaDevices.getUserMedia({
-        video: { deviceId: selectedDeviceId },
+        video: videoConstraints,
       });
 
       if (videoRef.current) {
         videoRef.current.srcObject = streamRef.current;
-        videoRef.current.play();
+        await videoRef.current.play();
       }
 
       codeReaderRef.current.decodeFromVideoDevice(
-        undefined,
+        selectedDeviceId || undefined,
         videoRef.current,
         (result, error) => {
-          if (result) {
-            handleScanResult(result.getText());
-          }
-          if (error && error.name !== "NotFoundException") {
-            console.error(error);
-          }
+          if (result) handleScanResult(result.getText());
+          if (error && error.name !== "NotFoundException") console.error(error);
         },
       );
     } catch (error) {

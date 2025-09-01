@@ -201,21 +201,44 @@ const MyTask = () => {
         // Get the combined PDF blob
         const blob = await response.blob();
 
-        // Create download link
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${task.id}-all-labels.pdf`;
-        document.body.appendChild(a);
-        a.click();
+        // Handle download for Capacitor vs Web
+        if (window.Capacitor) {
+          try {
+            const { Filesystem, Directory } = await import(
+              "@capacitor/filesystem"
+            );
 
-        // Clean up
-        setTimeout(() => {
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-        }, 100);
+            // Convert blob to base64
+            const reader = new FileReader();
+            reader.onloadend = async () => {
+              try {
+                const base64Data = reader.result.split(",")[1];
+                const fileName = `${task.id}-all-labels.pdf`;
 
-        alert(`已生成任務 ${task.id} 的所有標籤 PDF`);
+                // Save file to Documents directory
+                const result = await Filesystem.writeFile({
+                  path: fileName,
+                  data: base64Data,
+                  directory: Directory.Documents,
+                });
+
+                alert(`PDF已保存到文件夾: ${fileName}`);
+              } catch (saveError) {
+                console.error("Error saving file:", saveError);
+                alert("保存PDF失敗");
+              }
+            };
+            reader.readAsDataURL(blob);
+          } catch (capacitorError) {
+            console.error("Capacitor filesystem error:", capacitorError);
+            // Fallback to web download
+            downloadPDFWeb(blob, `${task.id}-all-labels.pdf`);
+          }
+        } else {
+          // Web environment - standard download
+          downloadPDFWeb(blob, `${task.id}-all-labels.pdf`);
+          alert(`已生成任務 ${task.id} 的所有標籤 PDF`);
+        }
       } else {
         // Try to parse JSON error, but handle non-JSON responses gracefully
         try {
@@ -229,6 +252,22 @@ const MyTask = () => {
       console.error("Error printing all items:", error);
       alert("生成PDF時發生錯誤");
     }
+  };
+
+  // Helper function for web PDF download
+  const downloadPDFWeb = (blob, filename) => {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+
+    // Clean up
+    setTimeout(() => {
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    }, 100);
   };
 
   // Filter and sort tasks

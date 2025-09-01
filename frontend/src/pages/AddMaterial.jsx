@@ -20,6 +20,7 @@ const AddMaterial = () => {
   const [message, setMessage] = useState({ type: "", text: "" });
   const [isScanning, setIsScanning] = useState(false);
   const [cameraError, setCameraError] = useState("");
+  const [cameraPermission, setCameraPermission] = useState(null);
 
   // QR Scanner refs
   const videoRef = useRef(null);
@@ -227,14 +228,37 @@ const AddMaterial = () => {
   };
 
   // QR/Barcode scanning functions
-  const startScanning = () => {
+  const startScanning = async () => {
     setCameraError("");
+
+    // Check camera permission for Capacitor
+    if (window.Capacitor) {
+      try {
+        const { Camera } = await import("@capacitor/camera");
+        const permission = await Camera.checkPermissions();
+        if (permission.camera !== "granted") {
+          const requestResult = await Camera.requestPermissions();
+          if (requestResult.camera !== "granted") {
+            setCameraError("需要相機權限才能掃描QR碼");
+            return;
+          }
+        }
+        setCameraPermission(true);
+      } catch (error) {
+        console.warn("Permission check failed:", error);
+      }
+    }
+
     setIsScanning(true);
   };
 
   const stopScanning = () => {
     if (qrScannerRef.current) {
-      qrScannerRef.current.reset();
+      try {
+        qrScannerRef.current.reset();
+      } catch (e) {
+        console.warn("Error stopping scanner:", e);
+      }
     }
     setIsScanning(false);
   };
@@ -244,29 +268,98 @@ const AddMaterial = () => {
     if (isScanning && videoRef.current) {
       const initScanner = async () => {
         try {
+          // Create new reader instance
+          if (qrScannerRef.current) {
+            try {
+              qrScannerRef.current.reset();
+            } catch (e) {
+              console.warn("Error resetting previous scanner:", e);
+            }
+          }
+
           const codeReader = new BrowserMultiFormatReader();
           qrScannerRef.current = codeReader;
 
-          // Start decoding from video device
-          await codeReader.decodeFromVideoDevice(
-            undefined, // Use default camera
-            videoRef.current,
-            (result, err) => {
-              if (result) {
-                setMaterial((prev) => ({
-                  ...prev,
-                  factory_lot_number: result.getText(),
-                }));
-                setIsScanning(false);
-              }
-              if (err && err.name !== "NotFoundException") {
-                console.error("Scanner error:", err);
-              }
+          // Enhanced camera constraints for mobile/Capacitor
+          const constraints = {
+            video: {
+              facingMode: "environment",
+              width: { ideal: 1280, max: 1920 },
+              height: { ideal: 720, max: 1080 },
+              frameRate: { ideal: 30, max: 30 },
             },
-          );
+            audio: false,
+          };
+
+          let stream;
+          try {
+            stream = await navigator.mediaDevices.getUserMedia(constraints);
+          } catch (primaryError) {
+            console.warn("Primary camera access failed:", primaryError);
+            // Fallback with simpler constraints
+            try {
+              stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: "environment" },
+                audio: false,
+              });
+            } catch (fallbackError) {
+              console.warn("Fallback camera access failed:", fallbackError);
+              // Final fallback without facingMode
+              stream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: false,
+              });
+            }
+          }
+
+          if (videoRef.current && stream) {
+            videoRef.current.srcObject = stream;
+
+            // Wait for video to be ready
+            await new Promise((resolve, reject) => {
+              const video = videoRef.current;
+              video.onloadedmetadata = resolve;
+              video.onerror = reject;
+              video.load();
+            });
+
+            await videoRef.current.play();
+
+            // Start decoding with enhanced error handling
+            setTimeout(() => {
+              codeReader.decodeFromVideoDevice(
+                undefined,
+                videoRef.current,
+                (result, err) => {
+                  if (result) {
+                    setMaterial((prev) => ({
+                      ...prev,
+                      factory_lot_number: result.getText(),
+                    }));
+                    stopScanning();
+                  }
+                  if (err && err.name !== "NotFoundException") {
+                    console.error("Scanner error:", err);
+                  }
+                },
+              );
+            }, 100);
+          }
         } catch (error) {
           console.error("Failed to start scanner:", error);
-          setCameraError("無法啟動相機。請檢查權限設置。");
+          let errorMessage = "無法啟動相機。請檢查權限設置。";
+
+          if (error.name === "NotAllowedError") {
+            errorMessage = "相機權限被拒絕，請在設定中允許相機存取";
+          } else if (error.name === "NotFoundError") {
+            errorMessage = "找不到相機裝置";
+          } else if (error.name === "NotReadableError") {
+            errorMessage = "相機正被其他應用程式使用";
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+
+          setCameraError(errorMessage);
           setIsScanning(false);
         }
       };
@@ -277,7 +370,11 @@ const AddMaterial = () => {
     // Cleanup function
     return () => {
       if (qrScannerRef.current) {
-        qrScannerRef.current.reset();
+        try {
+          qrScannerRef.current.reset();
+        } catch (e) {
+          console.warn("Error cleaning up scanner:", e);
+        }
       }
     };
   }, [isScanning]);
@@ -604,12 +701,31 @@ const AddMaterial = () => {
                 </button>
               </div>
 
+              {/* Camera Error Display */}
+              {cameraError && (
+                <div className="mb-4 rounded-lg bg-red-50 p-3 text-center text-sm text-red-700">
+                  <ErrorIcon className="mr-1 inline-block h-4 w-4" />
+                  {cameraError}
+                  <button
+                    onClick={() => {
+                      setCameraError("");
+                      setIsScanning(false);
+                      setTimeout(() => startScanning(), 100);
+                    }}
+                    className="ml-2 text-blue-600 underline hover:text-blue-800"
+                  >
+                    重試
+                  </button>
+                </div>
+              )}
+
               <div className="relative">
                 <video
                   ref={videoRef}
                   className="h-64 w-full rounded-xl border border-gray-300 object-cover"
                   playsInline
                   muted
+                  autoPlay
                   style={{ backgroundColor: "#f3f4f6" }}
                 />
 
@@ -621,16 +737,6 @@ const AddMaterial = () => {
                     <div className="border-blue absolute bottom-0 left-0 h-6 w-6 border-b-4 border-l-4"></div>
                     <div className="border-blue absolute right-0 bottom-0 h-6 w-6 border-r-4 border-b-4"></div>
                   </div>
-                </div>
-
-                {/* Loading indicator for camera initialization */}
-                <div className="absolute top-4 right-4">
-                  {/*<LoadingSpinner*/}
-                  {/*  variant="circular"*/}
-                  {/*  size={30}*/}
-                  {/*  message=""*/}
-                  {/*  color="primary"*/}
-                  {/*/>*/}
                 </div>
               </div>
 

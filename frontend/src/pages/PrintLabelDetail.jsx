@@ -27,22 +27,49 @@ const PrintLabelDetail = ({ item, taskId, onClose, onPrintSuccess }) => {
         // Get the PDF blob from response
         const blob = await response.blob();
 
-        // Create download link
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${item.id}-label.pdf`;
-        document.body.appendChild(a);
-        a.click();
+        // Handle download for Capacitor vs Web
+        if (window.Capacitor) {
+          try {
+            const { Filesystem, Directory } = await import(
+              "@capacitor/filesystem"
+            );
 
-        // Clean up
-        setTimeout(() => {
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-        }, 100);
+            // Convert blob to base64
+            const reader = new FileReader();
+            reader.onloadend = async () => {
+              try {
+                const base64Data = reader.result.split(",")[1];
+                const fileName = `${item.id}-label.pdf`;
 
-        onPrintSuccess();
-        onClose();
+                // Save file to Documents directory
+                const result = await Filesystem.writeFile({
+                  path: fileName,
+                  data: base64Data,
+                  directory: Directory.Documents,
+                });
+
+                alert(`PDF已保存到文件夾: ${fileName}`);
+                onPrintSuccess();
+                onClose();
+              } catch (saveError) {
+                console.error("Error saving file:", saveError);
+                alert("保存PDF失敗");
+              }
+            };
+            reader.readAsDataURL(blob);
+          } catch (capacitorError) {
+            console.error("Capacitor filesystem error:", capacitorError);
+            // Fallback to web download
+            downloadPDFWeb(blob, `${item.id}-label.pdf`);
+            onPrintSuccess();
+            onClose();
+          }
+        } else {
+          // Web environment - standard download
+          downloadPDFWeb(blob, `${item.id}-label.pdf`);
+          onPrintSuccess();
+          onClose();
+        }
       } else {
         const error = await response.json();
         alert(error.error || "打印失敗");
@@ -53,6 +80,22 @@ const PrintLabelDetail = ({ item, taskId, onClose, onPrintSuccess }) => {
     } finally {
       setPrinting(false);
     }
+  };
+
+  // Helper function for web PDF download
+  const downloadPDFWeb = (blob, filename) => {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+
+    // Clean up
+    setTimeout(() => {
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    }, 100);
   };
 
   const backdropVariants = {
