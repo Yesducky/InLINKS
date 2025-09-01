@@ -298,7 +298,7 @@ const Task = () => {
                             className: "h-4 w-4",
                           })}
                         &nbsp;
-                        {taskInfo.state?.state_name}
+                        {taskInfo.state?.state_name_chinese}
                       </span>
                     </div>
                   </div>

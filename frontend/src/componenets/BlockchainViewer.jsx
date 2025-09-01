@@ -82,7 +82,7 @@ const BlockchainViewer = ({ itemId, open, onClose }) => {
       case "UPDATE":
         return <UpdateIcon {...iconProps} style={{ color: "#3b82f6" }} />;
       case "SPLIT":
-        return <TimelineIcon {...iconProps} style={{ color: "#f59e0b" }} />;
+        return <InventoryIcon {...iconProps} style={{ color: "#f59e0b" }} />;
       case "ASSIGN":
         return <AssignmentIcon {...iconProps} style={{ color: "#8b5cf6" }} />;
       case "TRANSFER":
@@ -91,11 +91,13 @@ const BlockchainViewer = ({ itemId, open, onClose }) => {
         return <QrCodeIcon {...iconProps} style={{ color: "#f97316" }} />;
       case "SCAN VERIFY":
         return <QrCodeIcon {...iconProps} style={{ color: "#f97316" }} />;
+      case "BLOCKCHAIN SCAN":
+        return <TimelineIcon {...iconProps} style={{ color: "#3b82f6" }} />;
       case "WORKER SCAN VERIFY":
         return <QrCodeIcon {...iconProps} style={{ color: "#ec4899" }} />;
       case "T&C SCAN VERIFY":
         return <QrCodeIcon {...iconProps} style={{ color: "#3b82f6" }} />;
-      case "TASK_STATE_CHANGE":
+      case "TASK STATE CHANGE":
         return <AssignmentIcon {...iconProps} style={{ color: "#6b7280 " }} />;
       default:
         return <AccessTimeIcon {...iconProps} style={{ color: "#6b7280" }} />;

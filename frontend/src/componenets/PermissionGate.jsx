@@ -1,4 +1,5 @@
 import React from "react";
+const skipPermissionCheck = import.meta.env.VITE_SKIP_PERMISSION_CHECK;
 import { usePermissions } from "../hooks/usePermissions.js";
 import LoadingSpinner from "./LoadingSpinner.jsx";
 import Header from "./Header.jsx";
@@ -14,6 +15,11 @@ const PermissionGate = ({
   show = true,
   style = null,
 }) => {
+  // short-circuit override: when set to 'true', always render children
+  if (skipPermissionCheck && show) {
+    return <>{children}</>;
+  }
+
   const { hasPermission, canRead, canWrite, canDelete, canCreate, loading } =
     usePermissions();
 

@@ -8,10 +8,7 @@ const EditTaskModal = ({ isOpen, onClose, task, onSave, workOrderId }) => {
   const [formData, setFormData] = useState({
     task_name: "",
     description: "",
-    assignee: {
-      id: "",
-      name: "",
-    },
+    assignee_id: "",
     state_id: "",
     start_date: "",
     due_date: "",
@@ -32,7 +29,7 @@ const EditTaskModal = ({ isOpen, onClose, task, onSave, workOrderId }) => {
         setFormData({
           task_name: task.task_name || "",
           description: task.description || "",
-          assignee: task.assignee || "",
+          assignee_id: task.assignee?.id || "",
           state_id: task.state_id || "",
           start_date: task.start_date
             ? new Date(task.start_date)
@@ -72,8 +69,8 @@ const EditTaskModal = ({ isOpen, onClose, task, onSave, workOrderId }) => {
         setFormData({
           task_name: "",
           description: "",
-          assignee_id: "",
-          state_id: "",
+          assignee_id: JSON.parse(localStorage.getItem("user") || "{}").id,
+          state_id: "PST008",
           start_date: "",
           due_date: "",
           completed_at: "",
@@ -118,6 +115,7 @@ const EditTaskModal = ({ isOpen, onClose, task, onSave, workOrderId }) => {
     setError("");
 
     try {
+      console.log(formData);
       const response = task
         ? await api.putTask(task.id, formData)
         : await api.postTask(formData);
@@ -266,7 +264,7 @@ const EditTaskModal = ({ isOpen, onClose, task, onSave, workOrderId }) => {
                         <option value="">選擇狀態</option>
                         {stateOptions.map((state) => (
                           <option key={state.id} value={state.id}>
-                            {state.state_name}
+                            {state.state_name_chinese}
                           </option>
                         ))}
                       </select>
@@ -341,7 +339,7 @@ const EditTaskModal = ({ isOpen, onClose, task, onSave, workOrderId }) => {
                         type="text"
                         id="assignee_id"
                         name="assignee_id"
-                        value={formData.assignee?.id}
+                        value={formData.assignee_id}
                         onChange={handleInputChange}
                         className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                         placeholder="輸入指派員工ID"

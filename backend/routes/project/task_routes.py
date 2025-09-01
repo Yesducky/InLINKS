@@ -29,13 +29,7 @@ def tasks():
                 'task_name': t.task_name,
                 'description': t.description,
                 'state_id': t.state_id,
-                'state': {
-                    'id': t.state.id,
-                    'state_name': t.state.state_name,
-                    'bg_color': t.state.bg_color,
-                    'text_color': t.state.text_color,
-                    'icon': t.state.icon
-                } if t.state else None,
+                'state': t.state.to_dict() if t.state else None,
                 'start_date': t.start_date.isoformat() if t.start_date else None,
                 'due_date': t.due_date.isoformat() if t.due_date else None,
                 'completed_at': t.completed_at.isoformat() if t.completed_at else None,
@@ -87,13 +81,7 @@ def task_detail(task_id):
             'task_name': task.task_name,
             'description': task.description,
             'state_id': task.state_id,
-            'state': {
-                'id': task.state.id,
-                'state_name': task.state.state_name,
-                'bg_color': task.state.bg_color,
-                'text_color': task.state.text_color,
-                'icon': task.state.icon
-            } if task.state else None,
+            'state': task.state.to_dict() if task.state else None,
             'start_date': task.start_date.isoformat() if task.start_date else None,
             'due_date': task.due_date.isoformat() if task.due_date else None,
             'completed_at': task.completed_at.isoformat() if task.completed_at else None,
