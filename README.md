@@ -1,6 +1,6 @@
 # InLINKS
 
-A full-stack inventory management system with Flask backend, React frontend, and mobile app support using Capacitor. Features role-based access control, real-time inventory tracking, and project management capabilities.
+A full-stack inventory management system with Flask backend and React frontend. Features role-based access control, real-time inventory tracking, and project management capabilities.
 
 ## Tech Stack
 
