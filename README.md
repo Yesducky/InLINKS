@@ -2,6 +2,14 @@
 
 A full-stack inventory management system with Flask backend and React frontend. Features role-based access control, real-time inventory tracking, and project management capabilities.
 
+| | | | |
+|:---:|:---:|:---:|:---:|
+| <img width="780" height="1688" alt="screenshot-1772956784710" src="https://github.com/user-attachments/assets/a9b2c3dc-6847-4493-b0af-e9c559771a1b" /> | <img width="780" height="1688" alt="screenshot-1772956671963" src="https://github.com/user-attachments/assets/d8840f5b-5590-4b77-8133-030d04a35eea" /> | <img width="780" height="1688" alt="screenshot-1773742791801" src="https://github.com/user-attachments/assets/d06c8975-0f7d-4249-8485-2570965c9990" /> | <img width="780" height="1688" alt="screenshot-1772956762240" src="https://github.com/user-attachments/assets/e6c32db1-703c-4188-a0d5-8fbd1a3b11c2" /> |
+| <img width="780" height="1688" alt="screenshot-1773742939637" src="https://github.com/user-attachments/assets/856bba8c-b4cf-4eea-a505-83ac50defcdb" /> | <img width="780" height="1688" alt="screenshot-1773740013443" src="https://github.com/user-attachments/assets/b83d677d-48a1-4d2b-9a36-0c22070dd898" /> | <img width="780" height="1688" alt="screenshot-1773742587373" src="https://github.com/user-attachments/assets/833a113d-50ff-41d8-bf5d-20c9a60fb0bb" /> | <img width="780" height="1688" alt="screenshot-1773740118773" src="https://github.com/user-attachments/assets/d3189955-9f22-43bb-923a-1dbc115ae639" /> | <img width="780" height="1688" alt="screenshot-1773740170250" src="https://github.com/user-attachments/assets/15966db3-acba-40c1-a0f4-33efb46435fc" />
+
+
+
+ 
 ## Tech Stack
 
 - **Backend**: Flask 2.3.3, Flask-SQLAlchemy 3.1.1, SQLite
