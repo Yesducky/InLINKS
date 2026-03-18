@@ -1,6 +1,6 @@
 # InLINKS
 
-A full-stack inventory management system with Flask backend and React frontend. Features role-based access control, real-time inventory tracking, and project management capabilities.
+A full-stack blockchain-based construction material management system with Flask backend and React frontend. Features role-based access control, real-time inventory tracking, and project management capabilities.
 
 | | | | |
 |:---:|:---:|:---:|:---:|
